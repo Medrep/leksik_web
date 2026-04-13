@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --bg: #f7f3eb;
+    --bg-accent: #fbf8f2;
+    --surface: rgba(255, 252, 247, 0.9);
+    --surface-strong: #fffdfa;
+    --border: rgba(118, 90, 50, 0.16);
+    --text: #23211d;
+    --text-muted: #70695f;
+    --brand: #ca801c;
+    --brand-soft: rgba(202, 128, 28, 0.12);
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #171410;
+    --bg-accent: #1f1a14;
+    --surface: rgba(30, 25, 19, 0.92);
+    --surface-strong: #262018;
+    --border: rgba(238, 224, 202, 0.14);
+    --text: #f4ede2;
+    --text-muted: #c1b39b;
+    --brand: #eca243;
+    --brand-soft: rgba(236, 162, 67, 0.14);
+  }
+
+  * {
+    @apply box-border;
+  }
+
+  html,
+  body {
+    @apply min-h-full;
+  }
+
+  body {
+    @apply m-0 bg-token-bg text-token-text antialiased;
+    background-image:
+      radial-gradient(circle at top left, rgba(255, 255, 255, 0.55), transparent 24rem),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-accent) 100%);
+    transition:
+      background-color 180ms ease,
+      color 180ms ease,
+      background-image 180ms ease;
+  }
+
+  a {
+    @apply text-inherit no-underline;
+  }
+}
+
+@layer components {
+  .shell-panel {
+    @apply border border-token-border bg-token-surface shadow-shell backdrop-blur transition-colors duration-200;
+  }
+
+  .pill {
+    @apply rounded-full bg-token-brandSoft px-3 py-1 text-xs font-medium text-token-brand;
+  }
+
+  .field-input {
+    @apply w-full rounded-[0.9rem] border border-token-border bg-token-surfaceStrong px-4 py-3 text-[0.98rem] text-token-text outline-none transition-colors duration-200 focus:border-token-brand;
+  }
+
+  .primary-button {
+    @apply inline-flex items-center justify-center rounded-[0.9rem] bg-token-brand px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:brightness-95;
+  }
+
+  .secondary-button {
+    @apply inline-flex items-center justify-center rounded-[0.9rem] border border-token-brand bg-transparent px-5 py-3 text-sm font-medium text-token-brand transition duration-200 hover:bg-token-brandSoft;
+  }
+
+  .auth-appear {
+    animation: auth-rise 320ms ease both;
+  }
+}
+
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

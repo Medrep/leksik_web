@@ -1,0 +1,417 @@
+# WEB_CLIENT_SCREENS.md
+
+## Purpose
+
+This document defines the screen list for the responsive web client of the Personal AI Vocabulary System.
+
+Its purpose is to translate the accepted narrow web-client scope and flow set into a practical implementation-baseline screen map.
+
+This document defines:
+- screen list
+- purpose of each screen
+- key UI blocks per screen
+- entry and exit paths between screens
+- what is intentionally excluded from each screen
+
+This document does not define:
+- backend implementation
+- component-level implementation detail
+- design-system specification
+- mobile app screens
+- capture screens
+- review screens
+- admin or billing screens
+
+The backend remains the system core.
+Telegram remains the primary interface for capture and daily review.
+
+## Status
+
+- implementation-baseline screen document
+- aligned to the approved narrow responsive web-client scope
+- not a full frontend product screen map
+- not a mobile-app specification
+
+## Screen system principles
+
+### 1. Narrow screen rule
+Only screens required for:
+- account entry
+- authenticated dictionary browsing
+- dictionary search within Dictionary List
+- read-only card details viewing
+- responsive browser usability
+- password recovery
+
+are included in this document.
+
+### 2. Backend-first rule
+Screens render backend-owned state.
+They do not introduce client-owned business logic.
+
+### 3. Telegram-first rule
+The web client does not add screens for:
+- vocabulary capture
+- ready-card creation after capture
+- daily review
+- review answering
+- review feedback
+
+Those remain in Telegram.
+
+### 4. Responsive rule
+This is one responsive screen system for:
+- mobile browser
+- desktop browser
+
+It is not a separate mobile-web product and not a separate desktop product.
+
+## Screen list
+
+The approved narrow screen set is:
+
+1. Landing / Entry
+2. Sign Up
+3. Sign In
+4. Password Recovery
+5. Password Recovery Confirmation
+6. Dictionary List
+7. Card Details
+
+No additional product screens should be assumed unless explicitly accepted later.
+
+## Screen 1 — Landing / Entry
+
+### Purpose
+Provide the public browser entry point into the web client and route the user into sign up or sign in.
+
+### Key UI blocks
+- product mark / identity
+- short product positioning text
+- primary action: sign in
+- secondary action: create account
+- brief note that capture and daily review happen through Telegram
+- theme toggle when presented in the public layout
+
+### Entry paths
+- direct visit to web root
+- return to public entry after sign-out action
+
+### Exit paths
+- to Sign Up
+- to Sign In
+
+### Intentionally excluded
+- large marketing-site sections
+- feature-comparison sections
+- pricing
+- onboarding walkthrough
+- Telegram linking flow
+- app dashboard navigation before authentication
+- review or capture actions
+
+## Screen 2 — Sign Up
+
+### Purpose
+Allow a new user to create an account and enter the authenticated web-client path.
+
+### Key UI blocks
+- back navigation to Landing / Entry if retained by UI
+- screen title
+- required sign-up form fields
+- primary submit action
+- link/path to Sign In
+- centered auth-card presentation within the shared public layout
+- theme toggle when presented as part of the shared public auth-entry layout
+
+### Entry paths
+- from Landing / Entry
+- from Sign In
+
+### Exit paths
+- to Dictionary List after successful sign-up/authenticated entry
+- to Sign In
+- to Landing / Entry if that navigation pattern is retained
+
+### Intentionally excluded
+- profile-completion flow
+- billing step
+- access-plan selection
+- Telegram linking
+- tutorial/onboarding wizard
+- advanced account settings
+- any post-sign-up capture flow
+
+## Screen 3 — Sign In
+
+### Purpose
+Allow an existing user to authenticate and enter the authenticated web-client path.
+
+### Key UI blocks
+- back navigation to Landing / Entry if retained by UI
+- screen title
+- sign-in form fields
+- primary submit action
+- link/path to Password Recovery
+- link/path to Sign Up
+- centered auth-card presentation within the shared public layout
+- theme toggle when presented as part of the shared public auth-entry layout
+
+### Entry paths
+- from Landing / Entry
+- from Sign Up
+- from protected-route redirect for unauthenticated user
+
+### Exit paths
+- to Dictionary List after successful sign-in
+- to Password Recovery
+- to Sign Up
+- to Landing / Entry if that navigation pattern is retained
+
+### Intentionally excluded
+- broader account-management UI
+- security-center UI
+- social login expansion unless explicitly accepted later
+- Telegram linking
+- capture or review actions
+
+## Screen 4 — Password Recovery
+
+### Purpose
+Allow the user to initiate password recovery from the web client.
+
+### Key UI blocks
+- back navigation to Sign In
+- screen title
+- recovery email input
+- primary action to initiate recovery
+- centered auth-card presentation within the shared public layout
+- theme toggle when presented as part of the shared public auth-entry layout
+
+### Entry paths
+- from Sign In
+
+### Exit paths
+- to Password Recovery Confirmation after successful submission
+- back to Sign In
+
+### Intentionally excluded
+- broader account-management area
+- password policy/settings area
+- multi-step recovery dashboard
+- unrelated support/contact flows
+- authenticated product navigation
+
+## Screen 5 — Password Recovery Confirmation
+
+### Purpose
+Confirm that the password recovery initiation request was accepted and guide the user back to Sign In.
+
+### Key UI blocks
+- success/confirmation message
+- brief instruction such as check-your-inbox
+- path back to Sign In
+- centered auth-card presentation within the shared public layout
+- theme toggle when presented as part of the shared public auth-entry layout
+
+### Entry paths
+- from Password Recovery after accepted submission
+
+### Exit paths
+- to Sign In
+
+### Intentionally excluded
+- account-management expansion
+- support workflow
+- broader auth troubleshooting UI
+- authenticated product navigation
+
+## Screen 6 — Dictionary List
+
+### Purpose
+Provide the main authenticated web-client screen for browsing and searching the current user’s dictionary.
+
+### Key UI blocks
+- minimal authenticated header/shell
+- product mark / identity
+- sign-out action
+- theme toggle when presented in the shared authenticated layout
+- dictionary search input
+- dictionary result count or equivalent lightweight list context
+- responsive list/grid of user-scoped dictionary items
+- item summary block for each result
+- navigation into Card Details
+
+### Entry paths
+- after successful sign-up
+- after successful sign-in
+- default authenticated-shell entry
+- return from Card Details
+- direct visit to protected dictionary route by authenticated user
+
+### Exit paths
+- to Card Details
+- sign-out action returns user to Landing / Entry
+
+### Intentionally excluded
+- manual add
+- advanced filters
+- sort/filter control expansion beyond accepted search
+- manual status change
+- review controls
+- capture controls
+- bulk actions
+- admin or settings navigation
+- billing/subscription navigation
+
+## Screen 7 — Card Details
+
+### Purpose
+Show the accepted read-only card fields for one user-scoped dictionary item.
+
+### Key UI blocks
+- back navigation to Dictionary List
+- minimal authenticated header pattern if retained by layout
+- sign-out action when presented in the shared authenticated layout
+- theme toggle when presented in the shared authenticated layout
+- word or phrase
+- canonical form when applicable
+- translation
+- short explanation / meaning
+- examples
+- language label only when present in the accepted backend detail payload
+- learning status only when present in the accepted backend detail payload
+- clean reading-oriented detail composition
+
+### Entry paths
+- from Dictionary List
+- from search results inside Dictionary List
+
+### Exit paths
+- back to Dictionary List
+- sign-out action returns user to Landing / Entry when available from the shared authenticated layout
+
+### Intentionally excluded
+- edit controls
+- delete controls
+- manual status change
+- notes editor
+- source/history management UI
+- review actions
+- capture actions
+- arbitrary extra sections just because backend may expose additional fields
+
+## Shared layout behavior
+
+### Public auth-entry layout
+The following screens may share one common public layout pattern:
+- Landing / Entry
+- Sign Up
+- Sign In
+- Password Recovery
+- Password Recovery Confirmation
+
+Shared traits may include:
+- centered auth-entry content
+- centered auth-card pattern on Sign Up, Sign In, Password Recovery, and recovery confirmation
+- lightweight branding
+- consistent navigation/back pattern
+- theme toggle
+
+This is a presentation pattern only.
+It does not imply additional product scope.
+
+### Authenticated layout
+The following screens may share one minimal authenticated layout pattern:
+- Dictionary List
+- Card Details
+
+Shared traits may include:
+- lightweight header
+- product mark
+- sign-out action
+- theme toggle
+- no explanatory side panels or internal helper chrome
+
+This is a minimal shell only.
+It must not expand into a broader application workspace.
+
+## Mobile and desktop behavior
+
+The same screen set above must work across:
+- mobile browser
+- desktop browser
+
+Responsive adaptation may change:
+- spacing
+- card/list density
+- grid vs stacked layout
+- header composition
+- search-field placement
+
+Responsive adaptation must not change:
+- product scope
+- flow availability
+- backend ownership boundaries
+- Telegram-first capture/review boundaries
+
+## Theme-toggle boundary
+
+Theme toggle is in scope as a shared-layout presentation behavior across the accepted web-client screen set.
+
+It may appear:
+- in the public auth-entry layout
+- in the authenticated dictionary layout
+
+It must not imply:
+- broader settings screen
+- profile-preferences area
+- personalization expansion beyond theme presentation
+
+## Backend source-of-truth boundary by screen
+
+### Public auth-entry screens
+Backend owns:
+- account creation
+- authentication
+- recovery initiation
+- session validity
+
+### Authenticated dictionary screens
+Backend owns:
+- access validation
+- user-scoped dictionary list
+- user-scoped dictionary search
+- user-scoped card details payload
+
+The web client renders these states and routes the user between accepted screens.
+It does not re-own these responsibilities.
+
+## Explicit screen exclusions
+
+The following screens are intentionally excluded from this document:
+- Manual Add
+- Review
+- Status Change
+- Filters panel / advanced filtering
+- Profile
+- Settings
+- Billing
+- Admin
+- OCR
+- Telegram linking
+- Analytics
+- Notifications center
+
+## Final screen rule
+
+If a screen is not required for:
+- account entry
+- password recovery
+- authenticated dictionary browsing
+- dictionary search within Dictionary List
+- read-only card viewing
+- responsive browser usability
+- approved theme handling
+
+it is out of scope for this web-client workstream unless explicitly accepted later.
