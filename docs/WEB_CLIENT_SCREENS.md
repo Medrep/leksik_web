@@ -40,6 +40,7 @@ Only screens required for:
 - authenticated dictionary browsing
 - dictionary search within Dictionary List
 - read-only card details viewing
+- narrow backend-backed settings/preferences
 - responsive browser usability
 - password recovery
 
@@ -77,6 +78,7 @@ The approved narrow screen set is:
 5. Password Recovery Confirmation
 6. Dictionary List
 7. Card Details
+8. Settings
 
 No additional product screens should be assumed unless explicitly accepted later.
 
@@ -236,10 +238,13 @@ Provide the main authenticated web-client screen for browsing and searching the 
 - product mark / identity
 - sign-out action
 - theme toggle when presented in the shared authenticated layout
+- optional minimal Telegram link-status/completion panel within the screen body
+- minimal authenticated settings navigation entry
 - dictionary search input
 - dictionary result count or equivalent lightweight list context
 - responsive list/grid of user-scoped dictionary items
 - item summary block for each result
+- empty state with a simple CTA inside Telegram-first product boundaries when no items are visible
 - navigation into Card Details
 
 ### Entry paths
@@ -251,6 +256,7 @@ Provide the main authenticated web-client screen for browsing and searching the 
 
 ### Exit paths
 - to Card Details
+- to Settings when provided by the minimal authenticated layout
 - sign-out action returns user to Landing / Entry
 
 ### Intentionally excluded
@@ -258,16 +264,19 @@ Provide the main authenticated web-client screen for browsing and searching the 
 - advanced filters
 - sort/filter control expansion beyond accepted search
 - manual status change
+- separate Telegram management area
+- unlink flow
+- reassignment flow
 - review controls
 - capture controls
 - bulk actions
-- admin or settings navigation
+- admin or broader account-management navigation
 - billing/subscription navigation
 
 ## Screen 7 — Card Details
 
 ### Purpose
-Show the accepted read-only card fields for one user-scoped dictionary item.
+Show the accepted card fields for one user-scoped dictionary item together with the narrow details-first delete action.
 
 ### Key UI blocks
 - back navigation to Dictionary List
@@ -276,11 +285,13 @@ Show the accepted read-only card fields for one user-scoped dictionary item.
 - theme toggle when presented in the shared authenticated layout
 - word or phrase
 - canonical form when applicable
-- translation
-- short explanation / meaning
+- explanation in the source word language
+- translation only when `preferred_translation_language` is set and backend returns translation
 - examples
 - language label only when present in the accepted backend detail payload
 - learning status only when present in the accepted backend detail payload
+- narrow delete action from Card Details only
+- small delete confirmation step
 - clean reading-oriented detail composition
 
 ### Entry paths
@@ -289,17 +300,50 @@ Show the accepted read-only card fields for one user-scoped dictionary item.
 
 ### Exit paths
 - back to Dictionary List
+- back to Dictionary List after successful delete
 - sign-out action returns user to Landing / Entry when available from the shared authenticated layout
 
 ### Intentionally excluded
 - edit controls
-- delete controls
+- restore/trash/bulk-delete controls
 - manual status change
 - notes editor
 - source/history management UI
 - review actions
 - capture actions
 - arbitrary extra sections just because backend may expose additional fields
+
+## Screen 8 — Settings
+
+### Purpose
+Provide one narrow authenticated settings/preferences screen for accepted backend-backed user settings.
+
+### Key UI blocks
+- minimal authenticated header/shell
+- screen title
+- sign-out action when presented in the shared authenticated layout
+- theme toggle when presented in the shared authenticated layout
+- accepted backend-backed settings/preferences sections only
+- lightweight loading, success, and error states for backend-owned settings behavior
+- submit/apply action only when required by the accepted backend contract
+
+### Entry paths
+- from Dictionary List when settings navigation is present in the minimal authenticated layout
+- direct visit to protected settings route by authenticated user
+
+### Exit paths
+- back to Dictionary List
+- sign-out action returns user to Landing / Entry when available from the shared authenticated layout
+
+### Intentionally excluded
+- profile editing
+- password/security-center expansion
+- billing/subscription management
+- admin controls
+- Telegram linking management expansion
+- capture or review actions
+- support/operations tooling
+- arbitrary web-only preferences outside the backend settings/preferences contract
 
 ## Shared layout behavior
 
@@ -325,6 +369,7 @@ It does not imply additional product scope.
 The following screens may share one minimal authenticated layout pattern:
 - Dictionary List
 - Card Details
+- Settings
 
 Shared traits may include:
 - lightweight header
@@ -335,6 +380,15 @@ Shared traits may include:
 
 This is a minimal shell only.
 It must not expand into a broader application workspace.
+
+## Cache boundary
+
+Lightweight local cache may support:
+- Dictionary List read reuse
+- Card Details read reuse
+
+This is an implementation optimization only.
+It is not a separate screen, flow, or product surface.
 
 ## Mobile and desktop behavior
 
@@ -364,8 +418,7 @@ It may appear:
 - in the authenticated dictionary layout
 
 It must not imply:
-- broader settings screen
-- profile-preferences area
+- broader profile/account-management area
 - personalization expansion beyond theme presentation
 
 ## Backend source-of-truth boundary by screen
@@ -384,6 +437,12 @@ Backend owns:
 - user-scoped dictionary search
 - user-scoped card details payload
 
+### Settings screen
+Backend owns:
+- accepted settings/preferences data
+- accepted settings/preferences update behavior
+- the same settings/preferences contract used by the mobile app where applicable
+
 The web client renders these states and routes the user between accepted screens.
 It does not re-own these responsibilities.
 
@@ -395,7 +454,6 @@ The following screens are intentionally excluded from this document:
 - Status Change
 - Filters panel / advanced filtering
 - Profile
-- Settings
 - Billing
 - Admin
 - OCR
@@ -411,6 +469,7 @@ If a screen is not required for:
 - authenticated dictionary browsing
 - dictionary search within Dictionary List
 - read-only card viewing
+- narrow backend-backed settings/preferences
 - responsive browser usability
 - approved theme handling
 

@@ -23,6 +23,13 @@ Accepted scope implemented
 - sign-out action
 - theme toggle across shared layouts
 - responsive browser support for mobile and desktop
+- protected narrow settings route
+- narrow settings screen for `preferred_translation_language`
+- minimal authenticated settings navigation entry
+- dictionary rendering aligned to the accepted explanation/translation rule
+- empty dictionary state with a simple CTA inside Telegram-first product boundaries
+- narrow details-first delete flow from Card Details only
+- lightweight local cache for dictionary list and card details
 
 Explicitly out of scope and still excluded
 - manual add
@@ -33,7 +40,9 @@ Explicitly out of scope and still excluded
 - OCR
 - manual status change
 - advanced filters
-- settings/profile expansion unless explicitly accepted later
+- broad settings/profile/account expansion
+- restore/trash flow
+- offline-first sync
 - client-owned business logic
 
 Implemented architecture boundary
@@ -44,7 +53,10 @@ Implemented architecture boundary
   - GET /auth/access
 - Dictionary List uses the protected backend model
 - Card Details uses the protected backend model
+- settings use the shared backend learning-preferences endpoints
+- delete uses the backend-owned soft-delete endpoint
 - sign out uses the real Supabase sign-out path
+- lightweight cache is a browser-side read optimization only
 - the client does not implement a parallel auth/session model
 
 Current implementation status
@@ -54,19 +66,25 @@ Current implementation status
 - authenticated route entry is gated through real backend auth/access checks
 - Dictionary List is backend-backed
 - dictionary search is backend-owned and stays inside Dictionary List
-- Card Details is backend-backed and read-only
+- Card Details is backend-backed
+- protected settings route and screen are implemented
+- `preferred_translation_language` load/save is implemented through:
+  - GET /preferences/learning
+  - PUT /preferences/learning
+- dictionary rendering now follows the accepted rule:
+  - explanation is shown as the source-language explanation
+  - translation is shown only when `preferred_translation_language` is set and backend returns translation
+- empty dictionary state is implemented with a narrow CTA that stays inside Telegram-first boundaries
+- details-first delete is implemented from Card Details only with a small confirmation step
+- successful delete returns the user to Dictionary List and removes the deleted item from normal visible reads
+- lightweight local cache is implemented for dictionary list and card details
+- cache invalidation is implemented after:
+  - delete
+  - sign out / auth-boundary loss
+  - relevant settings changes
 - theme behavior is implemented and persisted locally in the browser
 - shared public and authenticated layouts are implemented
-- integration hardening pass is completed
-- visual/layout cleanup pass is completed
-- public entry and auth screens now use a simplified centered auth-card presentation
-- authenticated shell is simplified to a minimal deploy-oriented header pattern
-- Dictionary List no longer includes internal explanatory side panels or prototype-style helper blocks
-- Card Details now uses a cleaner reading-oriented layout without prototype/dashboard-style framing
-- prototype/documentation-like UI noise has been removed from user-facing screens
-- theme control remains available but is visually quieter
-- no functionality, route, backend-integration, or scope changes were introduced in the cleanup pass
-- production build passes after the cleanup pass
+- production build passes
 
 Known confirmed contract points
 - browser auth uses Supabase directly
@@ -74,6 +92,9 @@ Known confirmed contract points
 - authenticated entry uses GET /auth/me and GET /auth/access
 - GET /vocab exists
 - GET /vocab/{item_id} exists
+- DELETE /vocab/{item_id} exists
+- GET /preferences/learning exists
+- PUT /preferences/learning exists
 - dictionary reads are user-scoped
 - GET /vocab supports:
   - search
@@ -87,13 +108,13 @@ Known confirmed contract points
   - short_explanation
   - examples
   - learning_status
+  - preferred_translation_language
 
 Known explicitly provisional contract points
-- exact GET /vocab response envelope and item schema
-- exact GET /vocab/{item_id} success response shape
-- exact guaranteed vs optional fields for list/details
-- exact examples payload shape
-- exact unauthenticated and access-denial status-code behavior for both endpoints
+- exact GET /vocab response envelope and item schema beyond the current accepted narrow field family
+- exact guaranteed vs optional fields for list/details beyond the currently confirmed baseline
+- exact examples payload shape beyond current accepted narrow handling
+- exact unauthenticated and access-denial status-code behavior for both vocab reads and delete
 - item-id field naming in response payloads if backend/docs still mix `item_id`, `id`, or another confirmed identifier field
 
 Local contract-clarification artifact
@@ -102,14 +123,19 @@ Local contract-clarification artifact
 Important implementation rules going forward
 - do not add new frontend features unless explicitly accepted
 - do not expand scope beyond the accepted screen set
-- do not add client-owned auth, access, or search logic
+- do not add client-owned auth, access, search, or delete logic
 - do not promote extra backend fields into UI scope automatically
-- keep Card Details read-only
+- keep delete details-first and narrow
 - keep search inside Dictionary List
 - keep sign out as an action, not a screen
 - keep theme as presentation behavior only, not a settings feature
+- keep cache as a lightweight read optimization only
 
-Recommended next move
-- use docs/BACKEND_CONTRACT_CLARIFICATION_NOTE.md to confirm the remaining GET /vocab and GET /vocab/{item_id} contract details in the backend/project repository
-- explicitly confirm response-payload identifier naming if backend/docs still mix `item_id`, `id`, or another identifier field
-- after backend confirmation, do only narrow normalization/correction work in this web repo if needed
+Current baseline result
+- the accepted baseline-update slices are implemented through:
+  - request/helper + preferences contract wiring
+  - settings route, screen, and navigation entry
+  - dictionary rendering rules + empty-state CTA
+  - details-first delete flow
+  - lightweight local cache for dictionary list and card details
+- no broader scope expansion was introduced

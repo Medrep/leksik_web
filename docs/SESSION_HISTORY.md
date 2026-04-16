@@ -1,0 +1,688 @@
+# SESSION_HISTORY.md
+
+## Purpose
+This file tracks major project sessions, decisions, accepted results, and next steps.
+
+It is not meant to be a full task tracker.  
+It is a concise working history so future AI chats and coding agents can understand recent project context.
+
+---
+
+## Session template
+
+### YYYY-MM-DD — Session title
+
+#### Context
+Short description of why the session happened.
+
+#### Decisions
+- decision 1
+- decision 2
+
+#### Work completed
+- completed item 1
+- completed item 2
+
+#### Accepted outputs
+- accepted output 1
+- accepted output 2
+
+#### Deferred / not now
+- deferred item 1
+- deferred item 2
+
+#### Next step
+Short description of the next smallest recommended step.
+
+---
+
+## 2026-04-13 — Telegram link-state foundation added
+
+#### Context
+Cross-channel onboarding planning was accepted, and the first implementation slice needed a backend-owned canonical Telegram link-state foundation without building the full web-first or Telegram-first completion flow yet.
+
+#### Decisions
+- The existing provider-aware messaging model was extended instead of introducing a separate Telegram-only linking subsystem.
+- Observed messaging identities and confirmed product-user links are now modeled separately.
+- Telegram-first observation is persisted at the backend even before linkage is completed.
+- MVP keeps one active linked Telegram account per product user and one active linked owner per Telegram identity.
+- Reassignment remains conflict/manual resolution rather than self-serve behavior.
+
+#### Work completed
+- Split observed messaging identities from canonical messaging link state in the backend data model.
+- Added explicit link states for pending, linked, and conflict plus basic audit timestamps.
+- Migrated existing linked Telegram rows into the new canonical linked-state table.
+- Updated Telegram webhook handling to record observed identities while preserving link-required product behavior.
+
+#### Accepted outputs
+- The backend can now represent observed-but-unlinked Telegram identities.
+- The backend now has canonical pending, linked, and conflict state support for Telegram linkage.
+- Existing linked Telegram capture/review behavior remains on the linked path instead of silently breaking.
+
+#### Deferred / not now
+- one-time code completion flow
+- web connect CTA / UX
+- Telegram onboarding wording polish
+- unlink flow
+- reassignment flow
+- admin/manual-resolution tooling
+
+#### Next step
+Build the next narrow slice on top of this foundation: secure link-completion mechanics that reuse the same canonical backend-owned link model.
+
+---
+
+## 2026-04-13 — Backend web-client CORS runtime blocker fixed
+
+#### Context
+The first real web-client auth bootstrap test hit a backend runtime blocker before backend auth behavior could be evaluated from the browser.
+
+#### Decisions
+- The blocker was confirmed to be CORS preflight handling, not Supabase browser auth, bearer-token ownership, or backend current-user/access logic.
+- The accepted fix remained narrow: add env-driven FastAPI CORS support to the backend runtime.
+- The auth ownership model remains unchanged: browser uses Supabase Auth directly, backend consumes bearer tokens, and `/auth/me` plus `/auth/access` remain backend checks.
+
+#### Work completed
+- Added backend CORS settings for allowed origins and credential behavior.
+- Added normalization for origin values loaded from env.
+- Registered FastAPI `CORSMiddleware` so browser preflight requests can complete for allowed origins.
+
+#### Accepted outputs
+- The backend now supports env-driven CORS runtime configuration for the current web-client integration path.
+- The accepted local browser origin can be allowed without hardcoding it into backend code.
+- No backend auth-entry facade, cookie/session auth layer, or endpoint-contract change was introduced.
+
+#### Deferred / not now
+- auth redesign
+- browser auth/session contract expansion
+- broader web-client integration documentation rewrite
+
+#### Next step
+Deploy the CORS patch to the target backend runtime and re-run browser auth bootstrap testing against `/auth/me` and `/auth/access`.
+
+---
+
+## 2026-04-12 — Future mobile baseline accepted
+
+#### Context
+A mobile MVP scope brief was reviewed and accepted, but only as a future client baseline rather than as the immediate next implementation workstream.
+
+#### Decisions
+- The mobile scope brief is accepted as the future mobile client baseline.
+- It must not be treated as the immediate next client implementation step.
+- Immediate client priority is still being evaluated separately against a smaller responsive web-first option.
+- The accepted mobile role remains: separate client project in Antigravity, thin over the shared backend API, with Telegram still primary for capture and daily review.
+
+#### Work completed
+- Added a small source-of-truth doc for the accepted future mobile MVP baseline.
+- Added the new mobile baseline doc to the documentation index.
+- Recorded the accepted baseline and its non-immediate status in session history.
+
+#### Accepted outputs
+- The future mobile baseline is now documented at scope/flow/screen-list level.
+- The docs make clear that mobile implementation does not start now from this acceptance.
+- The docs preserve the already accepted mobile role and scope without changing current delivery priority.
+
+#### Deferred / not now
+- immediate mobile implementation start
+- web-vs-mobile priority decision
+- detailed mobile UX or onboarding design
+
+#### Next step
+Keep the future mobile baseline as accepted reference material while current client-priority evaluation continues separately.
+
+---
+
+## 2026-04-12 — Production onboarding scope kept controlled
+
+#### Context
+The project needed a clear recorded decision about current production onboarding posture versus later user-facing auth/onboarding work.
+
+#### Decisions
+- For the current stage, production user onboarding remains manual / controlled.
+- There is no self-serve production onboarding flow yet.
+- Self-serve onboarding is intentionally deferred as scope control, not as an accidentally missing task.
+- Proper user-facing auth/onboarding will be designed and implemented later with the mobile app workstream.
+- The later user-facing entrypoint is expected to be a simple landing/auth flow.
+
+#### Work completed
+- Recorded the accepted onboarding scope decision in the project decision log.
+- Added a matching session-history note so future implementation chats inherit the same operational baseline.
+- Added a minimal product-spec clarification so the current stage is not read as having self-serve onboarding already.
+
+#### Accepted outputs
+- The docs now state clearly that current production onboarding is controlled/manual.
+- The docs now state clearly that self-serve onboarding is intentionally deferred.
+- The docs now tie future proper auth/onboarding flow to the mobile app workstream without defining the future design in detail.
+
+#### Deferred / not now
+- Self-serve production onboarding flow
+- detailed landing/auth UX design
+- mobile auth implementation details
+
+#### Next step
+Continue current controlled onboarding operations and defer full user-facing onboarding/auth design to the later mobile app stream.
+
+---
+
+## 2026-04-12 — Production auth validation blocker fixed
+
+#### Context
+Production bearer-token validation rejected real Supabase access tokens on backend protected endpoints even though Supabase Auth accepted the same tokens.
+
+#### Decisions
+- The production auth blocker was confirmed to be in backend bearer-token validation, not in token acquisition, Telegram linking, or DB user provisioning.
+- The accepted fix remained narrow: update only the bearer-token validation boundary and keep the existing request-context/current-user flow intact.
+- Production validation must no longer assume HS256/shared-secret-only verification.
+
+#### Work completed
+- Replaced the narrow manual bearer-token validation path with Supabase-compatible JWT verification.
+- Added ES256 session-token verification through Supabase JWKS.
+- Kept legacy HS256 token support through `SUPABASE_JWT_SECRET` for compatibility.
+- Normalized blank `SUPABASE_JWT_AUDIENCE` and `SUPABASE_JWT_ISSUER` values so blank env values behave as unset.
+
+#### Accepted outputs
+- Real Supabase-style production bearer tokens are accepted through the backend auth validation path.
+- Existing request-context/current-user resolution semantics were preserved after token validation succeeds.
+- Endpoint contracts did not change.
+- The fix remained limited to auth validation/config behavior and did not change Telegram, capture, dictionary, review, or product scope.
+
+#### Deferred / not now
+- Auth architecture redesign
+- broader auth/product documentation rewrite
+
+#### Next step
+Continue normal backend/product work on top of the corrected production auth validation path.
+
+---
+
+## 2026-04-08 — Product baseline and architecture set
+
+#### Context
+Initial project definition, MVP scope alignment, architecture selection, and documentation packaging for the Personal AI Vocabulary System.
+
+#### Decisions
+- Product is backend-first.
+- Bot is the primary interface for capture and daily review.
+- Mobile app is the secondary interface for dictionary browsing, manual add, and status management.
+- Main MVP learning unit is a word or phrase.
+- After bot capture, the user must receive a ready card immediately.
+- The app must support manual add.
+- OCR must be planned from day one but is not part of MVP.
+- OCR moves to Phase 1 after MVP.
+- Payment must be planned from day one.
+- Billing UI / active payment flow is not required in MVP.
+- Architecture style is modular monolith.
+- Chosen stack direction is FastAPI + Supabase Postgres/Auth/Storage + Flutter + Qwen + worker/jobs.
+- Review logic is code-driven.
+- Question generation is template-based MCQ.
+- Vocabulary items remain user-scoped in MVP.
+- The product must not be built around OpenClaw or any specific bot platform.
+
+#### Work completed
+- Product concept defined.
+- MVP functional scope defined.
+- MVP backlog defined.
+- High-level architecture defined.
+- Data model defined.
+- API surface defined.
+- Implementation plan defined.
+- Project docs package prepared:
+  - README_DOCS_INDEX.md
+  - PRODUCT_SPEC.md
+  - MVP_BACKLOG.md
+  - ARCHITECTURE.md
+  - DATA_MODEL.md
+  - API_SPEC.md
+  - IMPLEMENTATION_PLAN.md
+  - DECISIONS.md
+
+#### Accepted outputs
+- Product baseline accepted.
+- Architecture baseline accepted.
+- Realistic implementation order accepted.
+- New chat workflow accepted:
+  - architect chat
+  - Codex prompt chat
+  - Codex in VS Code
+  - separate control-tower usage
+
+#### Deferred / not now
+- OCR implementation
+- billing flow UI
+- advanced SRS
+- tutor mode
+- social features
+- shared/global vocabulary model
+
+#### Next step
+Start implementation with Milestone 1, Phase 0: backend foundation only.
+
+---
+
+## 2026-04-09 — Milestone 1 completed: Phase 0 and Phase 1 accepted
+
+#### Context
+Implementation and local validation of Milestone 1 foundation work for the backend, covering Phase 0 project foundation and Phase 1 identity and access foundation.
+
+#### Decisions
+- Phase 0 is accepted as complete.
+- Phase 1 is accepted as complete.
+- Local development should use the configured `.env` path.
+- For local development, Supabase connectivity should use the Supabase session pooler when direct connection fails in the current environment.
+- The `access_state` enum mapping must use lowercase DB values consistent with the Postgres enum definition.
+
+#### Work completed
+- Completed Phase 0 backend foundation:
+  - backend repository/app structure
+  - FastAPI scaffold
+  - environment config structure
+  - DB connection setup
+  - migration setup
+  - Docker setup
+  - `/health` endpoint
+- Completed Phase 1 identity/access foundation:
+  - `users`
+  - `user_access`
+  - `learning_preferences`
+  - auth integration boundary
+  - current user resolution
+  - access-state aware request context
+  - `/auth/me`
+  - `/auth/access`
+  - learning preferences read/update endpoints
+- Discovered and fixed a provisioning bug where Python-side `access_state` enum binding did not match the lowercase Postgres enum values.
+
+#### Accepted outputs
+- Backend foundation validated locally.
+- `.env` was set up correctly.
+- Supabase DB connectivity works.
+- `/health` returned `{"status":"ok","database":"ok","environment":"development"}`.
+- Identity/access foundation validated locally.
+- `/auth/me` works with dev auth headers.
+- `/auth/access` returns state `free`.
+- Learning preferences read/update works.
+- Unauthenticated access to protected endpoints returns `401`.
+- Milestone 1 is complete.
+
+#### Deferred / not now
+- Vocabulary capture
+- enrichment
+- bot integration
+- dictionary flows
+- review logic
+- OCR
+- billing UI / payment flow
+- Flutter/mobile work
+- Direct Supabase connection in the current environment due to IPv6 routing issues
+
+#### Next step
+Start Milestone 2 / Phase 2: Vocabulary capture core.
+
+---
+
+## 2026-04-09 — Milestone 2 / Phase 2 accepted: Vocabulary capture core
+
+#### Context
+Implementation and local validation of the first real vocabulary capture loop for the backend.
+
+#### Decisions
+- Milestone 2 / Phase 2 is accepted as complete.
+- The happy-path capture flow remains synchronous and returns a ready card immediately.
+- Qwen remains limited to structured enrichment only.
+- The Qwen local validation issue was configuration-related and was resolved by fixing the `QWEN_API_BASE_URL` typo.
+
+#### Work completed
+- Added Phase 2 capture persistence:
+  - `raw_inputs`
+  - `vocabulary_items`
+  - `vocabulary_sources`
+  - `vocabulary_examples`
+  - minimal `learning_states` initialization for new vocabulary items
+- Added the capture API:
+  - `POST /vocab/capture`
+- Added the enrichment pipeline boundary and Qwen structured enrichment integration.
+- Implemented minimal user-scoped normalization/reuse so repeat capture reuses the same vocabulary item.
+
+#### Accepted outputs
+- Real capture flow was validated locally end-to-end.
+- Authenticated capture through `POST /vocab/capture` works.
+- Ready card is returned immediately.
+- The response includes:
+  - `vocabulary_item_id`
+  - `display_text`
+  - `canonical_text`
+  - `translation`
+  - `short_explanation`
+  - `examples`
+  - `learning_status`
+- Repeat capture reused the same vocabulary item.
+- Unauthenticated capture returned `401`.
+- Qwen integration worked in real local validation after fixing the `QWEN_API_BASE_URL` typo.
+- The first real product loop is now proven:
+  - authenticated user submits text
+  - backend stores raw input
+  - enrichment runs
+  - vocabulary item is created or reused
+  - source/examples are stored
+  - learning state is initialized
+  - ready card is returned immediately
+- Milestone 2 / Phase 2 is complete.
+
+#### Deferred / not now
+- Bot integration
+- dictionary list/details/search/filter flows
+- review logic
+- OCR
+- billing UI / payment flow
+- Flutter/mobile work
+
+#### Next step
+Start Milestone 2 / Phase 3: Dictionary read model.
+
+---
+
+## 2026-04-09 — Milestone 2 completed: capture core and dictionary read model accepted
+
+#### Context
+Completion and local validation of Milestone 2, covering the first real vocabulary capture loop and the dictionary read model for app consumption.
+
+#### Decisions
+- Milestone 2 / Phase 2 is accepted as complete.
+- Milestone 2 / Phase 3 is accepted as complete.
+- Milestone 2 overall is accepted as complete.
+- Qwen remains limited to structured enrichment only.
+- A minimal schema fix was accepted to persist `language` on `vocabulary_items` for real dictionary language filtering.
+
+#### Work completed
+- Completed Milestone 2 / Phase 2 vocabulary capture core:
+  - authenticated `POST /vocab/capture`
+  - synchronous ready-card flow
+  - raw input persistence
+  - vocabulary item create/reuse
+  - source/example persistence
+  - learning-state initialization
+  - Qwen structured enrichment integration
+- Completed Milestone 2 / Phase 3 dictionary read model:
+  - dictionary list endpoint
+  - item details endpoint
+  - search by text
+  - filter by language
+  - filter by learning status
+  - user-scoped dictionary responses for UI consumption
+
+#### Accepted outputs
+- Milestone 2 / Phase 2 was completed and accepted.
+- Real capture flow was validated locally end-to-end.
+- Authenticated capture through `POST /vocab/capture` works.
+- Ready card is returned immediately.
+- Repeat capture reused the same vocabulary item.
+- Unauthenticated capture returned `401`.
+- Qwen integration worked in real local validation after fixing the `QWEN_API_BASE_URL` typo.
+- The first real product loop is now proven:
+  - authenticated user submits text
+  - backend stores raw input
+  - enrichment runs
+  - vocabulary item is created or reused
+  - source/examples are stored
+  - learning state is initialized
+  - ready card is returned immediately
+- Milestone 2 / Phase 3 was completed and accepted.
+- Dictionary list and item details were implemented.
+- `GET /vocab` supports:
+  - search by text
+  - filter by language
+  - filter by learning status
+- `GET /vocab/{item_id}` returns full item details for the current user.
+- Dictionary reads are user-scoped.
+- No hidden write behavior was added in the read layer.
+- Older rows may remain `language = NULL` by design.
+- Milestone 2 overall is now complete.
+
+#### Deferred / not now
+- Bot integration
+- review logic
+- OCR
+- billing UI / payment flow
+- Flutter/mobile work
+- manual status change
+
+#### Next step
+Start Milestone 3 — Bot working flow.
+
+---
+
+## 2026-04-10 — Milestone 3 accepted: Telegram bot working flow
+
+#### Context
+Implementation and local validation of the first concrete bot transport for backend capture, using Telegram while keeping the product core provider-agnostic.
+
+#### Decisions
+- Milestone 3 is accepted as complete.
+- Telegram is accepted as the first concrete messaging transport.
+- The messaging/user-linking model remains provider-agnostic so future providers can be added without redesign.
+- Telegram remains a thin transport adapter, not the system core.
+
+#### Work completed
+- Added Telegram as the first concrete messaging transport.
+- Added a provider-agnostic messaging/user-linking model for product-user mapping.
+- Added Telegram-to-product-user linking.
+- Wired Telegram capture flow to reuse the existing backend capture core.
+- Added Telegram-ready formatting for the immediate ready-card response.
+
+#### Accepted outputs
+- Milestone 3 was completed and accepted.
+- Telegram was implemented as the first concrete messaging transport.
+- A provider-agnostic messaging/user-linking model was added for future multi-provider support.
+- Telegram user identity can be linked to the correct product user.
+- Telegram capture flow reuses the existing backend capture core.
+- Ready card is returned immediately through Telegram flow.
+- Telegram transport remains a thin adapter, not the system core.
+- No review flow was added yet.
+- No WhatsApp implementation was added yet.
+- Local Telegram webhook smoke testing passed.
+- Milestone 3 is now complete.
+
+#### Deferred / not now
+- WhatsApp implementation
+- review flow
+- quiz/question answering
+- OCR
+- billing UI / payment flow
+- advanced bot conversation state
+
+#### Next step
+Start Milestone 4 — Learning loop / review flow.
+
+---
+
+## 2026-04-10 — Milestone 4 accepted: learning loop and review history surface complete
+
+#### Context
+Implementation, validation, and follow-up gap closure for the MVP learning loop, covering backend review flow, Telegram review delivery, and the missing review session history endpoint from the documented API surface.
+
+#### Decisions
+- Milestone 4 is accepted as complete.
+- Review flow remains backend-owned and code-driven.
+- Review questions remain stored snapshots and are not recomputed from live vocabulary state.
+- Telegram remains a thin transport adapter over the shared backend review flow.
+- The mobile app remains a separate client project to be implemented in Antigravity.
+- Future mobile implementation work belongs in a separate mobile implementation chat.
+
+#### Work completed
+- Implemented Milestone 4 learning loop / review flow:
+  - review session generation
+  - review question model
+  - review answer submission
+  - learning state updates after answers
+  - Telegram delivery of review questions
+  - Telegram answer handling
+  - minimal session flow only
+  - template-based MCQ only
+  - compact feedback
+- Completed the Milestone 4 follow-up gap closure:
+  - added `GET /review/session/{session_id}`
+  - kept the endpoint read-only
+  - scoped the endpoint to the authenticated current user
+  - returned stored session details/history
+  - returned stored question snapshots in stored order
+  - returned stored answers when present
+  - kept the endpoint free of side effects
+
+#### Accepted outputs
+- Milestone 4 was implemented and accepted as the learning loop / review flow milestone.
+- Review session generation was implemented and accepted.
+- Review question model was implemented and accepted.
+- Review answer submission was implemented and accepted.
+- Learning state updates after answers were implemented and accepted.
+- Telegram delivery of review questions was implemented and accepted.
+- Telegram answer handling was implemented and accepted.
+- Minimal session flow only was implemented and accepted.
+- Template-based MCQ only was implemented and accepted.
+- Compact feedback was implemented and accepted.
+- The follow-up gap closure was completed and accepted:
+  - `GET /review/session/{session_id}` was added
+  - the endpoint is read-only
+  - the endpoint is authenticated and user-scoped
+  - the endpoint returns stored session details/history
+  - the endpoint returns stored question snapshots in stored order
+  - the endpoint returns stored answers when present
+  - the endpoint has no side effects
+- This closed the doc/implementation mismatch for review session history.
+- Current accepted project status:
+  - Milestone 1 complete and accepted
+  - Milestone 2 complete and accepted
+  - Milestone 3 complete and accepted
+  - Milestone 4 complete and accepted
+- Important boundary remains accepted:
+  - mobile app is a separate client project
+  - mobile implementation will be done in Antigravity
+  - mobile remains a thin client over the shared backend API
+  - backend remains the system core
+
+#### Deferred / not now
+- OCR
+- billing UI / payment flow
+- WhatsApp implementation
+- advanced SRS
+- advanced analytics
+- app-side review UI
+- worker/scheduler expansion beyond the current MVP review loop
+
+#### Next step
+Start Milestone 5 — App usability + release prep.
+
+---
+
+## 2026-04-10 — Backend hardening Slice 1 and Slice 2 accepted
+
+#### Context
+Narrow backend hardening follow-up focused on small API consistency cleanup and config/runtime clarification after the core MVP milestones were accepted.
+
+#### Decisions
+- Backend hardening Slice 1 is accepted as complete.
+- Backend hardening Slice 2 is accepted as complete.
+- Review response-contract cleanup stays narrow and does not redesign review logic or Telegram flow.
+- Broader `DATABASE_URL` default policy remains explicitly unchanged in this pass.
+
+#### Work completed
+- Completed Backend hardening Slice 1:
+  - reviewed the active backend API surface
+  - normalized the approved narrow review response-contract mismatches
+- Completed Backend hardening Slice 2:
+  - changed backend settings loading from cwd-sensitive `.env` loading to an explicit backend-root env path
+  - normalized `TELEGRAM_WEBHOOK_SECRET` empty-string behavior so empty values behave as unset
+  - updated `.env.example` and `README.md` narrowly to clarify the runtime behavior
+
+#### Accepted outputs
+- Slice 1 completed and accepted.
+- Review response-contract mismatches were normalized in a narrow patch.
+- No review logic or Telegram flow redesign was introduced.
+- Slice 2 completed and accepted.
+- Backend settings loading was changed from cwd-sensitive `.env` loading to an explicit backend-root env path.
+- `TELEGRAM_WEBHOOK_SECRET` empty-string behavior was normalized so empty values behave as unset.
+- `.env.example` and README were updated narrowly to clarify the runtime behavior.
+- Broader `DATABASE_URL` default policy was explicitly left unchanged.
+
+#### Deferred / not now
+- Broader `DATABASE_URL` default policy changes
+- wider deployment/runtime cleanup
+- broader API error payload normalization
+
+#### Next step
+Start Backend hardening Slice 3 — Logging and observability minimum.
+
+---
+
+## 2026-04-11 — Backend hardening Slices 3-5 and Deployment Slices 1-5 accepted
+
+#### Context
+Documentation-first hardening and deployment-planning follow-up for first production deployment and controlled Telegram dogfooding readiness.
+
+#### Decisions
+- Backend hardening Slice 3 is accepted as complete.
+- Backend hardening Slice 4 is accepted as complete.
+- Backend hardening Slice 5 is accepted as complete.
+- Deployment Slice 1 is accepted as complete.
+- Deployment Slice 2 is accepted as complete.
+- Deployment Slice 3 is accepted as complete.
+- Deployment Slice 4 is accepted as complete.
+- Deployment Slice 5 is accepted as complete.
+- Backend MVP core, backend hardening, and deployment-planning slices are now effectively closed.
+
+#### Work completed
+- Completed Backend hardening Slice 3:
+  - added one global unexpected-exception visibility improvement in the backend API runtime path
+  - added one narrow success-boundary log for `POST /vocab/capture`
+  - kept the change narrow and did not introduce broad logging standardization
+- Completed Backend hardening Slice 4:
+  - audited migration hygiene
+  - confirmed the Alembic migration chain is coherent and single-head
+  - clarified in README that API/Docker startup does not auto-apply Alembic migrations
+  - added the explicit compose/container migration step to README
+- Completed Backend hardening Slice 5:
+  - added a practical backend smoke/regression checklist to README
+  - added a backend dogfooding/release-readiness minimum section to README
+  - kept the slice documentation-only
+- Completed Deployment Slice 1:
+  - added a deployment-readiness doc covering production backend runtime/env checklist, API and worker prerequisites, migration run order, deploy order, and the rule that Telegram production webhook activation comes last
+- Completed Deployment Slice 2:
+  - added a dedicated Telegram production webhook cutover doc covering prerequisites, safe cutover sequence, immediate sanity checks, and minimal containment notes
+  - kept the slice docs-only
+- Completed Deployment Slice 3:
+  - added a production smoke verification doc covering post-deploy checks and post-webhook-cutover checks for already accepted MVP backend flows
+  - kept the slice docs-only
+- Completed Deployment Slice 4:
+  - added a controlled tester onboarding doc covering manual onboarding prerequisites, sequence, readiness checks, and narrow failure notes
+  - kept the slice manual and did not introduce admin tooling or self-serve onboarding
+- Completed Deployment Slice 5:
+  - added a first-run ops notes doc covering minimal containment, basic rollback direction, and first production launch-window operator notes
+  - kept the slice narrow and did not expand it into a full runbook or incident-management process
+
+#### Accepted outputs
+- Backend hardening Slice 3 completed and accepted.
+- Backend hardening Slice 4 completed and accepted.
+- Backend hardening Slice 5 completed and accepted.
+- Deployment Slice 1 completed and accepted.
+- Deployment Slice 2 completed and accepted.
+- Deployment Slice 3 completed and accepted.
+- Deployment Slice 4 completed and accepted.
+- Deployment Slice 5 completed and accepted.
+- The project now has a minimal operational pack for first production deployment and controlled Telegram dogfooding.
+
+#### Deferred / not now
+- broader logging standardization
+- full rollback/runbook detail
+- incident-management process design
+- support-process design
+- CI/CD rollback automation
+
+#### Next step
+Execute the first production path:
+- prepare real production env/secrets
+- deploy backend
+- apply migrations
+- confirm runtime readiness
+- perform Telegram webhook cutover
+- run production smoke verification
+- onboard first controlled testers

@@ -1,10 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { BackendRequestError } from "@/lib/backend-client";
+import { fetchLearningPreferences, getPreferencesRequestMessage } from "@/lib/preferences";
 import {
+  invalidateCachedDictionaryItem,
+  invalidateCachedDictionaryReadDataForUser,
+  readCachedDictionaryCardDetails,
+  writeCachedDictionaryCardDetails,
+} from "@/lib/vocab-cache";
+import {
+  deleteDictionaryItem,
   fetchDictionaryCardDetails,
   getVocabRequestMessage,
   type DictionaryCardDetails,
@@ -43,11 +52,33 @@ function DetailSection({
 }
 
 export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
+  const router = useRouter();
   const { refreshBootstrap, session } = useAuth();
   const [details, setDetails] = useState<DictionaryCardDetails | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [detailsErrorMessage, setDetailsErrorMessage] = useState<string | null>(null);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
+  const [preferencesErrorMessage, setPreferencesErrorMessage] = useState<string | null>(null);
+  const [isDeleteConfirming, setIsDeleteConfirming] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(true);
+  const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
   const [isNotFound, setIsNotFound] = useState(false);
+  const [preferredTranslationLanguage, setPreferredTranslationLanguage] = useState<string | null>(null);
+  const currentUserId = session?.user?.id ?? null;
+
+  useEffect(() => {
+    if (!currentUserId) {
+      setDetails(null);
+      return;
+    }
+
+    const cachedDetails = readCachedDictionaryCardDetails({
+      userId: currentUserId,
+      itemId: item_id,
+    });
+
+    setDetails(cachedDetails);
+  }, [currentUserId, item_id]);
 
   useEffect(() => {
     if (!session?.access_token) {
@@ -57,9 +88,61 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
     const accessToken = session.access_token;
     const controller = new AbortController();
 
+    async function loadPreferences() {
+      setIsLoadingPreferences(true);
+      setPreferencesErrorMessage(null);
+
+      try {
+        const preferences = await fetchLearningPreferences({
+          accessToken,
+          signal: controller.signal,
+        });
+
+        setPreferredTranslationLanguage(preferences.preferredTranslationLanguage);
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        if (error instanceof BackendRequestError && error.status === 401) {
+          void refreshBootstrap();
+          return;
+        }
+
+        setPreferencesErrorMessage(
+          getPreferencesRequestMessage(error, "The dictionary preferences could not be loaded from the backend."),
+        );
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoadingPreferences(false);
+        }
+      }
+    }
+
+    void loadPreferences();
+
+    return () => controller.abort();
+  }, [refreshBootstrap, session?.access_token]);
+
+  useEffect(() => {
+    if (!session?.access_token) {
+      return;
+    }
+
+    const accessToken = session.access_token;
+    const hasCachedDetails = currentUserId
+      ? readCachedDictionaryCardDetails({
+          userId: currentUserId,
+          itemId: item_id,
+        }) !== null
+      : false;
+    const controller = new AbortController();
+
     async function loadCardDetails() {
-      setIsLoading(true);
-      setErrorMessage(null);
+      setIsLoadingDetails(true);
+      setDetailsErrorMessage(null);
+      setDeleteErrorMessage(null);
+      setIsDeleteConfirming(false);
       setIsNotFound(false);
 
       try {
@@ -76,6 +159,13 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
         }
 
         setDetails(nextDetails);
+        if (currentUserId) {
+          writeCachedDictionaryCardDetails({
+            userId: currentUserId,
+            itemId: item_id,
+            details: nextDetails,
+          });
+        }
       } catch (error) {
         if (controller.signal.aborted) {
           return;
@@ -87,16 +177,26 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
         }
 
         if (error instanceof BackendRequestError && (error.status === 403 || error.status === 404)) {
+          if (currentUserId) {
+            invalidateCachedDictionaryItem({
+              userId: currentUserId,
+              itemId: item_id,
+            });
+          }
           setDetails(null);
           setIsNotFound(true);
           return;
         }
 
-        setDetails(null);
-        setErrorMessage(getVocabRequestMessage(error, "The card details could not be loaded from the backend."));
+        if (!hasCachedDetails) {
+          setDetails(null);
+          setDetailsErrorMessage(
+            getVocabRequestMessage(error, "The card details could not be loaded from the backend."),
+          );
+        }
       } finally {
         if (!controller.signal.aborted) {
-          setIsLoading(false);
+          setIsLoadingDetails(false);
         }
       }
     }
@@ -104,7 +204,56 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
     void loadCardDetails();
 
     return () => controller.abort();
-  }, [item_id, refreshBootstrap, session?.access_token]);
+  }, [currentUserId, item_id, refreshBootstrap, session?.access_token]);
+
+  const canShowTranslation = !isLoadingPreferences && Boolean(preferredTranslationLanguage) && Boolean(details?.translation);
+  const errorMessage = preferencesErrorMessage ?? detailsErrorMessage;
+  const isLoading = !details && !isNotFound && !errorMessage && (isLoadingDetails || isLoadingPreferences);
+
+  async function handleDelete() {
+    if (!session?.access_token) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteErrorMessage(null);
+
+    try {
+      await deleteDictionaryItem({
+        accessToken: session.access_token,
+        item_id,
+      });
+
+      if (currentUserId) {
+        invalidateCachedDictionaryReadDataForUser(currentUserId);
+      }
+      setDetails(null);
+      setIsDeleteConfirming(false);
+      router.replace("/dictionary");
+      router.refresh();
+    } catch (error) {
+      if (error instanceof BackendRequestError && error.status === 401) {
+        void refreshBootstrap();
+        return;
+      }
+
+      if (error instanceof BackendRequestError && (error.status === 403 || error.status === 404)) {
+        if (currentUserId) {
+          invalidateCachedDictionaryItem({
+            userId: currentUserId,
+            itemId: item_id,
+          });
+        }
+        setDetails(null);
+        setIsNotFound(true);
+        return;
+      }
+
+      setDeleteErrorMessage(getVocabRequestMessage(error, "The word could not be deleted from the backend."));
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   return (
     <section className="auth-appear grid gap-6">
@@ -165,17 +314,21 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
                   “{details.examples[0]}”
                 </blockquote>
               </DetailSection>
-            ) : <div />}
+            ) : (
+              <div />
+            )}
           </div>
 
           <div className="grid gap-8 border-t border-token-border pt-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
             <div className="grid gap-8">
-              <DetailSection label="Translation">
-                <p>{details.translation ?? "Not available for this item."}</p>
-              </DetailSection>
+              {canShowTranslation ? (
+                <DetailSection label="Translation">
+                  <p>{details.translation}</p>
+                </DetailSection>
+              ) : null}
 
-              <DetailSection label="Definition">
-                <p>{details.meaning ?? "Not available for this item."}</p>
+              <DetailSection label="Explanation">
+                <p>{details.explanation ?? "Not available for this item."}</p>
               </DetailSection>
 
               {details.examples.length > 1 ? (
@@ -190,6 +343,62 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
             </div>
 
             <div className="grid gap-8">
+              <DetailSection label="Dictionary">
+                <div className="grid gap-3">
+                  {!isDeleteConfirming ? (
+                    <button
+                      className="secondary-button justify-start"
+                      type="button"
+                      onClick={() => {
+                        setDeleteErrorMessage(null);
+                        setIsDeleteConfirming(true);
+                      }}
+                      disabled={isDeleting}
+                    >
+                      Delete from dictionary
+                    </button>
+                  ) : (
+                    <div className="rounded-[1rem] border border-red-300/60 bg-red-50/80 p-4 dark:border-red-400/30 dark:bg-red-950/30">
+                      <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                        Delete this word from your dictionary?
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-red-800 dark:text-red-200">
+                        This removes it from normal dictionary browsing.
+                      </p>
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <button
+                          className="primary-button"
+                          type="button"
+                          onClick={() => void handleDelete()}
+                          disabled={isDeleting}
+                        >
+                          {isDeleting ? "Deleting..." : "Confirm delete"}
+                        </button>
+                        <button
+                          className="secondary-button"
+                          type="button"
+                          onClick={() => {
+                            setDeleteErrorMessage(null);
+                            setIsDeleteConfirming(false);
+                          }}
+                          disabled={isDeleting}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                      {deleteErrorMessage ? (
+                        <p className="mt-3 text-sm leading-6 text-red-800 dark:text-red-200">
+                          {deleteErrorMessage}
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
+                  {!isDeleteConfirming && deleteErrorMessage ? (
+                    <p className="text-sm leading-6 text-red-700 dark:text-red-200">{deleteErrorMessage}</p>
+                  ) : null}
+                </div>
+              </DetailSection>
+
               {details.language ? (
                 <DetailSection label="Language">
                   <p>{details.language}</p>

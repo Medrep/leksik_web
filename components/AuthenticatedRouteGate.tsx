@@ -28,10 +28,24 @@ function GatePanel({
   );
 }
 
-export function AuthenticatedRouteGate({ children }: { children: React.ReactNode }) {
+export function AuthenticatedRouteGate({
+  children,
+  resourceLabel,
+}: {
+  children: React.ReactNode;
+  resourceLabel?: string;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const { authStatus, bootstrapError, bootstrapStatus, hasBootstrapConfig, refreshBootstrap } = useAuth();
+  const configDescription = resourceLabel
+    ? `Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and NEXT_PUBLIC_API_BASE_URL before opening your ${resourceLabel}.`
+    : "Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and NEXT_PUBLIC_API_BASE_URL before opening the dictionary.";
+  const loadingTitle = resourceLabel ? `Preparing your ${resourceLabel}` : "Preparing your dictionary";
+  const redirectDescription = resourceLabel
+    ? `You need to sign in before opening your ${resourceLabel}.`
+    : "You need to sign in before opening the dictionary.";
+  const errorTitle = resourceLabel ? `We couldn't open your ${resourceLabel}` : "We couldn't open the dictionary";
 
   useEffect(() => {
     if (authStatus === "unauthenticated") {
@@ -44,7 +58,7 @@ export function AuthenticatedRouteGate({ children }: { children: React.ReactNode
     return (
       <GatePanel
         title="App configuration is incomplete"
-        description="Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and NEXT_PUBLIC_API_BASE_URL before opening the dictionary."
+        description={configDescription}
       />
     );
   }
@@ -52,7 +66,7 @@ export function AuthenticatedRouteGate({ children }: { children: React.ReactNode
   if (authStatus === "loading" || (authStatus === "authenticated" && bootstrapStatus === "checking")) {
     return (
       <GatePanel
-        title="Preparing your dictionary"
+        title={loadingTitle}
         description="Checking your session and loading access."
       />
     );
@@ -62,7 +76,7 @@ export function AuthenticatedRouteGate({ children }: { children: React.ReactNode
     return (
       <GatePanel
         title="Redirecting to sign in"
-        description="You need to sign in before opening the dictionary."
+        description={redirectDescription}
       />
     );
   }
@@ -70,7 +84,7 @@ export function AuthenticatedRouteGate({ children }: { children: React.ReactNode
   if (authStatus === "error" || bootstrapStatus === "error") {
     return (
       <GatePanel
-        title="We couldn't open the dictionary"
+        title={errorTitle}
         description={bootstrapError ?? "The current session couldn't be confirmed."}
         action={
           <button className="secondary-button" type="button" onClick={() => void refreshBootstrap()}>

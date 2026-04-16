@@ -11,8 +11,8 @@ It is not the mobile app repo.
 The backend remains the system core.
 Telegram remains the primary interface for capture and daily review.
 
-The current slice includes the approved screen set, Supabase browser auth entry, thin authenticated-entry bootstrap through backend auth checks, backend-backed Dictionary List loading/search, and backend-backed Card Details rendering.
-It does not redesign backend behavior or expand beyond the accepted read-only screen scope.
+The current repo boundary includes the approved narrow screen set, while the currently integrated backend-backed UI slices remain Supabase browser auth entry, thin authenticated-entry bootstrap through backend auth checks, backend-backed Dictionary List loading/search, backend-backed Card Details rendering, and a minimal authenticated Telegram link status/completion subflow inside Dictionary List.
+It does not redesign backend behavior or expand beyond the accepted narrow screen scope.
 
 ## Accepted repo boundary
 
@@ -25,6 +25,7 @@ It does not redesign backend behavior or expand beyond the accepted read-only sc
 - Dictionary List
 - Dictionary search inside Dictionary List
 - Card Details
+- Settings
 - sign-out action
 - theme toggle
 - responsive browser support for mobile and desktop
@@ -38,7 +39,7 @@ It does not redesign backend behavior or expand beyond the accepted read-only sc
 - OCR
 - manual status change
 - advanced filters
-- settings/profile expansion unless strictly required
+- profile/account-management expansion beyond the accepted narrow settings screen
 - client-owned business logic
 
 ## Thin-client ownership model
@@ -46,6 +47,7 @@ It does not redesign backend behavior or expand beyond the accepted read-only sc
 - Supabase Auth owns browser auth entry and browser session state
 - backend owns access state checks
 - backend owns dictionary list/search/details behavior
+- backend owns accepted settings/preferences behavior
 - the web client only renders browser states and routes between approved screens
 
 If a required backend/API capability is missing, document the gap.
@@ -58,6 +60,8 @@ Do not invent client-side workaround logic.
 - `GET /auth/access`
 - `GET /vocab`
 - `GET /vocab/{item_id}`
+- `GET /messaging-links/telegram`
+- `POST /messaging-links/telegram/complete`
 
 ## Main dependency risk to validate
 
@@ -79,6 +83,7 @@ Current implementation boundary:
 - authenticated entry into protected routes is accepted only after backend `/auth/me` and `/auth/access` succeed
 - Dictionary List uses `GET /vocab` with the confirmed `search` query parameter and keeps search inside the same screen
 - Card Details uses `GET /vocab/{item_id}` and promotes only the accepted read-only detail fields into the UI
+- Dictionary List may show a small authenticated Telegram link panel that reads `GET /messaging-links/telegram` and submits `POST /messaging-links/telegram/complete`
 - confirmed project evidence already supports field names such as `display_text`, `canonical_text`, `translation`, `short_explanation`, `examples`, and `learning_status`
 - exact `GET /vocab` and `GET /vocab/{item_id}` response envelope schemas are still only partially documented here, and item-id field naming in response payloads remains conservatively handled in the client mapper
 - no client-owned auth/session workaround model is introduced beyond the built-in Supabase browser session behavior

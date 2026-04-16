@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { resolveAuthenticatedEntry } from "@/lib/auth-bootstrap";
 import { appConfig } from "@/lib/config";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { clearAllCachedDictionaryReadData } from "@/lib/vocab-cache";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated" | "error";
 type BootstrapStatus = "idle" | "checking" | "ready" | "error";
@@ -60,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setBootstrapError(null);
 
       if (!nextSession?.access_token) {
+        clearAllCachedDictionaryReadData();
         setAuthStatus("unauthenticated");
         setBootstrapStatus("idle");
         return;
@@ -82,6 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (result.kind === "unauthorized") {
+        clearAllCachedDictionaryReadData();
         setAuthStatus("unauthenticated");
         setBootstrapStatus("idle");
         setSession(null);
@@ -151,6 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (result.kind === "unauthorized") {
+      clearAllCachedDictionaryReadData();
       setAuthStatus("unauthenticated");
       setBootstrapStatus("idle");
       setSession(null);
@@ -186,6 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: error.message };
     }
 
+    clearAllCachedDictionaryReadData();
     setSession(null);
     setUser(null);
     setMe(null);

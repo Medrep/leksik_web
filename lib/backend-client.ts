@@ -64,11 +64,15 @@ export function getBackendErrorMessage(body: unknown, fallback: string) {
 export async function fetchBackendJson<T>({
   accessToken,
   path,
+  method = "GET",
+  body,
   searchParams,
   signal,
 }: {
   accessToken: string;
   path: string;
+  method?: "GET" | "POST" | "PUT" | "DELETE";
+  body?: unknown;
   searchParams?: URLSearchParams;
   signal?: AbortSignal;
 }): Promise<T> {
@@ -82,12 +86,24 @@ export async function fetchBackendJson<T>({
     url.search = searchParams.toString();
   }
 
-  const response = await fetch(url.toString(), {
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    Authorization: `Bearer ${accessToken}`,
+  };
+
+  const requestInit: RequestInit = {
+    method,
+    headers,
     signal,
+  };
+
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+    requestInit.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(url.toString(), {
+    ...requestInit,
   });
 
   if (!response.ok) {

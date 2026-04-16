@@ -11,28 +11,30 @@ const VOCAB_SEARCH_QUERY_PARAM = "search";
 // partially documented here, so only the confirmed narrow snake_case field family
 // is normalized below. Response-envelope handling remains conservative.
 const LIST_TITLE_KEYS = ["display_text", "canonical_text"] as const;
-const LIST_SUMMARY_KEYS = ["translation", "short_explanation"] as const;
+const LIST_EXPLANATION_KEYS = ["short_explanation"] as const;
+const LIST_TRANSLATION_KEYS = ["translation"] as const;
 const LANGUAGE_KEYS = ["language"] as const;
 const LEARNING_STATUS_KEYS = ["learning_status"] as const;
 const DETAIL_CANONICAL_KEYS = ["canonical_text"] as const;
-const DETAIL_MEANING_KEYS = ["short_explanation"] as const;
+const DETAIL_EXPLANATION_KEYS = ["short_explanation"] as const;
 const ITEM_ID_KEYS = ["item_id", "id", "vocabulary_item_id"] as const;
 
 export type DictionaryListItem = {
+  explanation: string | null;
   id: string;
   learningStatus: string | null;
   language: string | null;
-  summary: string | null;
   title: string;
+  translation: string | null;
 };
 
 export type DictionaryCardDetails = {
   canonicalForm: string | null;
+  explanation: string | null;
   examples: string[];
   id: string;
   language: string | null;
   learningStatus: string | null;
-  meaning: string | null;
   title: string;
   translation: string | null;
 };
@@ -87,11 +89,12 @@ function normalizeDictionaryListItem(raw: unknown) {
   }
 
   return {
+    explanation: pickString(record, [...LIST_EXPLANATION_KEYS]),
     id,
     title: pickString(record, [...LIST_TITLE_KEYS]) ?? "Saved item",
-    summary: pickString(record, [...LIST_SUMMARY_KEYS]),
     language: pickString(record, [...LANGUAGE_KEYS]),
     learningStatus: pickString(record, [...LEARNING_STATUS_KEYS]),
+    translation: pickString(record, [...LIST_TRANSLATION_KEYS]),
   } satisfies DictionaryListItem;
 }
 
@@ -132,11 +135,11 @@ function normalizeDictionaryCardDetails(raw: unknown): DictionaryCardDetails | n
 
   return {
     canonicalForm: pickString(record, [...DETAIL_CANONICAL_KEYS]),
+    explanation: pickString(record, [...DETAIL_EXPLANATION_KEYS]),
     examples: pickExamples(record.examples),
     id,
     language: pickString(record, [...LANGUAGE_KEYS]),
     learningStatus: pickString(record, [...LEARNING_STATUS_KEYS]),
-    meaning: pickString(record, [...DETAIL_MEANING_KEYS]),
     title: pickString(record, [...LIST_TITLE_KEYS]) ?? "Saved item",
     translation: pickString(record, ["translation"]),
   };
@@ -184,6 +187,23 @@ export async function fetchDictionaryCardDetails({
   });
 
   return normalizeDictionaryCardDetails(payload);
+}
+
+export async function deleteDictionaryItem({
+  accessToken,
+  item_id,
+  signal,
+}: {
+  accessToken: string;
+  item_id: string;
+  signal?: AbortSignal;
+}) {
+  await fetchBackendJson<unknown>({
+    accessToken,
+    method: "DELETE",
+    path: `/vocab/${encodeURIComponent(item_id)}`,
+    signal,
+  });
 }
 
 export function getVocabRequestMessage(error: unknown, fallback: string) {

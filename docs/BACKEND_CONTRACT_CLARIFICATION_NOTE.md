@@ -1,212 +1,267 @@
-# BACKEND_CONTRACT_CLARIFICATION_NOTE.md
+# Backend Contract Clarification Note
 
 ## Purpose
 
-This document records the currently confirmed backend contract used by the narrow responsive web client of the Personal AI Vocabulary System.
+This note records the current confirmed backend contract used by the responsive web client.
 
-Its purpose is to remove remaining contract ambiguity for the web client without redesigning the backend and without expanding frontend scope.
+It is a narrow clarification artifact only.
+It does not redesign backend ownership, frontend scope, or product architecture.
 
-This note is a clarification artifact.
-It does not redefine product scope.
-It does not redesign endpoint ownership.
-It does not add new frontend features.
+## Preserved boundaries
 
-## Context
-
-The responsive web client is:
-- a separate client repository
-- a thin client over the existing backend
-- limited to narrow browser flows for:
-  - auth entry
-  - authenticated shell entry
-  - dictionary list
-  - dictionary search inside Dictionary List
-  - Card Details
-  - sign-out action
-  - theme toggle
-  - responsive browser access on mobile and desktop
-
-The backend remains the system core.
-Telegram remains the primary interface for capture and daily review.
+- the backend remains the system core
+- Telegram remains the primary interface for capture and daily review
+- the responsive web client remains a thin client over the backend
+- browser auth entry uses Supabase directly
+- protected backend requests use `Authorization: Bearer <supabase_jwt>`
+- authenticated browser entry is bootstrapped through:
+  - `GET /auth/me`
+  - `GET /auth/access`
+- Card Details remains a narrow read-only scope
+- this note does not expand the web client into capture, review, billing, admin, delete, or manual-status scope
 
 ## Confirmed contract
 
-### Auth model used by the web client
+### Auth boundary
 
-The current web-client auth model is:
+Confirmed:
+- the browser signs in directly with Supabase Auth
+- after sign-in, the browser sends the Supabase access token to the backend as `Authorization: Bearer <supabase_jwt>`
+- the backend verifies the bearer token server-side
+- the backend does not provide a backend-owned auth-entry facade for the current web-client slice
 
-- browser auth uses Supabase directly
-- the browser obtains a Supabase JWT
-- protected backend requests use:
+### GET /auth/me
 
-`Authorization: Bearer <supabase_jwt>`
+Confirmed endpoint role:
+- backend current-user check for authenticated entry
 
-The backend consumes and validates bearer tokens from Supabase Auth.
+Auth:
+- required
+- expects `Authorization: Bearer <supabase_jwt>`
 
-### Authenticated entry bootstrap
+Confirmed success shape:
 
-The web client uses these backend-owned checks for authenticated entry:
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "email": "user@example.com"
+}
+```
 
-- `GET /auth/me`
-- `GET /auth/access`
+Field notes:
+- `id` is required
+- `email` is optional and may be `null`
 
-Working reliance:
-- `GET /auth/me` resolves the current authenticated user
-- `GET /auth/access` resolves the current access state
+Confirmed behavior:
+- resolves the authenticated user from the bearer token
+- provisions the app user row on first authenticated request if needed
+- updates stored email when token email is present and different
 
-Protected endpoints are expected to reject unauthenticated access.
+Confirmed unauthenticated behavior:
+- returns `401 Unauthorized`
 
-### Dictionary list endpoint
+### GET /auth/access
 
-Confirmed route:
-- `GET /vocab`
+Confirmed endpoint role:
+- backend access-state check for authenticated entry
 
-Confirmed supported query parameters from current project evidence:
+Auth:
+- required
+- expects `Authorization: Bearer <supabase_jwt>`
+
+Confirmed success shape:
+
+```json
+{
+  "state": "free"
+}
+```
+
+Field notes:
+- `state` is required
+- current enum values are:
+  - `free`
+  - `trial`
+  - `paid`
+  - `inactive`
+
+Confirmed behavior:
+- resolves the authenticated user from the bearer token
+- provisions the app user row on first authenticated request if needed
+- provisions a default access row when missing
+- current default provisioned access state is `free`
+
+Confirmed unauthenticated behavior:
+- returns `401 Unauthorized`
+
+### GET /vocab
+
+Confirmed endpoint role:
+- user-scoped dictionary list read for authenticated clients
+
+Auth:
+- required
+- uses the same authenticated request-context path as `/auth/me` and `/auth/access`
+
+Confirmed query params:
 - `search`
 - `language`
 - `learning_status`
 
+Confirmed success envelope:
+
+```json
+{
+  "items": [
+    {
+      "id": "00000000-0000-0000-0000-000000000000",
+      "display_text": "prendre une decision",
+      "canonical_text": "prendre une decision",
+      "translation": "to make a decision",
+      "language": "fr",
+      "item_type": "phrase",
+      "learning_status": "new"
+    }
+  ]
+}
+```
+
+Field notes for each list item:
+- `id` is required
+- `display_text` is required
+- `canonical_text` is optional and may be `null`
+- `translation` is optional and may be `null`
+- `language` is optional and may be `null`
+- `item_type` is required
+- `learning_status` is optional and may be `null`
+
 Confirmed behavior:
-- dictionary reads are user-scoped
-- search is supported
-- language filter is supported
-- learning-status filter is supported
+- returns only items owned by the authenticated user
+- returns only non-deleted items in normal dictionary reads
+- supports search across `display_text`, `canonical_text`, and `translation` when translation is present
+- normalizes `language` filter to trimmed lowercase
+- returns items ordered by most recently updated, then most recently created
 
-### Dictionary details endpoint
+Pagination status:
+- current backend evidence shows no pagination
+- there are no pagination query params on the route
+- the response shape contains `items` only
+- there is currently no documented pagination metadata
 
-Confirmed route form:
-- `GET /vocab/{item_id}`
+### GET /vocab/{item_id}
 
-Route naming should be treated as:
-- `item_id`
-- not `itemId`
+Confirmed endpoint role:
+- user-scoped dictionary item details read for authenticated clients
+
+Auth:
+- required
+- uses the same authenticated request-context path as `/auth/me` and `/auth/access`
+
+Confirmed route naming:
+- backend route parameter is `item_id`
+- project docs should use `GET /vocab/{item_id}`
+
+Confirmed success shape:
+
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "display_text": "prendre une decision",
+  "canonical_text": "prendre une decision",
+  "translation": "to make a decision",
+  "short_explanation": "Used to express making a choice.",
+  "examples": [
+    "Il faut prendre une decision rapidement.",
+    "Nous devons prendre une decision aujourd'hui."
+  ],
+  "language": "fr",
+  "item_type": "phrase",
+  "learning_status": "new"
+}
+```
+
+Field notes:
+- `id` is required
+- `display_text` is required
+- `canonical_text` is optional and may be `null`
+- `translation` is optional and may be `null`
+- `short_explanation` is required and is stored in the source word language
+- `examples` is required and is returned as a list of strings
+- `language` is optional and may be `null`
+- `item_type` is required
+- `learning_status` is optional and may be `null`
 
 Confirmed behavior:
-- returns details for the current user’s item
-- non-owned item should currently be treated as not found
-- current working assumption for non-owned item behavior is `404`
+- returns full details only for the authenticated user's item
+- soft-deleted items do not appear in normal item-details reads
+- returns `404 Not Found` when the item is missing or not owned by the current user
 
-### Confirmed read-model field family
+### GET /preferences/learning
 
-Confirmed project evidence supports snake_case vocabulary/card fields such as:
+Confirmed endpoint role:
+- shared settings/preferences read for authenticated clients
+
+Accepted baseline note:
+- used by the narrow web settings screen where applicable
+- current translation-preference field name is `preferred_translation_language`
+
+### PUT /preferences/learning
+
+Confirmed endpoint role:
+- shared settings/preferences update for authenticated clients
+
+Accepted baseline note:
+- used by the narrow web settings screen where applicable
+- changing `preferred_translation_language` does not immediately regenerate old cards
+- older cards refresh lazily later
+
+## Safe web-client assumptions
+
+Safe assumptions for the current responsive web client:
+- use Supabase browser auth directly for sign up, sign in, sign out, and recovery initiation
+- call backend protected endpoints with `Authorization: Bearer <supabase_jwt>`
+- bootstrap authenticated shell entry with:
+  - `GET /auth/me`
+  - `GET /auth/access`
+- treat `GET /vocab` as the dictionary list endpoint
+- treat `GET /vocab/{item_id}` as the Card Details endpoint
+- treat dictionary reads as authenticated and user-scoped
+- treat settings/preferences reads and writes as authenticated and user-scoped
+- use snake_case backend field names exactly as returned by the backend
+
+## Card Details scope boundary
+
+The accepted narrow Card Details read-only field family remains:
 - `display_text`
 - `canonical_text`
-- `translation`
+- `translation` when present
 - `short_explanation`
 - `examples`
 - `learning_status`
+- `language` when present
 
-These are the safe read-only fields the narrow web client may rely on for Card Details and dictionary rendering.
-
-### Data nuance already confirmed
-
-Older rows may legitimately have:
-- `language = NULL`
-
-So language should be treated as optional in the web client UI.
+Important:
+- backend responses also include `id` and `item_type`
+- this note does not imply that every backend response field automatically becomes UI scope
 
 ## Still provisional
 
-The following points are still not fully confirmed from backend route/schema code or concrete response samples:
+Still not explicitly locked beyond current backend evidence:
+- the exact unauthenticated error body for every protected dictionary route
+- whether future pagination will be added to `GET /vocab`
+- any frontend token persistence or refresh behavior
+- any additional UI use of backend fields outside the accepted narrow screen scope
 
-### GET /vocab
-- exact response envelope shape
-- exact per-item list schema
-- exact guaranteed vs optional fields
-- whether pagination exists
-- exact pagination params/metadata if pagination exists
-- exact unauthenticated response body
-- exact authenticated-but-denied response body/status
+## Evidence basis
 
-### GET /vocab/{item_id}
-- exact success response envelope shape
-- exact examples payload shape
-- exact guaranteed vs optional field split
-- exact path parameter type/format at route level
-- exact unauthenticated response body
-- exact not-found response body
-- whether missing item and non-owned item intentionally collapse to the same `404` payload shape
-
-### GET /auth/me and GET /auth/access
-- exact JSON schema returned by each endpoint
-- whether `/auth/me` returns only identity or additional profile fields
-- whether `/auth/access` returns only access state or a broader entitlement object
-- exact status/body behavior beyond general protected-route `401`
-
-## Current safe web-client assumptions
-
-The web client may safely assume the following right now:
-
-- Supabase browser auth is the source of the JWT used for backend access
-- protected backend calls use `Authorization: Bearer <supabase_jwt>`
-- authenticated shell entry is gated through:
-  - `GET /auth/me`
-  - `GET /auth/access`
-- unauthenticated access to protected routes should be treated as `401`
-- dictionary list uses:
-  - `GET /vocab`
-  - optional `search`
-  - optional `language`
-  - optional `learning_status`
-- dictionary details use:
-  - `GET /vocab/{item_id}`
-- dictionary reads are user-scoped
-- Card Details remain read-only
-- Card Details should rely only on accepted narrow fields:
-  - `display_text`
-  - `canonical_text`
-  - `translation`
-  - `short_explanation`
-  - `examples`
-  - `learning_status`
-  - `language` only when present
-
-The web client should not assume:
-- pagination
-- total-count metadata
-- richer response envelopes
-- extra fields as UI scope
-- fallback aliases beyond confirmed snake_case fields
-
-## Required narrow clarifications
-
-The following small clarification work is recommended:
-
-1. Normalize docs to:
-- `GET /vocab/{item_id}`
-
-2. Add explicit response examples for:
-- `GET /auth/me`
-- `GET /auth/access`
-- `GET /vocab`
-- `GET /vocab/{item_id}`
-
-3. Explicitly document whether `GET /vocab` is:
-- unpaginated
-or
-- paginated
-
-4. Explicitly document the browser-entry ownership model:
-- direct Supabase browser auth
-- backend bearer-token consumption
-- authenticated-entry bootstrap via `/auth/me` and `/auth/access`
-
-## Not in scope for this clarification
-
-This clarification note does not:
-- redesign endpoint ownership
-- add frontend scope
-- expand Card Details
-- add advanced filters
-- add settings/profile work
-- move capture or review into the web client
-- introduce client-owned auth/access/search logic
-
-## Practical next step
-
-After this note is accepted:
-
-1. patch backend/project docs with route-name normalization and response examples
-2. confirm whether `GET /vocab` is paginated or not
-3. return to the web client repo
-4. apply only narrow normalization/correction work if contract clarification reveals a mismatch
+This note is based on current project docs and backend code, especially:
+- `docs/API_SPEC.md`
+- `README.md`
+- `docs/ARCHITECTURE.md`
+- `docs/SESSION_HISTORY.md`
+- `docs/WEB_CLIENT_STATUS.md`
+- `backend/app/modules/identity_access/api.py`
+- `backend/app/modules/identity_access/schemas.py`
+- `backend/app/modules/dictionary/api.py`
+- `backend/app/modules/dictionary/schemas.py`
+- `backend/app/modules/dictionary/services.py`

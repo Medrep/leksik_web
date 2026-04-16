@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the approved narrow user flows for the responsive web client of the Personal AI Vocabulary System.
+This document defines the accepted narrow user flows for the responsive web client of the Personal AI Vocabulary System.
 
 Its purpose is to translate the accepted web-client scope into a small set of implementation-baseline flows without expanding the web client into a full frontend product.
 
@@ -15,6 +15,9 @@ This document covers only:
 - dictionary list browsing
 - dictionary search
 - card details viewing
+- settings
+- details-first delete
+- empty dictionary state
 - sign out
 - responsive browser usage on mobile and desktop
 - theme toggle as a presentation-layer behavior across accepted screens
@@ -34,14 +37,14 @@ Telegram remains the primary interface for capture and daily review.
 ## Status
 
 - implementation-baseline flow document
-- aligned to the narrow responsive web-client scope
+- aligned to the updated narrow responsive web-client scope
 - not a full product flow map
 - not a replacement for the broader app roadmap
 
 ## Flow principles
 
 ### 1. Backend-first rule
-All identity, access, and dictionary data remain backend-owned.
+All identity, access, dictionary, preference, and delete behavior remain backend-owned.
 The web client is a thin browser client over backend behavior.
 
 ### 2. Telegram-first rule
@@ -55,15 +58,18 @@ The web client does not take over:
 Those flows remain in Telegram.
 
 ### 3. Narrow-flow rule
-Only the smallest user-facing flows required for account entry and dictionary viewing are included here.
+Only the smallest user-facing flows required for account entry, dictionary usage, narrow settings, and narrow delete behavior are included here.
 
 ### 4. No client-side business-logic rule
-If a flow depends on authentication, access state, or dictionary ownership, the backend is the source of truth.
+If a flow depends on authentication, access state, dictionary ownership, preferences, or delete behavior, the backend is the source of truth.
 The web client must not invent fallback client-side logic for those responsibilities.
+
+### 5. Read-optimization rule
+Lightweight local cache may support the user experience for dictionary reads, but it does not create a separate product flow and does not change backend ownership.
 
 ## Included flows
 
-The approved narrow web-client flows are:
+The accepted narrow web-client flows are:
 
 1. Landing / entry
 2. Sign up
@@ -73,9 +79,12 @@ The approved narrow web-client flows are:
 6. Dictionary list browsing
 7. Dictionary search
 8. Card details viewing
-9. Sign out
-10. Responsive use on desktop and mobile browser
-11. Theme toggle as a presentation-layer behavior
+9. Settings
+10. Details-first delete
+11. Empty dictionary state
+12. Sign out
+13. Responsive use on desktop and mobile browser
+14. Theme toggle as a presentation-layer behavior
 
 ## Flow 1 — Landing / entry
 
@@ -99,7 +108,7 @@ Give the user a simple browser entry point into the product and route them into 
 - to sign in
 
 ### Notes
-- Landing is a lightweight entry surface, not a marketing site expansion.
+- Landing is a lightweight entry surface, not a marketing-site expansion.
 - It may communicate that capture and daily review happen through Telegram.
 - It does not introduce broader product navigation before authentication.
 
@@ -116,7 +125,7 @@ Allow a new user to create an account through the web client.
 1. User opens the sign-up screen.
 2. User enters required registration fields.
 3. User submits the sign-up form.
-4. Backend-owned auth flow creates the account.
+4. Browser auth flow creates the account through the accepted auth boundary.
 5. On success, user enters the authenticated web-client path.
 
 ### Success result
@@ -135,7 +144,7 @@ Allow a new user to create an account through the web client.
 
 ### Boundaries
 - This flow creates account entry only.
-- It does not include onboarding expansion, profile completion, billing setup, Telegram linking, or product tutorial flows.
+- It does not include onboarding expansion, profile completion, billing setup, Telegram linking, or tutorial flows.
 
 ## Flow 3 — Sign in
 
@@ -151,7 +160,7 @@ Allow an existing user to authenticate and enter the web client.
 1. User opens the sign-in screen.
 2. User enters credentials.
 3. User submits the sign-in form.
-4. Backend-owned auth flow validates the session.
+4. Browser auth flow validates the session.
 5. On success, user enters the authenticated shell and dictionary entry path.
 
 ### Success result
@@ -184,7 +193,7 @@ Allow the user to initiate password recovery through the web client.
 1. User opens the password recovery screen.
 2. User enters email.
 3. User submits the recovery form.
-4. Backend-owned recovery initiation runs.
+4. Recovery initiation runs through the accepted auth boundary.
 5. User sees the recovery confirmation state.
 
 ### Success result
@@ -202,7 +211,6 @@ Allow the user to initiate password recovery through the web client.
 ### Boundaries
 - This flow covers recovery initiation only.
 - It does not expand into a broader account-management area.
-- Password reset completion behavior outside the web-client release boundary should follow the accepted auth implementation path.
 
 ## Flow 5 — Authenticated shell entry
 
@@ -217,7 +225,7 @@ Provide the smallest authenticated browser entry into the dictionary experience.
 
 ### Main path
 1. User reaches an authenticated route.
-2. Web client resolves the authenticated session through the backend-owned auth path.
+2. Web client resolves the authenticated session through the accepted auth path.
 3. Web client resolves the current user and allowed access state through backend-owned checks.
 4. User is admitted into the minimal authenticated shell.
 5. Default continuation goes to dictionary list.
@@ -233,13 +241,14 @@ Provide the smallest authenticated browser entry into the dictionary experience.
 
 ### Exit paths
 - to dictionary list
+- to settings
 - to sign out
 
 ### Boundaries
 - Authenticated shell is intentionally minimal.
 - It is not a broader application workspace.
 - It is not a multi-feature dashboard.
-- It is not an admin or settings shell.
+- It is not an admin shell or broad account-management shell.
 
 ## Flow 6 — Dictionary list browsing
 
@@ -250,6 +259,8 @@ Allow the authenticated user to browse their saved dictionary items.
 - authenticated shell default entry
 - return from card details
 - returning authenticated session opening the dictionary route directly
+- return from settings after relevant preference change
+- return after successful delete
 
 ### Main path
 1. Authenticated user opens dictionary list.
@@ -270,14 +281,16 @@ Allow the authenticated user to browse their saved dictionary items.
 ### Exit paths
 - to card details
 - remain on dictionary list
+- to settings
 - to sign out
 
 ### Boundaries
-- This is a read-only dictionary browsing flow.
-- It does not include manual add.
-- It does not include manual status change.
-- It does not include review actions.
-- It does not include advanced filters.
+- This is a dictionary browsing flow.
+- Search remains inside this screen.
+- This flow does not include manual add.
+- This flow does not include manual status change.
+- This flow does not include review actions.
+- This flow does not include advanced filters.
 
 ## Flow 7 — Dictionary search
 
@@ -308,13 +321,14 @@ Allow the authenticated user to search their own dictionary by text.
 
 ### Boundaries
 - Search is limited to dictionary text search.
+- Search remains inside Dictionary List.
 - This flow does not include advanced filters.
 - This flow does not include saved searches or search analytics.
 
 ## Flow 8 — Card details viewing
 
 ### Purpose
-Allow the authenticated user to open a stored dictionary item and view its accepted read-only card fields.
+Allow the authenticated user to open a stored dictionary item and view its accepted card fields.
 
 ### Entry points
 - from dictionary list
@@ -324,14 +338,17 @@ Allow the authenticated user to open a stored dictionary item and view its accep
 1. User selects a dictionary item.
 2. Web client requests the item details from the backend.
 3. Backend returns the user-scoped card details.
-4. Web client renders the accepted read-only card view.
+4. Web client renders the accepted card view.
+5. If delete is available, user may continue into the narrow delete flow from this screen.
 
 ### Card-details content boundary
-Card details are limited to read-only viewing of accepted dictionary/card fields:
+Card details are limited to accepted dictionary/card fields:
 - word or phrase
 - canonical form when applicable
-- translation
-- short explanation / meaning
+- explanation in the source word language
+- translation only when:
+  - `preferred_translation_language` is set, and
+  - the backend returns translation
 - examples
 - language label when present in the accepted detail payload
 - learning status when present in the accepted detail payload
@@ -346,21 +363,130 @@ Card details are limited to read-only viewing of accepted dictionary/card fields
 
 ### Exit paths
 - back to dictionary list
+- to details-first delete
 - sign out if available from the minimal authenticated shell/header pattern
 
 ### Boundaries
-- Card details are read-only.
-- This flow does not include:
-  - edit
-  - delete
-  - manual status change
-  - notes editing
-  - source/history management
-  - capture actions
-  - review actions
-  - arbitrary additional fields just because the backend may return them
+- Card details do not include manual status change.
+- Card details do not include capture actions.
+- Card details do not include review actions.
+- Card details do not include arbitrary extra fields just because the backend may return them.
+- The client must not imply immediate backfill of older cards when settings change.
 
-## Flow 9 — Sign out
+## Flow 9 — Settings
+
+### Purpose
+Allow the authenticated user to view and update accepted settings through backend-owned preference behavior.
+
+### Entry points
+- from minimal authenticated shell/header
+- from accepted authenticated navigation within dictionary/settings scope
+
+### Main path
+1. Authenticated user opens settings.
+2. Web client requests accepted settings data from the backend.
+3. Backend returns backend-owned settings for the current user.
+4. Web client renders only the accepted settings controls.
+5. User updates `preferred_translation_language`.
+6. Web client sends the update through the accepted backend preferences endpoint.
+7. Backend persists and returns the updated preference state.
+
+### Success result
+- user can view and update `preferred_translation_language`
+- resulting settings state is confirmed by backend-owned behavior
+
+### Failure result
+- loading or update failure is shown within the settings flow
+- no client-owned settings logic replaces backend validation or persistence
+
+### Exit paths
+- back to dictionary list
+- remain on settings
+- to sign out
+
+### Boundaries
+- This is a narrow settings flow only.
+- It is currently limited to `preferred_translation_language`.
+- It does not include profile/account-management expansion.
+- It does not include billing, admin, or security-center flows.
+- It does not include Telegram-linking expansion.
+- It does not include review preferences UI unless separately accepted later.
+
+## Flow 10 — Details-first delete
+
+### Purpose
+Allow the authenticated user to delete a dictionary item through the narrow accepted delete flow.
+
+### Entry points
+- from card details only
+
+### Main path
+1. User selects delete from card details.
+2. Web client shows a small confirmation step.
+3. User confirms deletion.
+4. Web client calls the accepted backend delete endpoint.
+5. Backend applies soft delete behavior.
+6. Web client invalidates affected visible read state.
+7. User is redirected back to dictionary list.
+8. Deleted item is no longer shown in normal dictionary browsing.
+
+### Success result
+- item is deleted through the accepted backend flow
+- user returns to dictionary list
+- stale visible read state is not left behind
+
+### Failure result
+- delete failure is shown within the narrow delete flow
+- client does not pretend delete succeeded when backend did not confirm it
+
+### Exit paths
+- back to card details if delete is canceled
+- to dictionary list after success
+
+### Boundaries
+- Delete works only from card details.
+- This flow does not include restore.
+- This flow does not include trash.
+- This flow does not include bulk delete.
+- This flow does not include list-row delete.
+- This flow does not include manual status change.
+
+## Flow 11 — Empty dictionary state
+
+### Purpose
+Provide a simple non-passive experience when the authenticated user has no visible dictionary items.
+
+### Entry points
+- dictionary list load returns no visible items for the current user
+
+### Main path
+1. User opens dictionary list.
+2. Backend returns an empty user-scoped dictionary result.
+3. Web client renders an empty state message.
+4. Web client shows a simple CTA.
+5. CTA points the user back toward the Telegram-first product path without turning the web client into a capture surface.
+
+### Success result
+- empty dictionary state is clear and not passive
+- CTA remains consistent with Telegram-first product boundaries
+
+### Failure result
+- empty state does not turn into unsupported web capture behavior
+- empty state does not imply missing data when the backend result is simply empty
+
+### Exit paths
+- remain on dictionary list
+- follow the accepted CTA direction
+- to settings
+- to sign out
+
+### Boundaries
+- CTA must remain inside Telegram-first product boundaries.
+- This flow does not create web capture.
+- This flow does not create onboarding expansion.
+- This flow does not create advanced branching by link state unless separately accepted later.
+
+## Flow 12 — Sign out
 
 ### Purpose
 Allow the authenticated user to leave the protected web-client area safely.
@@ -372,10 +498,12 @@ Allow the authenticated user to leave the protected web-client area safely.
 1. User selects sign out.
 2. Web client calls the accepted logout or session-termination path.
 3. Authenticated state is cleared.
-4. User returns to landing or sign-in entry.
+4. Relevant cached read data is cleared or made inaccessible.
+5. User returns to landing or sign-in entry.
 
 ### Success result
 - protected session is terminated
+- protected cached read state is not left accessible after sign out
 - user is no longer inside the authenticated shell
 
 ### Failure result
@@ -387,7 +515,8 @@ Allow the authenticated user to leave the protected web-client area safely.
 - to sign in
 
 ### Boundaries
-- Sign out does not expand into session-management UI or account-management settings.
+- Sign out remains an action, not a standalone screen.
+- It does not expand into session-management UI or account-management settings.
 
 ## Responsive usage boundary
 
@@ -411,8 +540,23 @@ Theme toggle is in scope as a presentation-layer behavior across the accepted we
 
 Boundary:
 - it affects visual presentation only
-- it does not introduce a broader settings or profile flow
+- it does not expand the accepted settings flow into a broader profile/account-management area
 - it does not create additional product-state complexity in this flow document
+
+## Cache boundary
+
+Lightweight local cache may support:
+- dictionary list read performance
+- card details read performance
+
+Cache is not a user-facing product flow.
+It is a narrow implementation optimization.
+
+Boundary:
+- backend remains the source of truth
+- cache must invalidate after delete
+- cache must clear or become inaccessible after sign out
+- cache must not become offline-first sync logic
 
 ## What remains in Telegram
 
@@ -435,22 +579,21 @@ The backend remains the source of truth for:
 - user-scoped dictionary retrieval
 - user-scoped dictionary search
 - user-scoped card details access
+- accepted settings/preferences data and update behavior
+- delete behavior
 
 The web client is responsible only for:
 - initiating these flows from the browser
 - rendering the resulting states
 - routing the user between approved screens
 
-## Smallest backend/API dependency to validate
+## Smallest backend/API dependencies to validate
 
-Before implementation starts, the web-client workstream must confirm that a real browser-ready auth-entry/session path exists for:
-- sign up
-- sign in
-- sign out
-- recovery initiation
-- protected-route session continuity
-
-This remains the main backend/API dependency check for the web client.
+Before implementation starts, the web-client workstream must confirm:
+- the contract shape for `preferred_translation_language`
+- the payload shape needed for explanation + conditional translation rendering
+- the delete endpoint behavior needed for details-first delete
+- the invalidation behavior needed after delete, sign out, and relevant settings changes
 
 ## Explicit flow exclusions
 
@@ -459,12 +602,14 @@ The following flows are intentionally excluded from this document:
 - manual status change
 - review UI
 - advanced filters
-- profile or settings expansion
+- profile or account-management expansion beyond the accepted narrow settings flow
 - Telegram linking flow
 - billing or subscription flow
 - admin flow
 - OCR flow
 - analytics flow
+- restore/trash flow
+- offline-first sync flow
 
 ## Final scope rule
 
@@ -472,7 +617,10 @@ If a user flow is not required for:
 - account entry
 - authenticated dictionary browsing
 - dictionary search
-- read-only card details viewing
+- accepted card viewing
+- narrow backend-backed settings
+- narrow details-first delete
+- empty dictionary handling
 - responsive browser usability
 - approved theme handling
 

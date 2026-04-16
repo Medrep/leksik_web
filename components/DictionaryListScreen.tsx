@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { TelegramLinkPanel } from "@/components/TelegramLinkPanel";
 import { BackendRequestError } from "@/lib/backend-client";
+import { fetchLearningPreferences, getPreferencesRequestMessage } from "@/lib/preferences";
+import { readCachedDictionaryList, writeCachedDictionaryList } from "@/lib/vocab-cache";
 import { fetchDictionaryList, getVocabRequestMessage, type DictionaryListItem } from "@/lib/vocab";
 
 function LoadingCard() {
@@ -18,6 +21,7 @@ function LoadingCard() {
 
 function ResultCard({ item }: { item: DictionaryListItem }) {
   const badge = item.language ?? item.learningStatus;
+  const previewText = item.translation ?? item.explanation ?? "Open to view this saved word.";
 
   return (
     <Link href={`/dictionary/${item.id}`}>
@@ -28,7 +32,7 @@ function ResultCard({ item }: { item: DictionaryListItem }) {
               {item.title}
             </h3>
             <p className="mt-1 text-sm leading-6 text-token-muted">
-              {item.summary ?? "Open to view this saved word."}
+              {previewText}
             </p>
           </div>
           {badge ? <span className="pill">{badge}</span> : null}
@@ -41,12 +45,17 @@ function ResultCard({ item }: { item: DictionaryListItem }) {
 export function DictionaryListScreen() {
   const { refreshBootstrap, session } = useAuth();
   const [items, setItems] = useState<DictionaryListItem[]>([]);
+  const [preferredTranslationLanguage, setPreferredTranslationLanguage] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [listErrorMessage, setListErrorMessage] = useState<string | null>(null);
+  const [preferencesErrorMessage, setPreferencesErrorMessage] = useState<string | null>(null);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [hasLoadedPreferences, setHasLoadedPreferences] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingPreferences, setIsLoadingPreferences] = useState(false);
+  const currentUserId = session?.user?.id ?? null;
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -57,11 +66,84 @@ export function DictionaryListScreen() {
   }, [searchText]);
 
   useEffect(() => {
+    if (!currentUserId) {
+      setItems([]);
+      setHasLoadedOnce(false);
+      return;
+    }
+
+    const cachedItems = readCachedDictionaryList({
+      userId: currentUserId,
+      searchText: activeQuery,
+    });
+
+    if (cachedItems) {
+      setItems(cachedItems);
+      setHasLoadedOnce(true);
+      return;
+    }
+
+    setItems([]);
+    setHasLoadedOnce(false);
+  }, [activeQuery, currentUserId]);
+
+  useEffect(() => {
     if (!session?.access_token) {
       return;
     }
 
     const accessToken = session.access_token;
+    const controller = new AbortController();
+
+    async function loadPreferences() {
+      setIsLoadingPreferences(true);
+      setPreferencesErrorMessage(null);
+
+      try {
+        const preferences = await fetchLearningPreferences({
+          accessToken,
+          signal: controller.signal,
+        });
+
+        setPreferredTranslationLanguage(preferences.preferredTranslationLanguage);
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        if (error instanceof BackendRequestError && error.status === 401) {
+          void refreshBootstrap();
+          return;
+        }
+
+        setPreferencesErrorMessage(
+          getPreferencesRequestMessage(error, "The dictionary preferences could not be loaded from the backend."),
+        );
+      } finally {
+        if (!controller.signal.aborted) {
+          setHasLoadedPreferences(true);
+          setIsLoadingPreferences(false);
+        }
+      }
+    }
+
+    void loadPreferences();
+
+    return () => controller.abort();
+  }, [refreshBootstrap, session?.access_token]);
+
+  useEffect(() => {
+    if (!session?.access_token) {
+      return;
+    }
+
+    const accessToken = session.access_token;
+    const hasCachedList = currentUserId
+      ? readCachedDictionaryList({
+          userId: currentUserId,
+          searchText: activeQuery,
+        }) !== null
+      : false;
     const controller = new AbortController();
 
     async function loadDictionaryList() {
@@ -71,7 +153,7 @@ export function DictionaryListScreen() {
         setIsRefreshing(true);
       }
 
-      setErrorMessage(null);
+      setListErrorMessage(null);
 
       try {
         const nextItems = await fetchDictionaryList({
@@ -81,6 +163,13 @@ export function DictionaryListScreen() {
         });
 
         setItems(nextItems);
+        if (currentUserId) {
+          writeCachedDictionaryList({
+            userId: currentUserId,
+            searchText: activeQuery,
+            items: nextItems,
+          });
+        }
         setHasLoadedOnce(true);
       } catch (error) {
         if (controller.signal.aborted) {
@@ -92,9 +181,13 @@ export function DictionaryListScreen() {
           return;
         }
 
-        setItems([]);
-        setHasLoadedOnce(true);
-        setErrorMessage(getVocabRequestMessage(error, "The dictionary list could not be loaded from the backend."));
+        if (!hasCachedList) {
+          setItems([]);
+          setHasLoadedOnce(true);
+          setListErrorMessage(
+            getVocabRequestMessage(error, "The dictionary list could not be loaded from the backend."),
+          );
+        }
       } finally {
         if (!controller.signal.aborted) {
           setIsLoading(false);
@@ -106,15 +199,23 @@ export function DictionaryListScreen() {
     void loadDictionaryList();
 
     return () => controller.abort();
-  }, [activeQuery, refreshBootstrap, session?.access_token]);
+  }, [activeQuery, currentUserId, refreshBootstrap, session?.access_token]);
 
+  const canShowTranslation = hasLoadedPreferences && Boolean(preferredTranslationLanguage);
+  const visibleItems = items.map((item) => ({
+    ...item,
+    translation: canShowTranslation ? item.translation : null,
+  }));
+  const errorMessage = preferencesErrorMessage ?? listErrorMessage;
   const hasQuery = activeQuery.length > 0;
-  const showInitialLoading = isLoading && !hasLoadedOnce;
-  const showEmptyState = !showInitialLoading && !errorMessage && items.length === 0;
+  const showInitialLoading = !hasLoadedOnce && (isLoadingPreferences || !hasLoadedPreferences || isLoading);
+  const showEmptyState = !showInitialLoading && !errorMessage && visibleItems.length === 0;
 
   return (
     <section className="grid gap-5">
       <section className="auth-appear grid gap-4">
+        <TelegramLinkPanel />
+
         <div className="shell-panel rounded-[1.2rem] p-3">
           <div className="flex items-center gap-3">
             <svg
@@ -147,10 +248,17 @@ export function DictionaryListScreen() {
           </div>
         </div>
 
-        <p className="text-sm text-[#a9a39a]">
-          {showInitialLoading ? "Loading words..." : `${items.length} word${items.length === 1 ? "" : "s"}`}
-          {hasQuery ? ` for “${activeQuery}”` : ""}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-[#a9a39a]">
+            {showInitialLoading
+              ? "Loading words..."
+              : `${visibleItems.length} word${visibleItems.length === 1 ? "" : "s"}`}
+            {hasQuery ? ` for “${activeQuery}”` : ""}
+          </p>
+          <Link className="text-sm text-token-muted transition hover:text-token-brand" href="/settings">
+            Settings
+          </Link>
+        </div>
 
         {isRefreshing ? <p className="text-sm text-token-muted">Updating results…</p> : null}
 
@@ -175,14 +283,28 @@ export function DictionaryListScreen() {
               {hasQuery ? "No words matched that search." : "No saved words yet."}
             </p>
             <p className="mt-2 text-sm leading-6 text-token-muted">
-              {hasQuery ? "Try a different word or phrase." : "Your saved vocabulary will appear here."}
+              {hasQuery
+                ? "Try a different word or phrase."
+                : "Use Telegram to send your first word or phrase. It will appear here after the backend saves it."}
             </p>
+            {!hasQuery ? (
+              <div className="mt-4">
+                <a
+                  className="secondary-button"
+                  href="https://web.telegram.org/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open Telegram
+                </a>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
-        {!showInitialLoading && !errorMessage && items.length > 0 ? (
+        {!showInitialLoading && !errorMessage && visibleItems.length > 0 ? (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {items.map((item) => (
+            {visibleItems.map((item) => (
               <ResultCard key={item.id} item={item} />
             ))}
           </div>
