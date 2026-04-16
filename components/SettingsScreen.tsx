@@ -7,19 +7,53 @@ import { BackendRequestError } from "@/lib/backend-client";
 import {
   fetchLearningPreferences,
   getPreferencesRequestMessage,
+  type LearningPreferences,
   updateLearningPreferences,
 } from "@/lib/preferences";
 import { invalidateCachedDictionaryReadDataForUser } from "@/lib/vocab-cache";
 
-function normalizeDraftValue(value: string) {
-  const trimmedValue = value.trim();
-  return trimmedValue ? trimmedValue : null;
+type TranslationLanguageCode = "en" | "ru" | "pl";
+type TranslationLanguageSelectValue = "" | TranslationLanguageCode;
+
+const TRANSLATION_LANGUAGE_OPTIONS: ReadonlyArray<{
+  label: string;
+  value: TranslationLanguageSelectValue;
+}> = [
+  { label: "No translation", value: "" },
+  { label: "English", value: "en" },
+  { label: "Russian", value: "ru" },
+  { label: "Polish", value: "pl" },
+];
+
+function isTranslationLanguageCode(value: string): value is TranslationLanguageCode {
+  return TRANSLATION_LANGUAGE_OPTIONS.some(
+    (option) => option.value !== "" && option.value === value,
+  );
+}
+
+function toSelectValue(value: string | null): TranslationLanguageSelectValue {
+  if (value === null) {
+    return "";
+  }
+
+  if (isTranslationLanguageCode(value)) {
+    return value;
+  }
+
+  throw new Error("Backend returned an unsupported preferred_translation_language value.");
+}
+
+function toBackendValue(value: TranslationLanguageSelectValue): TranslationLanguageCode | null {
+  return value === "" ? null : value;
 }
 
 export function SettingsScreen() {
   const { refreshBootstrap, session, user } = useAuth();
-  const [draftPreferredTranslationLanguage, setDraftPreferredTranslationLanguage] = useState("");
-  const [savedPreferredTranslationLanguage, setSavedPreferredTranslationLanguage] = useState<string | null>(null);
+  const [draftPreferredTranslationLanguage, setDraftPreferredTranslationLanguage] =
+    useState<TranslationLanguageSelectValue>("");
+  const [loadedPreferences, setLoadedPreferences] = useState<LearningPreferences | null>(null);
+  const [savedPreferredTranslationLanguage, setSavedPreferredTranslationLanguage] =
+    useState<TranslationLanguageCode | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,8 +79,9 @@ export function SettingsScreen() {
           signal: controller.signal,
         });
 
-        const nextValue = preferences.preferredTranslationLanguage ?? "";
-        setSavedPreferredTranslationLanguage(preferences.preferredTranslationLanguage);
+        const nextValue = toSelectValue(preferences.preferredTranslationLanguage);
+        setLoadedPreferences(preferences);
+        setSavedPreferredTranslationLanguage(toBackendValue(nextValue));
         setDraftPreferredTranslationLanguage(nextValue);
       } catch (error) {
         if (controller.signal.aborted) {
@@ -80,6 +115,11 @@ export function SettingsScreen() {
       return;
     }
 
+    if (!loadedPreferences) {
+      setErrorMessage("The current settings must be loaded before saving.");
+      return;
+    }
+
     setIsSaving(true);
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -88,12 +128,14 @@ export function SettingsScreen() {
       const updatedPreferences = await updateLearningPreferences({
         accessToken: session.access_token,
         preferences: {
-          preferredTranslationLanguage: normalizeDraftValue(draftPreferredTranslationLanguage),
+          ...loadedPreferences,
+          preferredTranslationLanguage: toBackendValue(draftPreferredTranslationLanguage),
         },
       });
 
-      const nextValue = updatedPreferences.preferredTranslationLanguage ?? "";
-      setSavedPreferredTranslationLanguage(updatedPreferences.preferredTranslationLanguage);
+      const nextValue = toSelectValue(updatedPreferences.preferredTranslationLanguage);
+      setLoadedPreferences(updatedPreferences);
+      setSavedPreferredTranslationLanguage(toBackendValue(nextValue));
       setDraftPreferredTranslationLanguage(nextValue);
       if (user?.id) {
         invalidateCachedDictionaryReadDataForUser(user.id);
@@ -111,8 +153,9 @@ export function SettingsScreen() {
     }
   }
 
-  const normalizedDraftValue = normalizeDraftValue(draftPreferredTranslationLanguage);
-  const hasUnsavedChanges = normalizedDraftValue !== savedPreferredTranslationLanguage;
+  const normalizedDraftValue = toBackendValue(draftPreferredTranslationLanguage);
+  const hasUnsavedChanges =
+    loadedPreferences !== null && normalizedDraftValue !== savedPreferredTranslationLanguage;
 
   return (
     <section className="auth-appear grid gap-6">
@@ -139,23 +182,29 @@ export function SettingsScreen() {
                   Preferred translation language
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-token-muted">
-                  Leave this blank to show explanation only.
+                  Choose a translation language or select No translation to show explanation only.
                 </p>
               </div>
 
-              <input
+              <select
                 className="field-input"
-                type="text"
                 name="preferred_translation_language"
-                placeholder="Optional"
                 value={draftPreferredTranslationLanguage}
                 onChange={(event) => {
-                  setDraftPreferredTranslationLanguage(event.target.value);
+                  setDraftPreferredTranslationLanguage(
+                    event.target.value as TranslationLanguageSelectValue,
+                  );
                   setErrorMessage(null);
                   setSuccessMessage(null);
                 }}
                 disabled={isLoading || isSaving}
-              />
+              >
+                {TRANSLATION_LANGUAGE_OPTIONS.map((option) => (
+                  <option key={option.label} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </section>
 
             {isLoading ? <p className="text-sm text-token-muted">Loading current settings…</p> : null}
@@ -172,7 +221,7 @@ export function SettingsScreen() {
               <button
                 className="primary-button disabled:cursor-not-allowed disabled:opacity-60"
                 type="submit"
-                disabled={isLoading || isSaving || !hasUnsavedChanges}
+                disabled={isLoading || isSaving || loadedPreferences === null || !hasUnsavedChanges}
               >
                 {isSaving ? "Saving..." : "Save settings"}
               </button>
