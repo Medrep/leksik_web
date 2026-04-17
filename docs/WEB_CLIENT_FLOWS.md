@@ -126,19 +126,20 @@ Allow a new user to create an account through the web client.
 2. User enters required registration fields.
 3. User submits the sign-up form.
 4. Browser auth flow creates the account through the accepted auth boundary.
-5. On success, user enters the authenticated web-client path.
+5. On success, user reaches a dedicated sign-up confirmation state that tells them to check their email.
 
 ### Success result
 - user account is created
-- user is authenticated or moved into the accepted authenticated-entry continuation
-- user reaches the authenticated shell and dictionary entry path
+- user is redirected away from the sign-up form
+- user reaches a dedicated sign-up confirmation state
+- user is instructed to check email before signing in
 
 ### Failure result
 - sign-up failure is shown to the user
 - user remains in the sign-up flow and can retry
 
 ### Exit paths
-- to authenticated shell entry on success
+- to sign-up confirmation on success
 - back to sign in
 - back to landing if supported by the UI design
 
@@ -218,8 +219,8 @@ Allow the user to initiate password recovery through the web client.
 Provide the smallest authenticated browser entry into the dictionary experience.
 
 ### Entry points
-- successful sign up
 - successful sign in
+- successful sign in after email confirmation
 - returning authenticated user opening a protected route
 - successful session restoration on browser revisit
 

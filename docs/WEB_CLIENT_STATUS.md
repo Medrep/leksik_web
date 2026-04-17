@@ -10,6 +10,7 @@ Project position
 Accepted scope implemented
 - Landing / Entry
 - Sign Up
+- Sign Up Confirmation
 - Sign In
 - Password Recovery
 - Password Recovery Confirmation
@@ -61,6 +62,7 @@ Implemented architecture boundary
 
 Current implementation status
 - public auth-entry screens are implemented
+- successful sign-up now redirects to a dedicated check-your-email confirmation screen
 - public auth interaction layer is implemented
 - Supabase browser auth is wired
 - authenticated route entry is gated through real backend auth/access checks

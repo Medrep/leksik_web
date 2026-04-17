@@ -72,6 +72,7 @@ Visual design references may inform layout and hierarchy, but they do not define
 The web client may include:
 - landing / entry screen
 - sign up screen
+- sign-up confirmation state
 - sign in screen
 - password recovery screen and recovery confirmation state
 - sign out action

@@ -170,14 +170,10 @@ export function SignUpForm() {
       }
 
       if (data.session) {
-        router.replace(getNextRoute());
-        return;
+        await supabase.auth.signOut();
       }
 
-      setStatusTone("neutral");
-      setStatusMessage(
-        "Account request accepted. If email confirmation is enabled for this Supabase project, confirm your email before signing in.",
-      );
+      router.replace("/sign-up/confirmation");
     } catch (error) {
       setStatusTone("error");
       setStatusMessage(getAuthErrorMessage(error, "Sign-up could not be completed from the current browser auth setup."));

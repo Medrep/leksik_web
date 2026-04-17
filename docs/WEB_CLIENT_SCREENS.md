@@ -73,12 +73,13 @@ The approved narrow screen set is:
 
 1. Landing / Entry
 2. Sign Up
-3. Sign In
-4. Password Recovery
-5. Password Recovery Confirmation
-6. Dictionary List
-7. Card Details
-8. Settings
+3. Sign Up Confirmation
+4. Sign In
+5. Password Recovery
+6. Password Recovery Confirmation
+7. Dictionary List
+8. Card Details
+9. Settings
 
 No additional product screens should be assumed unless explicitly accepted later.
 
@@ -115,7 +116,7 @@ Provide the public browser entry point into the web client and route the user in
 ## Screen 2 — Sign Up
 
 ### Purpose
-Allow a new user to create an account and enter the authenticated web-client path.
+Allow a new user to create an account and reach the sign-up confirmation state.
 
 ### Key UI blocks
 - back navigation to Landing / Entry if retained by UI
@@ -131,7 +132,7 @@ Allow a new user to create an account and enter the authenticated web-client pat
 - from Sign In
 
 ### Exit paths
-- to Dictionary List after successful sign-up/authenticated entry
+- to Sign Up Confirmation after successful submission
 - to Sign In
 - to Landing / Entry if that navigation pattern is retained
 
@@ -144,7 +145,31 @@ Allow a new user to create an account and enter the authenticated web-client pat
 - advanced account settings
 - any post-sign-up capture flow
 
-## Screen 3 — Sign In
+## Screen 3 — Sign Up Confirmation
+
+### Purpose
+Confirm that registration was accepted and tell the user to check their email before signing in.
+
+### Key UI blocks
+- success/confirmation message
+- brief instruction to check email for the confirmation link
+- path back to Sign In
+- centered auth-card presentation within the shared public layout
+- theme toggle when presented as part of the shared public auth-entry layout
+
+### Entry paths
+- from Sign Up after accepted submission
+
+### Exit paths
+- to Sign In
+
+### Intentionally excluded
+- onboarding expansion
+- account-setup wizard
+- authenticated product navigation
+- broader account-management UI
+
+## Screen 4 — Sign In
 
 ### Purpose
 Allow an existing user to authenticate and enter the authenticated web-client path.
@@ -177,7 +202,7 @@ Allow an existing user to authenticate and enter the authenticated web-client pa
 - Telegram linking
 - capture or review actions
 
-## Screen 4 — Password Recovery
+## Screen 5 — Password Recovery
 
 ### Purpose
 Allow the user to initiate password recovery from the web client.
@@ -204,7 +229,7 @@ Allow the user to initiate password recovery from the web client.
 - unrelated support/contact flows
 - authenticated product navigation
 
-## Screen 5 — Password Recovery Confirmation
+## Screen 6 — Password Recovery Confirmation
 
 ### Purpose
 Confirm that the password recovery initiation request was accepted and guide the user back to Sign In.
@@ -228,7 +253,7 @@ Confirm that the password recovery initiation request was accepted and guide the
 - broader auth troubleshooting UI
 - authenticated product navigation
 
-## Screen 6 — Dictionary List
+## Screen 7 — Dictionary List
 
 ### Purpose
 Provide the main authenticated web-client screen for browsing and searching the current user’s dictionary.
@@ -248,7 +273,6 @@ Provide the main authenticated web-client screen for browsing and searching the 
 - navigation into Card Details
 
 ### Entry paths
-- after successful sign-up
 - after successful sign-in
 - default authenticated-shell entry
 - return from Card Details
@@ -273,7 +297,7 @@ Provide the main authenticated web-client screen for browsing and searching the 
 - admin or broader account-management navigation
 - billing/subscription navigation
 
-## Screen 7 — Card Details
+## Screen 8 — Card Details
 
 ### Purpose
 Show the accepted card fields for one user-scoped dictionary item together with the narrow details-first delete action.
@@ -313,7 +337,7 @@ Show the accepted card fields for one user-scoped dictionary item together with 
 - capture actions
 - arbitrary extra sections just because backend may expose additional fields
 
-## Screen 8 — Settings
+## Screen 9 — Settings
 
 ### Purpose
 Provide one narrow authenticated settings/preferences screen for accepted backend-backed user settings.
@@ -351,13 +375,14 @@ Provide one narrow authenticated settings/preferences screen for accepted backen
 The following screens may share one common public layout pattern:
 - Landing / Entry
 - Sign Up
+- Sign Up Confirmation
 - Sign In
 - Password Recovery
 - Password Recovery Confirmation
 
 Shared traits may include:
 - centered auth-entry content
-- centered auth-card pattern on Sign Up, Sign In, Password Recovery, and recovery confirmation
+- centered auth-card pattern on Sign Up, Sign Up Confirmation, Sign In, Password Recovery, and recovery confirmation
 - lightweight branding
 - consistent navigation/back pattern
 - theme toggle
