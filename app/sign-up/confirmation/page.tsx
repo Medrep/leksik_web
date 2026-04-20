@@ -1,19 +1,27 @@
 import Link from "next/link";
 import { PublicAuthCard } from "@/components/PublicAuthCard";
 import { PublicLayoutShell } from "@/components/PublicLayoutShell";
+import { buildHrefWithNext, getOptionalNextRouteFromSearchParams, type SearchParamsRecord } from "@/lib/auth-next";
 
-export default function SignUpConfirmationPage() {
+type SignUpConfirmationPageProps = {
+  searchParams?: SearchParamsRecord;
+};
+
+export default function SignUpConfirmationPage({ searchParams }: SignUpConfirmationPageProps) {
+  const nextRoute = getOptionalNextRouteFromSearchParams(searchParams);
+  const signInHref = buildHrefWithNext("/sign-in", nextRoute);
+
   return (
     <PublicLayoutShell activePath="/sign-up">
       <PublicAuthCard
         title="Check your email"
         description="We sent a confirmation link to your email address."
-        backHref="/sign-in"
+        backHref={signInHref}
         backLabel="Sign in"
         footer={
           <>
             Already confirmed?{" "}
-            <Link className="text-token-brand" href="/sign-in">
+            <Link className="text-token-brand" href={signInHref}>
               Sign in
             </Link>
           </>

@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { buildHrefWithNext, getNextRouteFromWindow, getOptionalNextRouteFromWindow } from "@/lib/auth-next";
 import { appConfig } from "@/lib/config";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
@@ -28,21 +29,6 @@ function sleep(ms: number) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
   });
-}
-
-function getNextRoute() {
-  if (typeof window === "undefined") {
-    return "/dictionary";
-  }
-
-  const searchParams = new URLSearchParams(window.location.search);
-  const nextRoute = searchParams.get("next");
-
-  if (!nextRoute || !nextRoute.startsWith("/")) {
-    return "/dictionary";
-  }
-
-  return nextRoute;
 }
 
 function getSupabaseConfigError() {
@@ -173,7 +159,7 @@ export function SignUpForm() {
         await supabase.auth.signOut();
       }
 
-      router.replace("/sign-up/confirmation");
+      router.replace(buildHrefWithNext("/sign-up/confirmation", getOptionalNextRouteFromWindow()));
     } catch (error) {
       setStatusTone("error");
       setStatusMessage(getAuthErrorMessage(error, "Sign-up could not be completed from the current browser auth setup."));
@@ -323,7 +309,7 @@ export function SignInForm() {
         return;
       }
 
-      router.replace(getNextRoute());
+      router.replace(getNextRouteFromWindow());
     } catch (error) {
       setStatusTone("error");
       setStatusMessage(getAuthErrorMessage(error, "Sign-in could not be completed from the current browser auth setup."));

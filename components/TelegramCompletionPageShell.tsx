@@ -16,6 +16,7 @@ type CompletionResult = {
 type TelegramCompletionPageShellProps = {
   artifact: string | null;
   signInHref: string;
+  signUpHref: string;
 };
 
 const STATE_COPY: Record<
@@ -105,6 +106,7 @@ function resolveShellState({
 export function TelegramCompletionPageShell({
   artifact,
   signInHref,
+  signUpHref,
 }: TelegramCompletionPageShellProps) {
   const { authStatus, bootstrapStatus, refreshBootstrap, session } = useAuth();
   const attemptedCompletionKeyRef = useRef<string | null>(null);
@@ -261,7 +263,7 @@ export function TelegramCompletionPageShell({
             <Link className="primary-button" href={signInHref}>
               Sign in
             </Link>
-            <Link className="secondary-button" href="/sign-up">
+            <Link className="secondary-button" href={signUpHref}>
               Create account
             </Link>
           </div>

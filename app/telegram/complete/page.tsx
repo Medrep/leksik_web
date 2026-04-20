@@ -1,5 +1,6 @@
 import { PublicLayoutShell } from "@/components/PublicLayoutShell";
 import { TelegramCompletionPageShell } from "@/components/TelegramCompletionPageShell";
+import { buildHrefWithNext } from "@/lib/auth-next";
 
 type TelegramCompletionPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -19,28 +20,28 @@ function normalizeArtifact(searchParams: TelegramCompletionPageProps["searchPara
   return trimmedCode ? trimmedCode : null;
 }
 
-function buildSignInHref(artifact: string | null) {
+function buildCompletionPath(artifact: string | null) {
   const completionParams = new URLSearchParams();
 
   if (artifact) {
     completionParams.set("code", artifact);
   }
 
-  const completionPath = `/telegram/complete${
+  return `/telegram/complete${
     completionParams.toString() ? `?${completionParams.toString()}` : ""
   }`;
-
-  return `/sign-in?next=${encodeURIComponent(completionPath)}`;
 }
 
 export default function TelegramCompletionPage({ searchParams }: TelegramCompletionPageProps) {
   const artifact = normalizeArtifact(searchParams);
+  const completionPath = buildCompletionPath(artifact);
 
   return (
     <PublicLayoutShell activePath="/telegram/complete">
       <TelegramCompletionPageShell
         artifact={artifact}
-        signInHref={buildSignInHref(artifact)}
+        signInHref={buildHrefWithNext("/sign-in", completionPath)}
+        signUpHref={buildHrefWithNext("/sign-up", completionPath)}
       />
     </PublicLayoutShell>
   );
