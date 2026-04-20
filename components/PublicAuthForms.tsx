@@ -213,7 +213,7 @@ export function SignUpForm() {
         <span>Password</span>
         <input
           className="field-input"
-          type="password"
+          type="text"
           autoComplete="new-password"
           placeholder="Min. 8 characters"
           value={values.password}
@@ -232,7 +232,7 @@ export function SignUpForm() {
         <span>Confirm password</span>
         <input
           className="field-input"
-          type="password"
+          type="text"
           autoComplete="new-password"
           placeholder="Repeat password"
           value={values.confirmPassword}
@@ -349,7 +349,7 @@ export function SignInForm() {
         </div>
         <input
           className="field-input"
-          type="password"
+          type="text"
           autoComplete="current-password"
           placeholder="Your password"
           value={values.password}

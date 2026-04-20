@@ -268,6 +268,14 @@ export function TelegramCompletionPageShell({
             </Link>
           </div>
         ) : null}
+
+        {shellState === "success" ? (
+          <div className="mt-7">
+            <Link className="primary-button" href="/dictionary">
+              Open dictionary
+            </Link>
+          </div>
+        ) : null}
       </div>
     </section>
   );
