@@ -11,7 +11,7 @@ It is not the mobile app repo.
 The backend remains the system core.
 Telegram remains the primary interface for capture and daily review.
 
-The current repo boundary includes the approved narrow screen set, while the currently integrated backend-backed UI slices remain Supabase browser auth entry, thin authenticated-entry bootstrap through backend auth checks, backend-backed Dictionary List loading/search, backend-backed Card Details rendering, and a minimal authenticated Telegram link status/completion subflow inside Dictionary List.
+The current repo boundary includes the approved narrow screen set, while the currently integrated backend-backed UI slices remain Supabase browser auth entry, thin authenticated-entry bootstrap through backend auth checks, backend-backed Dictionary List loading/search, backend-backed Card Details rendering, a minimal authenticated Telegram link status/completion subflow inside Dictionary List, and the dedicated `/telegram/complete` route for Telegram-first authenticated completion handoff.
 It does not redesign backend behavior or expand beyond the accepted narrow screen scope.
 
 ## Accepted repo boundary
@@ -26,6 +26,7 @@ It does not redesign backend behavior or expand beyond the accepted narrow scree
 - Dictionary search inside Dictionary List
 - Card Details
 - Settings
+- Dedicated Telegram Completion at `/telegram/complete`
 - sign-out action
 - theme toggle
 - responsive browser support for mobile and desktop
@@ -84,6 +85,7 @@ Current implementation boundary:
 - Dictionary List uses `GET /vocab` with the confirmed `search` query parameter and keeps search inside the same screen
 - Card Details uses `GET /vocab/{item_id}` and promotes only the accepted read-only detail fields into the UI
 - Dictionary List may show a small authenticated Telegram link panel that reads `GET /messaging-links/telegram` and submits `POST /messaging-links/telegram/complete`
+- `/telegram/complete` is the dedicated public Telegram-first completion route and submits the existing completion code to `POST /messaging-links/telegram/complete` only after Supabase auth and backend auth bootstrap are ready
 - confirmed project evidence already supports field names such as `display_text`, `canonical_text`, `translation`, `short_explanation`, `examples`, and `learning_status`
 - exact `GET /vocab` and `GET /vocab/{item_id}` response envelope schemas are still only partially documented here, and item-id field naming in response payloads remains conservatively handled in the client mapper
 - no client-owned auth/session workaround model is introduced beyond the built-in Supabase browser session behavior

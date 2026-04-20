@@ -81,7 +81,40 @@ The approved narrow screen set is:
 8. Card Details
 9. Settings
 
+Narrow accepted add-on route:
+- Dedicated Telegram Completion at `/telegram/complete`
+
 No additional product screens should be assumed unless explicitly accepted later.
+
+## Narrow Add-On — Dedicated Telegram Completion
+
+### Purpose
+Provide one public Telegram-first completion surface for users arriving from Telegram with a backend-owned one-time completion code.
+
+### Key UI blocks
+- Telegram-specific completion status
+- auth-required state when the product account session is not ready
+- loading/checking state while authenticated completion is handed to the backend
+- success state after backend completion returns linked
+- blocked/conflict state when backend-owned linking rules block completion
+- invalid/expired state for missing, invalid, or expired completion codes
+
+### Entry paths
+- direct visit to `/telegram/complete?code=...` from Telegram-first onboarding
+- return from Sign In through the `next` parameter
+
+### Exit paths
+- to Sign In when authentication is required
+- to Sign Up when account creation is needed
+
+### Intentionally excluded
+- generic onboarding framework
+- settings or dictionary branch behavior
+- provider-management UI
+- unlink or reassignment flow
+- second completion endpoint or fallback completion route
+- client-owned interpretation of Telegram identity or ownership
+- Telegram capture or review behavior
 
 ## Screen 1 — Landing / Entry
 

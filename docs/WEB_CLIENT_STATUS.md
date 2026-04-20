@@ -14,6 +14,9 @@ Accepted scope implemented
 - Sign In
 - Password Recovery
 - Password Recovery Confirmation
+- Dedicated Telegram Completion at `/telegram/complete`
+- authenticated Telegram completion handoff through:
+  - POST /messaging-links/telegram/complete
 - Supabase browser auth for web auth entry
 - authenticated-entry bootstrap through:
   - GET /auth/me
@@ -66,6 +69,10 @@ Current implementation status
 - public auth interaction layer is implemented
 - Supabase browser auth is wired
 - authenticated route entry is gated through real backend auth/access checks
+- dedicated Telegram completion page is implemented at `/telegram/complete`
+- authenticated Telegram completion handoff is isolated to `/telegram/complete`
+- Telegram completion uses the existing backend endpoint only:
+  - POST /messaging-links/telegram/complete
 - Dictionary List is backend-backed
 - dictionary search is backend-owned and stays inside Dictionary List
 - Card Details is backend-backed
@@ -97,6 +104,7 @@ Known confirmed contract points
 - DELETE /vocab/{item_id} exists
 - GET /preferences/learning exists
 - PUT /preferences/learning exists
+- POST /messaging-links/telegram/complete exists for authenticated Telegram completion handoff
 - dictionary reads are user-scoped
 - GET /vocab supports:
   - search
@@ -132,6 +140,8 @@ Important implementation rules going forward
 - keep sign out as an action, not a screen
 - keep theme as presentation behavior only, not a settings feature
 - keep cache as a lightweight read optimization only
+- keep Telegram completion isolated to the dedicated `/telegram/complete` route
+- do not turn Telegram completion into generic onboarding, account-center, provider-management, unlink, or reassignment UI
 
 Current baseline result
 - the accepted baseline-update slices are implemented through:
@@ -140,4 +150,5 @@ Current baseline result
   - dictionary rendering rules + empty-state CTA
   - details-first delete flow
   - lightweight local cache for dictionary list and card details
+- the dedicated Telegram completion route and authenticated handoff are implemented as narrow onboarding additions
 - no broader scope expansion was introduced
