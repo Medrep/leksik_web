@@ -25,7 +25,9 @@ const STATE_COPY: Record<
     badge: string;
     title: string;
     description: string;
-    toneClassName: string;
+    detailTitle: string;
+    icon: "check" | "clock" | "lock" | "blocked" | "invalid";
+    tone: "brand" | "danger";
   }
 > = {
   checking: {
@@ -33,37 +35,95 @@ const STATE_COPY: Record<
     title: "Checking this Telegram link",
     description:
       "This page has the Telegram completion code and is checking it with the backend.",
-    toneClassName: "text-token-brand",
+    detailTitle: "Telegram-first completion",
+    icon: "clock",
+    tone: "brand",
   },
   "auth-required": {
     badge: "Sign in required",
     title: "Sign in to continue from Telegram",
     description:
       "Use your product account before this Telegram completion link can be handled.",
-    toneClassName: "text-token-brand",
+    detailTitle: "Sign in required",
+    icon: "lock",
+    tone: "brand",
   },
   success: {
     badge: "Completed",
-    title: "Telegram is linked",
+    title: "Telegram connected",
     description:
       "Your product account and Telegram account are now connected for capture and daily review.",
-    toneClassName: "text-token-brand",
+    detailTitle: "Telegram-first completion",
+    icon: "check",
+    tone: "brand",
   },
   blocked: {
     badge: "Blocked",
     title: "This Telegram link cannot be completed here",
     description:
       "Backend-owned linking rules blocked this completion. This web client does not support reassignment or unlinking.",
-    toneClassName: "text-red-700 dark:text-red-200",
+    detailTitle: "Blocked by backend rules",
+    icon: "blocked",
+    tone: "danger",
   },
   invalid: {
     badge: "Invalid or expired",
     title: "This Telegram completion link is not usable",
     description:
       "The link is missing its completion artifact, is expired, or cannot be used for this account.",
-    toneClassName: "text-red-700 dark:text-red-200",
+    detailTitle: "Invalid completion link",
+    icon: "invalid",
+    tone: "danger",
   },
 };
+
+function StateIcon({
+  icon,
+  tone,
+}: {
+  icon: (typeof STATE_COPY)[CompletionShellState]["icon"];
+  tone: (typeof STATE_COPY)[CompletionShellState]["tone"];
+}) {
+  const iconClassName =
+    tone === "danger"
+      ? "border-[#E8B7AF] bg-[#FFF4F1] text-[#8A3328]"
+      : "border-token-brand bg-token-brandSoft text-token-brand";
+
+  return (
+    <div className={`inline-flex h-14 w-14 items-center justify-center rounded-full border ${iconClassName}`}>
+      {icon === "check" ? (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 12.25L9.5 16.75L19 7.25" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : null}
+      {icon === "clock" ? (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.6" />
+          <path d="M12 7.75V12.4L15.25 14.25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : null}
+      {icon === "lock" ? (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="6.5" y="10.25" width="11" height="8.25" rx="2" stroke="currentColor" strokeWidth="1.6" />
+          <path d="M8.75 10.25V8.5C8.75 6.7 10.2 5.25 12 5.25C13.8 5.25 15.25 6.7 15.25 8.5V10.25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      ) : null}
+      {icon === "blocked" ? (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.6" />
+          <path d="M8.5 8.5L15.5 15.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      ) : null}
+      {icon === "invalid" ? (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 6.5V12.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+          <path d="M12 16.75H12.01" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" />
+          <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.6" />
+        </svg>
+      ) : null}
+    </div>
+  );
+}
 
 function resolveShellState({
   authStatus,
@@ -244,34 +304,55 @@ export function TelegramCompletionPageShell({
       : "No Telegram completion code was found in this URL."
   );
 
-  return (
-    <section className="auth-appear shell-panel w-full max-w-[32rem] rounded-[1.6rem] px-6 py-7 sm:px-8 sm:py-8">
-      <div>
-        <p className={`text-xs uppercase tracking-[0.18em] ${copy.toneClassName}`}>{copy.badge}</p>
-        <h1 className="mt-3 text-[2rem] font-semibold leading-tight tracking-[-0.03em] text-token-text">
-          {copy.title}
-        </h1>
-        <p className="mt-2 max-w-md text-base leading-7 text-token-muted">{copy.description}</p>
+  const detailClassName =
+    copy.tone === "danger"
+      ? "border-[#E8B7AF] bg-[#FFF4F1] text-[#8A3328]"
+      : "border-token-border bg-[#FEFAF2] text-token-muted";
 
-        <div className="mt-7 rounded-[1rem] border border-token-border bg-token-brandSoft px-5 py-4">
-          <p className="text-sm font-medium text-token-text">Telegram-first completion</p>
-          <p className="mt-1 text-sm leading-6 text-token-muted">{detailMessage}</p>
+  return (
+    <section className="auth-appear w-full max-w-[25rem] px-0 py-0 text-center sm:rounded-2xl sm:border sm:border-token-border sm:bg-token-surfaceStrong sm:px-8 sm:py-8">
+      <div className="flex flex-col items-center">
+        <StateIcon icon={copy.icon} tone={copy.tone} />
+        <p
+          className={
+            copy.tone === "danger"
+              ? "mt-5 text-xs font-medium uppercase tracking-[0.16em] text-[#8A3328]"
+              : "mt-5 text-xs font-medium uppercase tracking-[0.16em] text-token-brand"
+          }
+        >
+          {copy.badge}
+        </p>
+        <h1 className="mt-2 text-[1.3125rem] font-medium leading-tight text-token-text">{copy.title}</h1>
+        <p className="mx-auto mt-2 max-w-[17rem] text-[0.8125rem] leading-6 text-token-muted">{copy.description}</p>
+
+        <div className={`mt-6 w-full rounded-[0.75rem] border px-4 py-3 text-left ${detailClassName}`}>
+          <p className="text-[0.8125rem] font-medium text-token-text">{copy.detailTitle}</p>
+          <p className="mt-1 text-[0.8125rem] leading-5">{detailMessage}</p>
         </div>
 
         {shellState === "auth-required" ? (
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link className="primary-button" href={signInHref}>
+          <div className="mt-6 grid w-full gap-3">
+            <Link
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-token-brand px-5 text-sm font-semibold text-white transition hover:brightness-95"
+              href={signInHref}
+            >
               Sign in
             </Link>
-            <Link className="secondary-button" href={signUpHref}>
+            <Link
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-token-brand bg-transparent px-5 text-sm font-semibold text-token-brand transition hover:bg-token-brandSoft"
+              href={signUpHref}
+            >
               Create account
             </Link>
           </div>
         ) : null}
 
         {shellState === "success" ? (
-          <div className="mt-7">
-            <Link className="primary-button" href="/dictionary">
+          <div className="mt-6 w-full">
+            <Link
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-token-brand px-5 text-sm font-semibold text-white transition hover:brightness-95"
+              href="/dictionary"
+            >
               Open dictionary
             </Link>
           </div>

@@ -25,10 +25,9 @@ Accepted scope implemented
 - search inside Dictionary List
 - Card Details
 - sign-out action
-- theme toggle across shared layouts
 - responsive browser support for mobile and desktop
 - protected narrow settings route
-- narrow settings screen for `preferred_translation_language`
+- narrow settings screen for accepted learning preferences and the relocated existing Telegram link panel
 - minimal authenticated settings navigation entry
 - dictionary rendering aligned to the accepted explanation/translation rule
 - empty dictionary state with a simple CTA inside Telegram-first product boundaries
@@ -64,20 +63,38 @@ Implemented architecture boundary
 - the client does not implement a parallel auth/session model
 
 Current implementation status
+- `/` now renders the real Landing / Entry screen with product mark/name, short supporting copy, a primary Sign in action to `/sign-in`, and a secondary Create account action to `/sign-up`.
 - public auth-entry screens are implemented
+- `/sign-up`, `/sign-in`, and `/password-recovery` use the refreshed public auth form presentation for layout, spacing, typography, labels, inline field errors, and auth/config error blocks.
+- sign-up now presents the name field with the UI label `Display name`; auth behavior, validation, submit flow, route structure, and backend integration remain unchanged.
+- `/sign-up/confirmation` and `/password-recovery/confirmation` use the refreshed public confirmation presentation with narrower centered layout, updated icon treatment, supporting copy layout, and button-style actions.
+- confirmation behavior remains unchanged: sign-up confirmation routes to sign in with existing `next` handling, password recovery confirmation links back to sign in and reset-again, and no resend-email implementation or backend call was added.
 - successful sign-up now redirects to a dedicated check-your-email confirmation screen
 - public auth interaction layer is implemented
 - Supabase browser auth is wired
 - authenticated route entry is gated through real backend auth/access checks
 - dedicated Telegram completion page is implemented at `/telegram/complete`
+- `/telegram/complete` uses the refreshed Telegram completion presentation with narrower centered layout, refreshed spacing/typography, state-specific icon treatment, compact supporting detail block, and button-style CTAs.
+- Telegram completion state coverage and behavior remain unchanged: success, checking, sign-in-required, blocked/conflict, and invalid/expired states are present, endpoint usage and state/result mapping are unchanged, and the success CTA still leads to `/dictionary`.
 - authenticated Telegram completion handoff is isolated to `/telegram/complete`
 - Telegram completion uses the existing backend endpoint only:
   - POST /messaging-links/telegram/complete
 - Dictionary List is backend-backed
 - dictionary search is backend-owned and stays inside Dictionary List
+- the existing Telegram link panel/functionality has been removed from `/dictionary`; Dictionary List behavior is otherwise unchanged.
 - Card Details is backend-backed
+- `/dictionary/[item_id]` uses the refreshed Card Details presentation with a narrower one-column reading layout, compact metadata, canonical-form placement, refreshed translation/explanation/examples structure, loading/error panels, and refreshed delete UI.
+- Card Details field coverage and behavior remain unchanged: translation, explanation, examples, canonical form, language, and learning status render when returned and allowed by existing data/preferences logic, and the back path to `/dictionary` remains in place.
 - protected settings route and screen are implemented
-- `preferred_translation_language` load/save is implemented through:
+- `/settings` uses the refreshed settings presentation with a narrower centered layout, updated typography/spacing, section structure, select styling, save/retry actions, and loading/success/error presentation.
+- `/settings` now includes `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, and `preferred_review_time`.
+- Settings use the existing `GET /preferences/learning` load flow and `PUT /preferences/learning` save flow for all accepted learning-preference fields.
+- `preferred_translation_language` behavior remains unchanged: the existing label/value mapping and null-cleared backend behavior remain intact.
+- `daily_review_target_count` uses step `5`, minimum `5`, and maximum `50`; temporarily null daily-review preference values are handled with narrow defensive defaults.
+- the existing Telegram link panel/functionality now lives on `/settings` and is visually integrated into the settings layout.
+- Telegram-related behavior remains unchanged: status loading, link completion, conflict handling, endpoint usage, and backend-owned semantics are unchanged; the code input and `Complete link` action are hidden when status is `linked`.
+- No Telegram reassignment, unlinking, provider-management, account-center behavior, or new backend calls were added.
+- accepted learning-preference load/save is implemented through:
   - GET /preferences/learning
   - PUT /preferences/learning
 - dictionary rendering now follows the accepted rule:
@@ -85,13 +102,14 @@ Current implementation status
   - translation is shown only when `preferred_translation_language` is set and backend returns translation
 - empty dictionary state is implemented with a narrow CTA that stays inside Telegram-first boundaries
 - details-first delete is implemented from Card Details only with a small confirmation step
+- delete mechanics remain unchanged: the delete action opens the confirmation block, `Confirm delete`, `Cancel`, `Deleting…`, and delete error messaging remain present, and successful delete returns to `/dictionary`.
 - successful delete returns the user to Dictionary List and removes the deleted item from normal visible reads
 - lightweight local cache is implemented for dictionary list and card details
 - cache invalidation is implemented after:
   - delete
   - sign out / auth-boundary loss
   - relevant settings changes
-- theme behavior is implemented and persisted locally in the browser
+- dark theme support and theme-toggle UI have been removed; the web client now uses the light-theme presentation only.
 - shared public and authenticated layouts are implemented
 - production build passes
 
@@ -138,7 +156,7 @@ Important implementation rules going forward
 - keep delete details-first and narrow
 - keep search inside Dictionary List
 - keep sign out as an action, not a screen
-- keep theme as presentation behavior only, not a settings feature
+- keep the client on the light-theme presentation only; do not add appearance settings or theme switching without explicit acceptance
 - keep cache as a lightweight read optimization only
 - keep Telegram completion isolated to the dedicated `/telegram/complete` route
 - do not turn Telegram completion into generic onboarding, account-center, provider-management, unlink, or reassignment UI

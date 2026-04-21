@@ -36,7 +36,7 @@ export function SignOutButton() {
       >
         {isSubmitting ? "Signing out..." : "Sign out"}
       </button>
-      {errorMessage ? <p className="max-w-[18rem] text-right text-xs leading-5 text-red-700 dark:text-red-300">{errorMessage}</p> : null}
+      {errorMessage ? <p className="max-w-[18rem] text-right text-xs leading-5 text-red-700">{errorMessage}</p> : null}
     </div>
   );
 }

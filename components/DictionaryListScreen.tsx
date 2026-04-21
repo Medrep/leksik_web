@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import { TelegramLinkPanel } from "@/components/TelegramLinkPanel";
 import { BackendRequestError } from "@/lib/backend-client";
 import { fetchLearningPreferences, getPreferencesRequestMessage } from "@/lib/preferences";
 import { readCachedDictionaryList, writeCachedDictionaryList } from "@/lib/vocab-cache";
@@ -11,10 +10,11 @@ import { fetchDictionaryList, getVocabRequestMessage, type DictionaryListItem } 
 
 function LoadingCard() {
   return (
-    <div className="rounded-[1.1rem] border border-token-border bg-token-surfaceStrong p-4">
-      <div className="h-6 w-2/5 rounded-full bg-token-brandSoft" />
-      <div className="mt-3 h-4 w-4/5 rounded-full bg-token-brandSoft" />
-      <div className="mt-3 h-6 w-20 rounded-full bg-token-brandSoft" />
+    <div className="rounded-xl border border-token-border bg-token-brandSoft/40 p-4">
+      <p className="text-[0.9375rem] font-medium text-token-text">Dictionary loading</p>
+      <p className="mt-1 text-[0.8125rem] leading-5 text-token-muted">Loading words…</p>
+      <div className="mt-3 h-3 w-2/5 rounded-full bg-token-brandSoft" />
+      <div className="mt-3 h-3 w-11/12 rounded-full bg-token-brandSoft" />
     </div>
   );
 }
@@ -25,20 +25,51 @@ function ResultCard({ item }: { item: DictionaryListItem }) {
 
   return (
     <Link href={`/dictionary/${item.id}`}>
-      <article className="rounded-[1.1rem] border border-token-border bg-token-surfaceStrong p-4 transition hover:border-token-brand hover:bg-token-surface">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <article className="min-h-[5.375rem] rounded-xl border border-token-border bg-token-surfaceStrong px-4 py-3.5 transition hover:border-token-brand hover:bg-token-surface">
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h3 className="text-[1.65rem] font-medium leading-tight tracking-[-0.03em] text-token-text">
+            <h3 className="truncate text-[0.9375rem] font-medium leading-6 text-token-text">
               {item.title}
             </h3>
-            <p className="mt-1 text-sm leading-6 text-token-muted">
+            <p className="mt-1 line-clamp-2 text-xs leading-5 text-token-muted">
               {previewText}
             </p>
           </div>
-          {badge ? <span className="pill">{badge}</span> : null}
+          {badge ? (
+            <span className="shrink-0 rounded-full bg-token-brandSoft px-2.5 py-1 text-[0.6875rem] font-medium uppercase leading-none text-token-brand">
+              {badge}
+            </span>
+          ) : null}
         </div>
       </article>
     </Link>
+  );
+}
+
+function StateCard({
+  action,
+  copy,
+  tone = "neutral",
+  title,
+}: {
+  action?: React.ReactNode;
+  copy: string;
+  tone?: "neutral" | "soft" | "danger";
+  title: string;
+}) {
+  const toneClassName =
+    tone === "danger"
+      ? "border-[#E8B7AF] bg-[#FFF4F1] text-[#8A3328]"
+      : tone === "soft"
+        ? "border-token-border bg-token-brandSoft/40 text-token-muted"
+        : "border-token-border bg-token-surfaceStrong text-token-muted";
+
+  return (
+    <div className={`rounded-xl border p-4 ${toneClassName}`}>
+      <p className="text-[0.9375rem] font-medium text-token-text">{title}</p>
+      <p className="mt-1 text-[0.8125rem] leading-5">{copy}</p>
+      {action ? <div className="mt-3">{action}</div> : null}
+    </div>
   );
 }
 
@@ -212,25 +243,23 @@ export function DictionaryListScreen() {
   const showEmptyState = !showInitialLoading && !errorMessage && visibleItems.length === 0;
 
   return (
-    <section className="grid gap-5">
-      <section className="auth-appear grid gap-4">
-        <TelegramLinkPanel />
-
-        <div className="shell-panel rounded-[1.2rem] p-3">
-          <div className="flex items-center gap-3">
+    <section className="auth-appear grid gap-4">
+      <div className="grid gap-4">
+        <div className="rounded-xl border border-token-border bg-token-surfaceStrong">
+          <div className="relative flex items-center">
             <svg
               aria-hidden="true"
-              className="ml-2 h-4 w-4 shrink-0 text-token-muted"
-              viewBox="0 0 20 20"
+              className="pointer-events-none absolute left-3.5 h-3.5 w-3.5 text-token-muted/65"
+              viewBox="0 0 14 14"
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.8"
+              strokeWidth="1.2"
             >
-              <circle cx="9" cy="9" r="5.5" />
-              <path d="M13.5 13.5L18 18" />
+              <circle cx="6" cy="6" r="4.5" />
+              <path d="M10 10L12.5 12.5" strokeLinecap="round" />
             </svg>
             <input
-              className="w-full bg-transparent py-2 pr-2 text-base text-token-text outline-none placeholder:text-[#b3aea5]"
+              className="min-h-11 w-full bg-transparent py-2 pl-9 pr-16 text-sm text-token-text outline-none placeholder:text-token-muted/45"
               type="search"
               placeholder="Search words..."
               value={searchText}
@@ -238,7 +267,7 @@ export function DictionaryListScreen() {
             />
             {searchText ? (
               <button
-                className="mr-2 text-sm text-token-muted transition hover:text-token-brand"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-token-brand transition hover:brightness-95"
                 type="button"
                 onClick={() => setSearchText("")}
               >
@@ -249,18 +278,27 @@ export function DictionaryListScreen() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-[#a9a39a]">
+          <p className="text-xs text-token-muted/70">
             {showInitialLoading
               ? "Loading words..."
               : `${visibleItems.length} word${visibleItems.length === 1 ? "" : "s"}`}
             {hasQuery ? ` for “${activeQuery}”` : ""}
           </p>
-          <Link className="text-sm text-token-muted transition hover:text-token-brand" href="/settings">
-            Settings
-          </Link>
+          <div className="flex items-center gap-4">
+            {isRefreshing ? <p className="text-xs text-token-muted">Updating results…</p> : null}
+            <Link className="text-xs font-medium text-token-brand transition hover:brightness-95" href="/settings">
+              Settings
+            </Link>
+          </div>
         </div>
 
-        {isRefreshing ? <p className="text-sm text-token-muted">Updating results…</p> : null}
+        {!showInitialLoading && isLoadingPreferences ? (
+          <StateCard
+            tone="soft"
+            title="Loading translation preference"
+            copy="Translations are hidden until preferences are ready."
+          />
+        ) : null}
 
         {showInitialLoading ? (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -271,45 +309,44 @@ export function DictionaryListScreen() {
         ) : null}
 
         {errorMessage ? (
-          <div className="rounded-[1.2rem] border border-red-300/60 bg-red-50/80 p-5 dark:border-red-400/30 dark:bg-red-950/30">
-            <p className="text-lg font-semibold text-red-800 dark:text-red-200">Couldn&apos;t load your dictionary.</p>
-            <p className="mt-2 text-sm leading-6 text-red-800 dark:text-red-200">{errorMessage}</p>
-          </div>
+          <StateCard
+            tone="danger"
+            title="Could not load dictionary"
+            copy={errorMessage}
+          />
         ) : null}
 
         {showEmptyState ? (
-          <div className="rounded-[1.2rem] border border-token-border bg-token-surfaceStrong p-5">
-            <p className="text-lg font-semibold text-token-text">
-              {hasQuery ? "No words matched that search." : "No saved words yet."}
-            </p>
-            <p className="mt-2 text-sm leading-6 text-token-muted">
-              {hasQuery
-                ? "Try a different word or phrase."
-                : "Use Telegram to send your first word or phrase. It will appear here after the backend saves it."}
-            </p>
-            {!hasQuery ? (
-              <div className="mt-4">
+          <StateCard
+            title={hasQuery ? "No search results" : "No saved words yet"}
+            copy={
+              hasQuery
+                ? "No words matched that search. Try a different word or phrase."
+                : "Use Telegram to send your first word or phrase."
+            }
+            action={
+              !hasQuery ? (
                 <a
-                  className="secondary-button"
+                  className="inline-flex min-h-10 items-center justify-center rounded-lg border border-token-brand bg-transparent px-4 text-sm font-medium text-token-brand transition hover:bg-token-brandSoft"
                   href="https://web.telegram.org/"
                   target="_blank"
                   rel="noreferrer"
                 >
                   Open Telegram
                 </a>
-              </div>
-            ) : null}
-          </div>
+              ) : null
+            }
+          />
         ) : null}
 
         {!showInitialLoading && !errorMessage && visibleItems.length > 0 ? (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
             {visibleItems.map((item) => (
               <ResultCard key={item.id} item={item} />
             ))}
           </div>
         ) : null}
-      </section>
+      </div>
     </section>
   );
 }

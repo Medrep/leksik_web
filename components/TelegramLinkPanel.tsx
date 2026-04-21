@@ -37,7 +37,7 @@ function statusCopy(status: TelegramLinkStatus | null) {
 
   if (status.state === "conflict") {
     return {
-      accentClassName: "text-red-700 dark:text-red-200",
+      accentClassName: "text-red-700",
       description:
         "Telegram linking is blocked by an existing link conflict. This web client does not support reassignment or unlinking.",
       headline: "Telegram link conflict",
@@ -54,14 +54,14 @@ function statusCopy(status: TelegramLinkStatus | null) {
 
 function statusBadgeClassName(state: TelegramLinkStatus["state"]) {
   if (state === "linked") {
-    return "pill";
+    return "rounded-full bg-token-brandSoft px-2.5 py-1 text-[0.6875rem] font-medium uppercase leading-none text-token-brand";
   }
 
   if (state === "conflict") {
-    return "rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-950/40 dark:text-red-200";
+    return "rounded-full bg-red-100 px-2.5 py-1 text-[0.6875rem] font-medium uppercase leading-none text-red-700";
   }
 
-  return "rounded-full bg-token-surfaceStrong px-3 py-1 text-xs font-medium text-token-muted";
+  return "rounded-full bg-token-brandSoft px-2.5 py-1 text-[0.6875rem] font-medium uppercase leading-none text-token-muted";
 }
 
 function observedAccountLabel(status: TelegramLinkStatus) {
@@ -206,28 +206,32 @@ export function TelegramLinkPanel() {
   }
 
   return (
-    <section className="auth-appear shell-panel rounded-[1.2rem] p-5 sm:p-6">
+    <section className="border-t border-token-border pt-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="max-w-2xl">
-          <p className="text-xs uppercase tracking-[0.16em] text-[#b0aaa1]">Telegram</p>
-          <h2 className={`mt-2 text-xl font-semibold ${currentCopy.accentClassName}`}>{currentCopy.headline}</h2>
-          <p className="mt-2 text-sm leading-6 text-token-muted">{currentCopy.description}</p>
+        <div className="max-w-xl">
+          <p className="text-[0.6875rem] uppercase tracking-[0.16em] text-token-muted/65">Telegram</p>
+          <h2 className={`mt-2 text-[0.9375rem] font-medium leading-6 ${currentCopy.accentClassName}`}>{currentCopy.headline}</h2>
+          <p className="mt-1 text-[0.8125rem] leading-5 text-token-muted">{currentCopy.description}</p>
           {observedAccount ? (
-            <p className="mt-3 text-sm text-token-muted">Observed account: {observedAccount}</p>
+            <p className="mt-3 text-[0.8125rem] text-token-muted">Observed account: {observedAccount}</p>
           ) : null}
         </div>
 
         {status ? <span className={statusBadgeClassName(status.state)}>{status.state}</span> : null}
       </div>
 
-      {isLoading ? <p className="mt-4 text-sm text-token-muted">Loading Telegram link status…</p> : null}
+      {isLoading ? (
+        <div className="mt-4 rounded-xl border border-[#FEEDCE] bg-[#FEFAF2] px-4 py-3 text-token-muted">
+          <p className="text-[0.8125rem] leading-5">Loading Telegram link status…</p>
+        </div>
+      ) : null}
 
       {!isLoading && shouldShowForm ? (
         <form className="mt-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]" onSubmit={handleSubmit}>
           <label className="grid gap-2">
-            <span className="text-sm font-medium text-token-text">One-time Telegram code</span>
+            <span className="text-[0.8125rem] font-medium text-token-text">One-time Telegram code</span>
             <input
-              className="field-input"
+              className="w-full rounded-lg border border-token-border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 focus:border-token-brand disabled:cursor-not-allowed disabled:opacity-60"
               type="text"
               inputMode="text"
               autoComplete="one-time-code"
@@ -238,17 +242,27 @@ export function TelegramLinkPanel() {
             />
           </label>
           <div className="flex items-end">
-            <button className="primary-button w-full sm:w-auto" type="submit" disabled={isSubmitting}>
+            <button
+              className="inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-token-brand px-5 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              type="submit"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Linking…" : "Complete link"}
             </button>
           </div>
         </form>
       ) : null}
 
-      {!isLoading && successMessage ? <p className="mt-4 text-sm text-token-brand">{successMessage}</p> : null}
+      {!isLoading && successMessage ? (
+        <div className="mt-4 rounded-xl border border-token-border bg-token-brandSoft/40 px-4 py-3 text-token-brand">
+          <p className="text-[0.8125rem] leading-5">{successMessage}</p>
+        </div>
+      ) : null}
 
       {!isLoading && errorMessage ? (
-        <p className="mt-4 text-sm leading-6 text-red-700 dark:text-red-200">{errorMessage}</p>
+        <div className="mt-4 rounded-xl border border-[#E8B7AF] bg-[#FFF4F1] px-4 py-3 text-[#8A3328]">
+          <p className="text-[0.8125rem] leading-5">{errorMessage}</p>
+        </div>
       ) : null}
     </section>
   );

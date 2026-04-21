@@ -1,6 +1,5 @@
 import { BrandMark } from "./BrandMark";
 import { SignOutButton } from "./SignOutButton";
-import { ThemeToggle } from "./ThemeToggle";
 
 export function AuthenticatedLayoutShell({ children }: { children: React.ReactNode }) {
   return (
@@ -18,7 +17,6 @@ export function AuthenticatedLayoutShell({ children }: { children: React.ReactNo
           <BrandMark to="/dictionary" />
         </div>
         <div className="flex items-center gap-3">
-          <ThemeToggle />
           <SignOutButton />
         </div>
       </header>

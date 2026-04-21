@@ -36,7 +36,7 @@ Its role is to provide:
 - empty dictionary state with a simple CTA
 - lightweight local cache for dictionary read data
 - responsive browser usage on mobile and desktop
-- presentation-layer behavior such as theme toggle
+- light-theme presentation only
 
 The web client is not the product core.
 The backend remains the system core and the source of truth for identity, access, vocabulary data, settings, and business rules.
@@ -124,18 +124,26 @@ The web client may include:
 - one narrow authenticated settings route
 - one narrow settings screen
 - backend-backed read/write support for accepted preference fields needed by the current baseline
+- the relocated existing Telegram link panel/functionality
 
 Current accepted settings scope is limited to:
 - `preferred_translation_language`
+- `daily_review_enabled`
+- `daily_review_target_count`
+- `preferred_review_time`
 
 Settings must use the same backend settings/preferences endpoints as mobile where applicable.
+The relocated Telegram panel keeps its existing backend-owned status/completion behavior and does not expand settings preferences.
 
 Settings do not expand into:
 - profile editing
 - billing
 - security center
 - broad account-management area
-- Telegram-linking expansion
+- Telegram-linking expansion beyond the existing relocated panel
+- Telegram reassignment or unlinking
+- provider-management or account-center behavior
+- daily-review controls beyond the accepted learning-preference fields listed above
 - general preferences dashboard
 
 ### 6. Dictionary delete
@@ -193,12 +201,12 @@ Responsive support here means:
 - adaptive layout behavior
 - not a separate mobile product track
 
-### 9. Theme toggle
-Theme toggle remains in scope as a presentation-layer preference for the web client.
+### 9. Theme presentation
+The web client uses the light-theme presentation only.
 
 Scope note:
-- this is a UI/theme behavior only
-- it must not expand into a broader settings/profile area beyond the accepted narrow settings surface
+- dark theme support and theme-toggle UI are not part of the current accepted web-client scope
+- appearance settings must not be added without separate explicit acceptance
 
 ### 10. Thin-client consumption of backend behavior
 The web client consumes backend-owned behavior for:
@@ -244,6 +252,7 @@ The following are explicitly out of scope for the current web-client baseline:
 - separate mobile app planning inside this workstream
 - broad analytics
 - advanced personalization
+- dark theme support or theme toggle UI
 - browser-extension-like behaviors
 - any feature that shifts capture or review away from Telegram-first operation
 - restore/trash flow
@@ -388,6 +397,6 @@ If a feature is not required for:
 - read-only card viewing with narrow delete
 - empty-state CTA
 - lightweight read caching
-- approved theme handling
+- light-theme presentation
 
 it is out of scope unless explicitly accepted later.

@@ -16,6 +16,7 @@ export default function SignInPage({ searchParams }: SignInPageProps) {
     <PublicLayoutShell activePath="/sign-in">
       <PublicAuthRedirect />
       <PublicAuthCard
+        variant="form"
         title="Welcome back"
         description="Sign in to your account."
         backHref="/"

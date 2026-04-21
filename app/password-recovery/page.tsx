@@ -8,6 +8,7 @@ export default function PasswordRecoveryPage() {
     <PublicLayoutShell activePath="/password-recovery">
       <PublicAuthRedirect />
       <PublicAuthCard
+        variant="form"
         title="Reset password"
         description="Enter your email and we'll send a reset link."
         backHref="/sign-in"

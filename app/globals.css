@@ -16,19 +16,6 @@
     --brand-soft: rgba(202, 128, 28, 0.12);
   }
 
-  :root[data-theme="dark"] {
-    color-scheme: dark;
-    --bg: #171410;
-    --bg-accent: #1f1a14;
-    --surface: rgba(30, 25, 19, 0.92);
-    --surface-strong: #262018;
-    --border: rgba(238, 224, 202, 0.14);
-    --text: #f4ede2;
-    --text-muted: #c1b39b;
-    --brand: #eca243;
-    --brand-soft: rgba(236, 162, 67, 0.14);
-  }
-
   * {
     @apply box-border;
   }

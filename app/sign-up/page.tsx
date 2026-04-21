@@ -16,6 +16,7 @@ export default function SignUpPage({ searchParams }: SignUpPageProps) {
     <PublicLayoutShell activePath="/sign-up">
       <PublicAuthRedirect />
       <PublicAuthCard
+        variant="form"
         title="Create account"
         description="Fill in your details to get started."
         backHref="/"

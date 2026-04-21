@@ -98,6 +98,7 @@ Provide one public Telegram-first completion surface for users arriving from Tel
 - success state after backend completion returns linked
 - blocked/conflict state when backend-owned linking rules block completion
 - invalid/expired state for missing, invalid, or expired completion codes
+- refreshed Telegram completion presentation with narrower centered layout, refreshed spacing and typography, state-specific icon treatment, compact supporting detail block, and button-style CTAs
 
 ### Entry paths
 - direct visit to `/telegram/complete?code=...` from Telegram-first onboarding
@@ -106,11 +107,13 @@ Provide one public Telegram-first completion surface for users arriving from Tel
 ### Exit paths
 - to Sign In when authentication is required
 - to Sign Up when account creation is needed
+- to Dictionary through the success CTA after backend completion returns linked
 
 ### Intentionally excluded
 - generic onboarding framework
 - settings or dictionary branch behavior
 - provider-management UI
+- account-center behavior
 - unlink or reassignment flow
 - second completion endpoint or fallback completion route
 - client-owned interpretation of Telegram identity or ownership
@@ -124,18 +127,17 @@ Provide the public browser entry point into the web client and route the user in
 ### Key UI blocks
 - product mark / identity
 - short product positioning text
-- primary action: sign in
-- secondary action: create account
+- primary action: sign in to `/sign-in`
+- secondary action: create account to `/sign-up`
 - brief note that capture and daily review happen through Telegram
-- theme toggle when presented in the public layout
 
 ### Entry paths
 - direct visit to web root
 - return to public entry after sign-out action
 
 ### Exit paths
-- to Sign Up
 - to Sign In
+- to Sign Up
 
 ### Intentionally excluded
 - large marketing-site sections
@@ -154,11 +156,10 @@ Allow a new user to create an account and reach the sign-up confirmation state.
 ### Key UI blocks
 - back navigation to Landing / Entry if retained by UI
 - screen title
-- required sign-up form fields
+- required sign-up form fields, including the `Display name` UI label for the name field
 - primary submit action
 - link/path to Sign In
-- centered auth-card presentation within the shared public layout
-- theme toggle when presented as part of the shared public auth-entry layout
+- refreshed public auth form presentation for layout, spacing, typography, labels, inline field errors, and auth/config error blocks
 
 ### Entry paths
 - from Landing / Entry
@@ -186,17 +187,17 @@ Confirm that registration was accepted and tell the user to check their email be
 ### Key UI blocks
 - success/confirmation message
 - brief instruction to check email for the confirmation link
-- path back to Sign In
-- centered auth-card presentation within the shared public layout
-- theme toggle when presented as part of the shared public auth-entry layout
+- button-style action to Sign In using the existing sign-in route and `next` handling
+- refreshed public confirmation presentation with narrower centered layout, updated icon treatment, and supporting copy layout
 
 ### Entry paths
 - from Sign Up after accepted submission
 
 ### Exit paths
-- to Sign In
+- to Sign In with existing `next` handling
 
 ### Intentionally excluded
+- resend-email implementation or backend call
 - onboarding expansion
 - account-setup wizard
 - authenticated product navigation
@@ -214,8 +215,7 @@ Allow an existing user to authenticate and enter the authenticated web-client pa
 - primary submit action
 - link/path to Password Recovery
 - link/path to Sign Up
-- centered auth-card presentation within the shared public layout
-- theme toggle when presented as part of the shared public auth-entry layout
+- refreshed public auth form presentation for layout, spacing, typography, labels, inline field errors, and auth/config error blocks
 
 ### Entry paths
 - from Landing / Entry
@@ -245,8 +245,7 @@ Allow the user to initiate password recovery from the web client.
 - screen title
 - recovery email input
 - primary action to initiate recovery
-- centered auth-card presentation within the shared public layout
-- theme toggle when presented as part of the shared public auth-entry layout
+- refreshed public auth form presentation for layout, spacing, typography, labels, inline field errors, and auth/config error blocks
 
 ### Entry paths
 - from Sign In
@@ -270,17 +269,19 @@ Confirm that the password recovery initiation request was accepted and guide the
 ### Key UI blocks
 - success/confirmation message
 - brief instruction such as check-your-inbox
-- path back to Sign In
-- centered auth-card presentation within the shared public layout
-- theme toggle when presented as part of the shared public auth-entry layout
+- button-style action back to Sign In
+- secondary reset-again link back to Password Recovery
+- refreshed public confirmation presentation with narrower centered layout, updated icon treatment, and supporting copy layout
 
 ### Entry paths
 - from Password Recovery after accepted submission
 
 ### Exit paths
 - to Sign In
+- to Password Recovery for reset-again
 
 ### Intentionally excluded
+- resend-email implementation or backend call
 - account-management expansion
 - support workflow
 - broader auth troubleshooting UI
@@ -295,8 +296,6 @@ Provide the main authenticated web-client screen for browsing and searching the 
 - minimal authenticated header/shell
 - product mark / identity
 - sign-out action
-- theme toggle when presented in the shared authenticated layout
-- optional minimal Telegram link-status/completion panel within the screen body
 - minimal authenticated settings navigation entry
 - dictionary search input
 - dictionary result count or equivalent lightweight list context
@@ -336,11 +335,11 @@ Provide the main authenticated web-client screen for browsing and searching the 
 Show the accepted card fields for one user-scoped dictionary item together with the narrow details-first delete action.
 
 ### Key UI blocks
-- back navigation to Dictionary List
+- back navigation to Dictionary List at `/dictionary`
 - minimal authenticated header pattern if retained by layout
 - sign-out action when presented in the shared authenticated layout
-- theme toggle when presented in the shared authenticated layout
 - word or phrase
+- compact metadata presentation
 - canonical form when applicable
 - explanation in the source word language
 - translation only when `preferred_translation_language` is set and backend returns translation
@@ -348,16 +347,16 @@ Show the accepted card fields for one user-scoped dictionary item together with 
 - language label only when present in the accepted backend detail payload
 - learning status only when present in the accepted backend detail payload
 - narrow delete action from Card Details only
-- small delete confirmation step
-- clean reading-oriented detail composition
+- refreshed delete presentation with confirmation, `Confirm delete`, `Cancel`, `Deleting…`, and delete error messaging
+- refreshed one-column reading-oriented detail composition with updated loading/error panels
 
 ### Entry paths
 - from Dictionary List
 - from search results inside Dictionary List
 
 ### Exit paths
-- back to Dictionary List
-- back to Dictionary List after successful delete
+- back to Dictionary List at `/dictionary`
+- back to Dictionary List at `/dictionary` after successful delete
 - sign-out action returns user to Landing / Entry when available from the shared authenticated layout
 
 ### Intentionally excluded
@@ -373,15 +372,25 @@ Show the accepted card fields for one user-scoped dictionary item together with 
 ## Screen 9 — Settings
 
 ### Purpose
-Provide one narrow authenticated settings/preferences screen for accepted backend-backed user settings.
+Provide one narrow authenticated settings/preferences screen for accepted backend-backed user settings and the relocated existing Telegram link panel.
 
 ### Key UI blocks
 - minimal authenticated header/shell
 - screen title
 - sign-out action when presented in the shared authenticated layout
-- theme toggle when presented in the shared authenticated layout
-- accepted backend-backed settings/preferences sections only
-- lightweight loading, success, and error states for backend-owned settings behavior
+- refreshed narrower centered settings presentation with updated spacing, typography, and section structure
+- accepted backend-backed settings fields:
+  - `preferred_translation_language`
+  - `daily_review_enabled`
+  - `daily_review_target_count`
+  - `preferred_review_time`
+- existing `preferred_translation_language` label/value mapping and null-cleared backend behavior
+- daily review enabled control
+- daily review target count control using step `5`, minimum `5`, and maximum `50`
+- preferred review time control
+- refreshed select control, save action, retry action, and loading/success/error presentation
+- relocated existing Telegram link-status/completion panel, visually integrated into the settings layout
+- existing Telegram status loading, link completion, and conflict presentation without behavior expansion; code input and `Complete link` are hidden when status is `linked`
 - submit/apply action only when required by the accepted backend contract
 
 ### Entry paths
@@ -397,7 +406,11 @@ Provide one narrow authenticated settings/preferences screen for accepted backen
 - password/security-center expansion
 - billing/subscription management
 - admin controls
-- Telegram linking management expansion
+- Telegram linking management expansion beyond the existing relocated panel
+- Telegram panel expansion beyond the existing relocated panel
+- Telegram reassignment or unlinking
+- provider-management or account-center behavior
+- daily-review controls beyond the accepted learning-preference fields
 - capture or review actions
 - support/operations tooling
 - arbitrary web-only preferences outside the backend settings/preferences contract
@@ -415,10 +428,11 @@ The following screens may share one common public layout pattern:
 
 Shared traits may include:
 - centered auth-entry content
-- centered auth-card pattern on Sign Up, Sign Up Confirmation, Sign In, Password Recovery, and recovery confirmation
+- refreshed form presentation on Sign Up, Sign In, and Password Recovery
+- refreshed confirmation presentation on Sign Up Confirmation and Password Recovery Confirmation
 - lightweight branding
 - consistent navigation/back pattern
-- theme toggle
+- light-theme presentation only
 
 This is a presentation pattern only.
 It does not imply additional product scope.
@@ -433,7 +447,7 @@ Shared traits may include:
 - lightweight header
 - product mark
 - sign-out action
-- theme toggle
+- light-theme presentation only
 - no explanatory side panels or internal helper chrome
 
 This is a minimal shell only.
@@ -467,17 +481,14 @@ Responsive adaptation must not change:
 - backend ownership boundaries
 - Telegram-first capture/review boundaries
 
-## Theme-toggle boundary
+## Theme boundary
 
-Theme toggle is in scope as a shared-layout presentation behavior across the accepted web-client screen set.
-
-It may appear:
-- in the public auth-entry layout
-- in the authenticated dictionary layout
+The web client uses the light-theme presentation only.
 
 It must not imply:
 - broader profile/account-management area
-- personalization expansion beyond theme presentation
+- appearance settings
+- dark theme support or theme-toggle UI
 
 ## Backend source-of-truth boundary by screen
 
@@ -529,6 +540,6 @@ If a screen is not required for:
 - read-only card viewing
 - narrow backend-backed settings/preferences
 - responsive browser usability
-- approved theme handling
+- light-theme presentation
 
 it is out of scope for this web-client workstream unless explicitly accepted later.

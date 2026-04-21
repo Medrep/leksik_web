@@ -25,11 +25,11 @@ type CardDetailsScreenProps = {
 
 function LoadingBlock() {
   return (
-    <div className="rounded-[1rem] bg-token-brandSoft p-5">
-      <div className="h-4 w-28 rounded-full bg-token-brandSoft" />
-      <div className="mt-3 h-8 w-4/5 rounded-full bg-token-brandSoft" />
-      <div className="mt-4 h-4 w-full rounded-full bg-token-brandSoft" />
-      <div className="mt-2 h-4 w-3/4 rounded-full bg-token-brandSoft" />
+    <div className="rounded-xl border border-token-border bg-token-brandSoft/40 p-4">
+      <p className="text-[0.9375rem] font-medium text-token-text">Card loading</p>
+      <div className="mt-3 h-3 w-1/3 rounded-full bg-token-brandSoft" />
+      <div className="mt-3 h-3 w-11/12 rounded-full bg-token-brandSoft" />
+      <div className="mt-3 h-3 w-2/3 rounded-full bg-token-brandSoft" />
     </div>
   );
 }
@@ -45,10 +45,65 @@ function DetailSection({
 }) {
   return (
     <section className={className}>
-      <h3 className="text-xs uppercase tracking-[0.16em] text-[#b0aaa1]">{label}</h3>
-      <div className="mt-2 text-[1.02rem] leading-8 text-token-text">{children}</div>
+      <h3 className="text-[0.6875rem] uppercase tracking-[0.16em] text-token-muted/65">{label}</h3>
+      <div className="mt-2 text-[0.9375rem] leading-7 text-token-text">{children}</div>
     </section>
   );
+}
+
+function StatePanel({
+  copy,
+  tone = "neutral",
+  title,
+}: {
+  copy: string;
+  tone?: "neutral" | "danger";
+  title: string;
+}) {
+  const toneClassName =
+    tone === "danger"
+      ? "border-[#E8B7AF] bg-[#FFF4F1] text-[#8A3328]"
+      : "border-token-border bg-token-surfaceStrong text-token-muted";
+
+  return (
+    <article className={`rounded-xl border p-4 ${toneClassName}`}>
+      <p className="text-[0.9375rem] font-medium text-token-text">{title}</p>
+      <p className="mt-1 text-[0.8125rem] leading-5">{copy}</p>
+    </article>
+  );
+}
+
+function formatCompactLanguage(value: string) {
+  const trimmedValue = value.trim();
+
+  return trimmedValue.length <= 3 ? trimmedValue.toUpperCase() : trimmedValue;
+}
+
+function getTranslationModeLabel({
+  preferredTranslationLanguage,
+  sourceLanguage,
+}: {
+  preferredTranslationLanguage: string | null;
+  sourceLanguage: string | null;
+}) {
+  if (sourceLanguage && preferredTranslationLanguage) {
+    const source = formatCompactLanguage(sourceLanguage);
+    const target = formatCompactLanguage(preferredTranslationLanguage);
+
+    if (source.toLowerCase() !== target.toLowerCase()) {
+      return `${source} → ${target}`;
+    }
+  }
+
+  if (sourceLanguage) {
+    return formatCompactLanguage(sourceLanguage);
+  }
+
+  if (preferredTranslationLanguage) {
+    return formatCompactLanguage(preferredTranslationLanguage);
+  }
+
+  return null;
 }
 
 export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
@@ -206,9 +261,28 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
     return () => controller.abort();
   }, [currentUserId, item_id, refreshBootstrap, session?.access_token]);
 
-  const canShowTranslation = !isLoadingPreferences && Boolean(preferredTranslationLanguage) && Boolean(details?.translation);
-  const errorMessage = preferencesErrorMessage ?? detailsErrorMessage;
-  const isLoading = !details && !isNotFound && !errorMessage && (isLoadingDetails || isLoadingPreferences);
+  const canShowTranslation =
+    !preferencesErrorMessage &&
+    !isLoadingPreferences &&
+    Boolean(preferredTranslationLanguage) &&
+    Boolean(details?.translation);
+  const isLoading = !details && !isNotFound && !detailsErrorMessage && isLoadingDetails;
+  const translationModeLabel = details
+    ? getTranslationModeLabel({
+        preferredTranslationLanguage,
+        sourceLanguage: details.language,
+      })
+    : null;
+  const metadataParts = details
+    ? [
+        details.canonicalForm &&
+        details.canonicalForm.toLowerCase() !== details.title.toLowerCase()
+          ? details.canonicalForm
+          : null,
+        details.language,
+        details.learningStatus,
+      ].filter((item): item is string => Boolean(item))
+    : [];
 
   async function handleDelete() {
     if (!session?.access_token) {
@@ -256,167 +330,135 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
   }
 
   return (
-    <section className="auth-appear grid gap-6">
+    <section className="auth-appear mx-auto grid w-full max-w-[44rem] gap-6">
       <div className="flex items-center justify-between gap-3 border-b border-token-border pb-4">
-        <Link className="inline-flex items-center gap-2 text-sm text-token-muted transition hover:text-token-brand" href="/dictionary">
+        <Link className="inline-flex items-center gap-2 text-[0.8125rem] text-token-muted transition hover:text-token-brand" href="/dictionary">
           <span aria-hidden="true">←</span>
           Dictionary
         </Link>
-        {details?.language ? <span className="pill">{details.language}</span> : null}
+        {translationModeLabel ? (
+          <span className="rounded-full bg-token-brandSoft px-2.5 py-1 text-[0.6875rem] font-medium uppercase leading-none text-token-brand">
+            {translationModeLabel}
+          </span>
+        ) : null}
       </div>
 
       {isLoading ? (
-        <article className="grid gap-8">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)] lg:items-start">
-            <LoadingBlock />
-            <LoadingBlock />
-          </div>
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
-            <LoadingBlock />
-            <LoadingBlock />
-          </div>
+        <article className="grid gap-3">
+          <LoadingBlock />
+          <LoadingBlock />
+          <LoadingBlock />
         </article>
       ) : null}
 
       {!isLoading && isNotFound ? (
-        <article className="rounded-[1.2rem] border border-token-border bg-token-surfaceStrong p-6">
-          <p className="text-lg font-semibold text-token-text">This word couldn&apos;t be opened.</p>
-          <p className="mt-2 text-sm leading-6 text-token-muted">
-            It may be missing or unavailable to the current account.
-          </p>
-        </article>
+        <StatePanel title="Word unavailable" copy="This word may be missing or unavailable to the current account." />
       ) : null}
 
-      {!isLoading && errorMessage ? (
-        <article className="rounded-[1.2rem] border border-red-300/60 bg-red-50/80 p-6 dark:border-red-400/30 dark:bg-red-950/30">
-          <p className="text-lg font-semibold text-red-800 dark:text-red-200">Couldn&apos;t load this word.</p>
-          <p className="mt-2 text-sm leading-6 text-red-800 dark:text-red-200">{errorMessage}</p>
-        </article>
+      {!isLoading && detailsErrorMessage ? (
+        <StatePanel tone="danger" title="Could not load this word" copy={detailsErrorMessage} />
       ) : null}
 
-      {!isLoading && !isNotFound && !errorMessage && details ? (
-        <article className="grid gap-8">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)] lg:items-start">
-            <div>
-              <h1 className="font-serifDisplay text-[3.4rem] leading-[0.96] tracking-[-0.04em] text-token-text sm:text-[4.6rem]">
-                {details.title}
-              </h1>
-              {(details.canonicalForm || details.learningStatus) ? (
-                <p className="mt-3 text-lg text-token-muted">
-                  {[details.canonicalForm, details.learningStatus].filter(Boolean).join(" · ")}
-                </p>
-              ) : null}
-            </div>
-
-            {details.examples.length > 0 ? (
-              <DetailSection label="Example" className="lg:pt-4">
-                <blockquote className="border-l-2 border-token-brand/50 pl-4 font-serifDisplay text-[1.05rem] italic leading-9 text-token-muted">
-                  “{details.examples[0]}”
-                </blockquote>
-              </DetailSection>
-            ) : (
-              <div />
-            )}
+      {!isLoading && !isNotFound && !detailsErrorMessage && details ? (
+        <article className="grid gap-6">
+          <div>
+            <h1 className="font-serifDisplay text-[3rem] font-normal leading-none text-token-text sm:text-[4rem]">
+              {details.title}
+            </h1>
+            {metadataParts.length > 0 ? (
+              <p className="mt-2 text-[0.8125rem] leading-5 text-token-muted">
+                {metadataParts.join(" · ")}
+              </p>
+            ) : null}
+            {details.canonicalForm ? (
+              <p className="mt-1 text-[0.6875rem] leading-5 text-token-muted/55">
+                Canonical: {details.canonicalForm}
+              </p>
+            ) : null}
+            {preferencesErrorMessage ? (
+              <p className="mt-3 max-w-md text-xs leading-5 text-token-muted/70">
+                Translation preference could not be loaded, so this card is shown without translation.
+              </p>
+            ) : null}
           </div>
 
-          <div className="grid gap-8 border-t border-token-border pt-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
-            <div className="grid gap-8">
-              {canShowTranslation ? (
-                <DetailSection label="Translation">
-                  <p>{details.translation}</p>
-                </DetailSection>
-              ) : null}
-
-              <DetailSection label="Explanation">
-                <p>{details.explanation ?? "Not available for this item."}</p>
+          <div className="grid gap-5 border-t border-token-border pt-5">
+            {canShowTranslation ? (
+              <DetailSection label="Translation">
+                <p className="text-token-text">{details.translation}</p>
               </DetailSection>
+            ) : null}
 
-              {details.examples.length > 1 ? (
-                <DetailSection label="Examples">
-                  <ul className="space-y-3 text-token-muted">
-                    {details.examples.slice(1).map((example, index) => (
-                      <li key={`${details.id}-example-${index + 1}`}>{example}</li>
-                    ))}
-                  </ul>
-                </DetailSection>
-              ) : null}
-            </div>
+            <DetailSection label="Explanation">
+              <p className="text-token-muted">{details.explanation ?? "Not available for this item."}</p>
+            </DetailSection>
 
-            <div className="grid gap-8">
-              <DetailSection label="Dictionary">
-                <div className="grid gap-3">
-                  {!isDeleteConfirming ? (
-                    <button
-                      className="secondary-button justify-start"
-                      type="button"
-                      onClick={() => {
-                        setDeleteErrorMessage(null);
-                        setIsDeleteConfirming(true);
-                      }}
-                      disabled={isDeleting}
+            {details.examples.length > 0 ? (
+              <DetailSection label="Examples">
+                <div className="rounded-lg border border-token-border bg-transparent px-3">
+                  {details.examples.map((example, index) => (
+                    <p
+                      className="border-t border-token-border py-2.5 font-serifDisplay text-[0.9375rem] font-normal italic leading-7 text-token-muted first:border-t-0"
+                      key={`${details.id}-example-${index}`}
                     >
-                      Delete from dictionary
-                    </button>
-                  ) : (
-                    <div className="rounded-[1rem] border border-red-300/60 bg-red-50/80 p-4 dark:border-red-400/30 dark:bg-red-950/30">
-                      <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                        Delete this word from your dictionary?
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-red-800 dark:text-red-200">
-                        This removes it from normal dictionary browsing.
-                      </p>
-                      <div className="mt-4 flex flex-wrap gap-3">
-                        <button
-                          className="primary-button"
-                          type="button"
-                          onClick={() => void handleDelete()}
-                          disabled={isDeleting}
-                        >
-                          {isDeleting ? "Deleting..." : "Confirm delete"}
-                        </button>
-                        <button
-                          className="secondary-button"
-                          type="button"
-                          onClick={() => {
-                            setDeleteErrorMessage(null);
-                            setIsDeleteConfirming(false);
-                          }}
-                          disabled={isDeleting}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                      {deleteErrorMessage ? (
-                        <p className="mt-3 text-sm leading-6 text-red-800 dark:text-red-200">
-                          {deleteErrorMessage}
-                        </p>
-                      ) : null}
-                    </div>
-                  )}
-                  {!isDeleteConfirming && deleteErrorMessage ? (
-                    <p className="text-sm leading-6 text-red-700 dark:text-red-200">{deleteErrorMessage}</p>
-                  ) : null}
+                      “{example}”
+                    </p>
+                  ))}
                 </div>
               </DetailSection>
+            ) : null}
 
-              {details.language ? (
-                <DetailSection label="Language">
-                  <p>{details.language}</p>
-                </DetailSection>
-              ) : null}
-
-              {details.canonicalForm ? (
-                <DetailSection label="Canonical form">
-                  <p>{details.canonicalForm}</p>
-                </DetailSection>
-              ) : null}
-
-              {details.learningStatus ? (
-                <DetailSection label="Status">
-                  <p>{details.learningStatus}</p>
-                </DetailSection>
-              ) : null}
-            </div>
+            <DetailSection label="Delete" className="border-t border-token-border pt-4">
+              <div className="grid gap-3">
+                {!isDeleteConfirming ? (
+                  <button
+                    className="inline-flex min-h-10 w-fit items-center justify-center rounded-lg px-0 text-sm font-medium text-token-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+                    type="button"
+                    onClick={() => {
+                      setDeleteErrorMessage(null);
+                      setIsDeleteConfirming(true);
+                    }}
+                    disabled={isDeleting}
+                  >
+                    Delete from dictionary
+                  </button>
+                ) : (
+                  <div className="rounded-xl border border-[#E8B7AF] bg-[#FFF4F1] p-4 text-[#8A3328]">
+                    <p className="text-[0.8125rem] font-medium">Delete this word from your dictionary?</p>
+                    <p className="mt-1 text-xs leading-5">
+                      This removes it from normal dictionary browsing.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        className="inline-flex min-h-10 items-center justify-center rounded-lg bg-token-brand px-4 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+                        type="button"
+                        onClick={() => void handleDelete()}
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? "Deleting…" : "Confirm delete"}
+                      </button>
+                      <button
+                        className="inline-flex min-h-10 items-center justify-center rounded-lg border border-token-brand bg-token-surfaceStrong px-4 text-sm font-medium text-token-brand transition hover:bg-token-brandSoft disabled:cursor-not-allowed disabled:opacity-60"
+                        type="button"
+                        onClick={() => {
+                          setDeleteErrorMessage(null);
+                          setIsDeleteConfirming(false);
+                        }}
+                        disabled={isDeleting}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    {deleteErrorMessage ? (
+                      <p className="mt-3 text-xs leading-5">{deleteErrorMessage}</p>
+                    ) : null}
+                  </div>
+                )}
+                {!isDeleteConfirming && deleteErrorMessage ? (
+                  <p className="text-xs leading-5 text-[#8A3328]">{deleteErrorMessage}</p>
+                ) : null}
+              </div>
+            </DetailSection>
           </div>
         </article>
       ) : null}

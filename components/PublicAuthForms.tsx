@@ -25,6 +25,20 @@ type RecoveryValues = {
 
 type FieldErrors<T extends string> = Partial<Record<T, string>>;
 
+const authInputBaseClassName =
+  "w-full rounded-lg border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 placeholder:text-token-muted/45 focus:border-token-brand";
+const authLabelClassName = "grid gap-1 text-xs text-token-muted";
+const authPrimaryButtonClassName =
+  "inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-token-brand px-5 text-sm font-semibold text-white transition duration-200 hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60";
+
+function getAuthInputClassName(hasError: boolean) {
+  return `${authInputBaseClassName} ${
+    hasError
+      ? "border-[#E8B7AF] bg-[#FFFAF8]"
+      : "border-token-border"
+  }`;
+}
+
 function sleep(ms: number) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
@@ -52,7 +66,7 @@ function FieldError({ message }: { message?: string }) {
     return null;
   }
 
-  return <p className="mt-2 text-sm leading-5 text-red-700 dark:text-red-300">{message}</p>;
+  return <p className="text-xs leading-5 text-[#8A3328]">{message}</p>;
 }
 
 function StatusMessage({
@@ -72,8 +86,8 @@ function StatusMessage({
       aria-live={tone === "error" ? "assertive" : "polite"}
       className={
         tone === "error"
-          ? "mt-4 rounded-[1rem] border border-red-300/60 bg-red-50/80 px-4 py-3 text-sm leading-6 text-red-800 dark:border-red-400/30 dark:bg-red-950/30 dark:text-red-200"
-          : "mt-4 rounded-[1rem] border border-token-border bg-token-brandSoft px-4 py-3 text-sm leading-6 text-token-muted"
+          ? "rounded-[0.625rem] border border-[#E8B7AF] bg-[#FFF4F1] px-3.5 py-3 text-[0.8125rem] leading-5 text-[#8A3328]"
+          : "rounded-[0.625rem] border border-token-border bg-[#FEFAF2] px-3.5 py-3 text-[0.8125rem] leading-5 text-token-muted"
       }
     >
       {message}
@@ -169,11 +183,12 @@ export function SignUpForm() {
   }
 
   return (
-    <form className="grid gap-4" onSubmit={handleSubmit} noValidate>
-      <label className="grid gap-2 text-sm text-token-muted">
-        <span>Full name</span>
+    <form className="grid gap-3" onSubmit={handleSubmit} noValidate>
+      <StatusMessage tone={statusTone} message={statusMessage} />
+      <label className={authLabelClassName}>
+        <span>Display name</span>
         <input
-          className="field-input"
+          className={getAuthInputClassName(Boolean(errors.fullName))}
           type="text"
           autoComplete="name"
           placeholder="Your name"
@@ -189,14 +204,14 @@ export function SignUpForm() {
         />
         <FieldError message={errors.fullName} />
       </label>
-      <label className="grid gap-2 text-sm text-token-muted">
+      <label className={authLabelClassName}>
         <span>Email</span>
         <input
-          className="field-input"
+          className={getAuthInputClassName(Boolean(errors.email))}
           type="email"
           autoComplete="email"
           inputMode="email"
-          placeholder="you@example.com"
+          placeholder="you@email.com"
           value={values.email}
           onChange={(event) => {
             const email = event.target.value;
@@ -209,10 +224,10 @@ export function SignUpForm() {
         />
         <FieldError message={errors.email} />
       </label>
-      <label className="grid gap-2 text-sm text-token-muted">
+      <label className={authLabelClassName}>
         <span>Password</span>
         <input
-          className="field-input"
+          className={getAuthInputClassName(Boolean(errors.password))}
           type="text"
           autoComplete="new-password"
           placeholder="Min. 8 characters"
@@ -228,10 +243,10 @@ export function SignUpForm() {
         />
         <FieldError message={errors.password} />
       </label>
-      <label className="grid gap-2 text-sm text-token-muted">
+      <label className={authLabelClassName}>
         <span>Confirm password</span>
         <input
-          className="field-input"
+          className={getAuthInputClassName(Boolean(errors.confirmPassword))}
           type="text"
           autoComplete="new-password"
           placeholder="Repeat password"
@@ -247,10 +262,9 @@ export function SignUpForm() {
         />
         <FieldError message={errors.confirmPassword} />
       </label>
-      <button className="primary-button mt-2 w-full disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={isSubmitting}>
+      <button className={`${authPrimaryButtonClassName} mt-2`} type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Creating account..." : "Get started"}
       </button>
-      <StatusMessage tone={statusTone} message={statusMessage} />
     </form>
   );
 }
@@ -319,15 +333,16 @@ export function SignInForm() {
   }
 
   return (
-    <form className="grid gap-4" onSubmit={handleSubmit} noValidate>
-      <label className="grid gap-2 text-sm text-token-muted">
+    <form className="grid gap-3" onSubmit={handleSubmit} noValidate>
+      <StatusMessage tone={statusTone} message={statusMessage} />
+      <label className={authLabelClassName}>
         <span>Email</span>
         <input
-          className="field-input"
+          className={getAuthInputClassName(Boolean(errors.email))}
           type="email"
           autoComplete="email"
           inputMode="email"
-          placeholder="you@example.com"
+          placeholder="you@email.com"
           value={values.email}
           onChange={(event) => {
             const email = event.target.value;
@@ -340,15 +355,15 @@ export function SignInForm() {
         />
         <FieldError message={errors.email} />
       </label>
-      <label className="grid gap-2 text-sm text-token-muted">
+      <label className={authLabelClassName}>
         <div className="flex items-center justify-between gap-3">
           <span>Password</span>
-          <Link className="text-sm text-token-brand" href="/password-recovery">
+          <Link className="text-xs text-token-brand transition hover:brightness-95" href="/password-recovery">
             Forgot password?
           </Link>
         </div>
         <input
-          className="field-input"
+          className={getAuthInputClassName(Boolean(errors.password))}
           type="text"
           autoComplete="current-password"
           placeholder="Your password"
@@ -364,10 +379,9 @@ export function SignInForm() {
         />
         <FieldError message={errors.password} />
       </label>
-      <button className="primary-button mt-2 w-full disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={isSubmitting}>
+      <button className={`${authPrimaryButtonClassName} mt-2`} type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Signing in..." : "Sign in"}
       </button>
-      <StatusMessage tone={statusTone} message={statusMessage} />
     </form>
   );
 }
@@ -432,15 +446,16 @@ export function PasswordRecoveryForm() {
   }
 
   return (
-    <form className="grid gap-4" onSubmit={handleSubmit} noValidate>
-      <label className="grid gap-2 text-sm text-token-muted">
+    <form className="grid gap-3" onSubmit={handleSubmit} noValidate>
+      <StatusMessage tone={statusTone} message={statusMessage} />
+      <label className={authLabelClassName}>
         <span>Email</span>
         <input
-          className="field-input"
+          className={getAuthInputClassName(Boolean(errors.email))}
           type="email"
           autoComplete="email"
           inputMode="email"
-          placeholder="you@example.com"
+          placeholder="you@email.com"
           value={values.email}
           onChange={(event) => {
             const email = event.target.value;
@@ -459,10 +474,9 @@ export function PasswordRecoveryForm() {
         />
         <FieldError message={errors.email} />
       </label>
-      <button className="primary-button mt-2 w-full disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={isSubmitting}>
+      <button className={`${authPrimaryButtonClassName} mt-2`} type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Sending reset link..." : "Send reset link"}
       </button>
-      <StatusMessage tone={statusTone} message={statusMessage} />
     </form>
   );
 }

@@ -4,6 +4,8 @@ const DAILY_REVIEW_ENABLED_KEY = "daily_review_enabled";
 const DAILY_REVIEW_TARGET_COUNT_KEY = "daily_review_target_count";
 const PREFERRED_REVIEW_TIME_KEY = "preferred_review_time";
 const PREFERRED_TRANSLATION_LANGUAGE_KEY = "preferred_translation_language";
+const DEFAULT_DAILY_REVIEW_ENABLED = false;
+const DEFAULT_DAILY_REVIEW_TARGET_COUNT = 10;
 
 export type LearningPreferences = {
   dailyReviewEnabled: boolean;
@@ -13,6 +15,10 @@ export type LearningPreferences = {
 };
 
 function normalizeBooleanPreference(value: unknown, key: string) {
+  if (value === null || value === undefined) {
+    return DEFAULT_DAILY_REVIEW_ENABLED;
+  }
+
   if (typeof value !== "boolean") {
     throw new Error(`Backend returned an invalid ${key} value.`);
   }
@@ -21,6 +27,10 @@ function normalizeBooleanPreference(value: unknown, key: string) {
 }
 
 function normalizeIntegerPreference(value: unknown, key: string) {
+  if (value === null || value === undefined) {
+    return DEFAULT_DAILY_REVIEW_TARGET_COUNT;
+  }
+
   if (typeof value !== "number" || !Number.isInteger(value)) {
     throw new Error(`Backend returned an invalid ${key} value.`);
   }

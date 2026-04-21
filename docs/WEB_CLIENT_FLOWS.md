@@ -20,7 +20,7 @@ This document covers only:
 - empty dictionary state
 - sign out
 - responsive browser usage on mobile and desktop
-- theme toggle as a presentation-layer behavior across accepted screens
+- light-theme presentation only
 
 It does not define:
 - backend implementation
@@ -84,7 +84,7 @@ The accepted narrow web-client flows are:
 11. Empty dictionary state
 12. Sign out
 13. Responsive use on desktop and mobile browser
-14. Theme toggle as a presentation-layer behavior
+14. Light-theme presentation only
 
 ## Flow 1 — Landing / entry
 
@@ -100,12 +100,12 @@ Give the user a simple browser entry point into the product and route them into 
 1. User opens the web client.
 2. User sees the landing / entry screen.
 3. User chooses either:
-   - sign up
-   - sign in
+   - sign in to `/sign-in`
+   - sign up to `/sign-up`
 
 ### Exit paths
-- to sign up
 - to sign in
+- to sign up
 
 ### Notes
 - Landing is a lightweight entry surface, not a marketing-site expansion.
@@ -377,7 +377,7 @@ Card details are limited to accepted dictionary/card fields:
 ## Flow 9 — Settings
 
 ### Purpose
-Allow the authenticated user to view and update accepted settings through backend-owned preference behavior.
+Allow the authenticated user to view and update accepted settings through backend-owned preference behavior and access the relocated existing Telegram link panel.
 
 ### Entry points
 - from minimal authenticated shell/header
@@ -387,17 +387,24 @@ Allow the authenticated user to view and update accepted settings through backen
 1. Authenticated user opens settings.
 2. Web client requests accepted settings data from the backend.
 3. Backend returns backend-owned settings for the current user.
-4. Web client renders only the accepted settings controls.
-5. User updates `preferred_translation_language`.
+4. Web client renders the accepted settings controls and the relocated existing Telegram link panel.
+5. User updates accepted learning-preference fields:
+   - `preferred_translation_language`
+   - `daily_review_enabled`
+   - `daily_review_target_count`
+   - `preferred_review_time`
 6. Web client sends the update through the accepted backend preferences endpoint.
 7. Backend persists and returns the updated preference state.
 
 ### Success result
-- user can view and update `preferred_translation_language`
+- user can view and update `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, and `preferred_review_time`
+- `daily_review_target_count` uses step `5`, minimum `5`, and maximum `50`
+- user can use the same Telegram status/loading/link-completion/conflict behavior that previously lived on Dictionary List
 - resulting settings state is confirmed by backend-owned behavior
 
 ### Failure result
 - loading or update failure is shown within the settings flow
+- Telegram status or completion failure is shown within the relocated Telegram panel
 - no client-owned settings logic replaces backend validation or persistence
 
 ### Exit paths
@@ -407,10 +414,11 @@ Allow the authenticated user to view and update accepted settings through backen
 
 ### Boundaries
 - This is a narrow settings flow only.
-- It is currently limited to `preferred_translation_language`.
+- Settings preferences remain limited to `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, and `preferred_review_time`.
+- The Telegram panel move is a placement change for existing behavior, not Telegram feature expansion.
 - It does not include profile/account-management expansion.
 - It does not include billing, admin, or security-center flows.
-- It does not include Telegram-linking expansion.
+- It does not include Telegram reassignment, unlinking, provider-management, account-center behavior, or new backend calls.
 - It does not include review preferences UI unless separately accepted later.
 
 ## Flow 10 — Details-first delete
@@ -535,14 +543,14 @@ Responsive behavior does not mean:
 - separate desktop feature set
 - hidden product-scope expansion on one form factor
 
-## Theme-toggle boundary
+## Theme boundary
 
-Theme toggle is in scope as a presentation-layer behavior across the accepted web-client screens.
+The web client uses the light-theme presentation only.
 
 Boundary:
-- it affects visual presentation only
-- it does not expand the accepted settings flow into a broader profile/account-management area
-- it does not create additional product-state complexity in this flow document
+- dark theme support and theme-toggle UI are not part of the current web client
+- appearance settings must not be added without separate explicit acceptance
+- this does not expand the accepted settings flow into a broader profile/account-management area
 
 ## Cache boundary
 
@@ -623,6 +631,6 @@ If a user flow is not required for:
 - narrow details-first delete
 - empty dictionary handling
 - responsive browser usability
-- approved theme handling
+- light-theme presentation
 
 it is out of scope for this web-client workstream unless explicitly accepted later.
