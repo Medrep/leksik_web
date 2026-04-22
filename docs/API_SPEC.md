@@ -344,11 +344,11 @@ Capture a word or phrase through the bot.
 - return ready card
 
 **Output**
-- display text
-- canonical text when applicable
-- translation when `preferred_translation_language` is set
+- display text preserving the requested word or phrase
+- canonical text when the requested form is not already canonical
+- translation field remains in the payload shape and is nullable; it is populated only when `preferred_translation_language` is set and differs from the source language
 - short explanation in the source word language
-- examples
+- exactly three examples in the source word language
 - learning status
 
 ### POST /vocab
@@ -378,7 +378,7 @@ Return user dictionary list.
     {
       "id": "00000000-0000-0000-0000-000000000000",
       "display_text": "prendre une decision",
-      "canonical_text": "prendre une decision",
+      "canonical_text": null,
       "translation": "to make a decision",
       "language": "fr",
       "item_type": "phrase",
@@ -416,12 +416,13 @@ Return full vocabulary item details.
 {
   "id": "00000000-0000-0000-0000-000000000000",
   "display_text": "prendre une decision",
-  "canonical_text": "prendre une decision",
+  "canonical_text": null,
   "translation": "to make a decision",
-  "short_explanation": "Used to express making a choice.",
+  "short_explanation": "Signifie choisir apres reflexion.",
   "examples": [
     "Il faut prendre une decision rapidement.",
-    "Nous devons prendre une decision aujourd'hui."
+    "Nous devons prendre une decision aujourd'hui.",
+    "Elle prefere prendre une decision claire."
   ],
   "language": "fr",
   "item_type": "phrase",
@@ -436,7 +437,7 @@ Return full vocabulary item details.
   - `canonical_text` nullable
   - `translation` nullable
   - `short_explanation` in the source word language
-  - `examples`
+  - exactly three `examples` in the source word language
   - `language` nullable
   - `item_type`
   - `learning_status` nullable
@@ -449,17 +450,36 @@ Return full vocabulary item details.
 ### DELETE /vocab/{item_id}
 Delete an item from the dictionary.
 
+**Auth**
+- required
+
 **Behavior**
 - user-facing action is Delete from dictionary
+- endpoint is authenticated and user-scoped
 - backend performs soft delete rather than immediate physical deletion
 - deleted item disappears from normal dictionary list/details responses
 - deleted item does not participate in review
 - deleted item is not treated as an active learning item
+- deleted row remains physically stored
+- restore flow, hard delete, and deleted-item re-capture semantics are deferred
 
 ## 4. Review
 
 ### POST /review/session
 Create or fetch a review session.
+
+Manual review note:
+- this endpoint represents an explicit user-triggered review path
+- `daily_review_enabled` does not block this manual path
+- scheduled daily review/reminder gating remains separate from manual review session creation
+- manual sessions are stored separately from scheduled-session runtime markers
+- manual review does not update scheduled-review runtime markers
+
+**Current compatibility note**
+- current MCQ session generation excludes soft-deleted items
+- current MCQ session generation excludes items without translation
+- already-created review sessions are stored snapshots and are not rewritten automatically
+- stored review sessions distinguish manual vs scheduled origin for backend traceability
 
 ### GET /review/session/{sessionId}/next
 Return the next question in the session.
@@ -473,8 +493,12 @@ Submit an answer to a question.
 **Behavior**
 - evaluate answer
 - save answer
-- update learning state
+- update learning state when the runtime item remains review-compatible
 - return compact feedback
+
+**Current compatibility note**
+- if the underlying runtime item is now soft-deleted or otherwise no longer review-compatible, the stored question/answer flow still completes
+- in that runtime-safety case, learning-state update is suppressed rather than rewriting the stored session
 
 ### GET /review/session/{sessionId}
 Return session details/history.
@@ -484,8 +508,31 @@ Return session details/history.
 ### GET /preferences/learning
 Return learning preferences.
 
+**Success response**
+`200 OK`
+
+```json
+{
+  "daily_review_enabled": true,
+  "daily_review_target_count": 10,
+  "preferred_review_time": "18:30:00",
+  "preferred_review_timezone": "Europe/Warsaw",
+  "preferred_translation_language": "en"
+}
+```
+
 ### PUT /preferences/learning
 Update learning preferences.
+
+**Input**
+- `daily_review_enabled`
+- `daily_review_target_count`
+- `preferred_review_time` nullable
+- `preferred_review_timezone` nullable
+- `preferred_translation_language` nullable
+
+**Success response**
+- same shape as `GET /preferences/learning`
 
 Current shared settings/preferences note:
 - the same backend settings/preferences endpoints are used by mobile and by the narrow web settings screen where applicable
@@ -497,7 +544,27 @@ Supported MVP fields:
 - daily review enabled
 - daily review target count
 - preferred review time
-- preferred_translation_language
+- preferred review timezone nullable
+- preferred_translation_language nullable
+
+Daily review settings semantics:
+- `daily_review_enabled` gates scheduled daily review / reminder behavior only
+- `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone` apply to the scheduled daily-review path only
+- scheduled-review operational state is stored separately from preferences
+- when update payloads omit `daily_review_target_count`, `preferred_review_time`, or `preferred_review_timezone`, existing stored values are preserved
+
+Scheduled runtime semantics:
+- scheduled daily review currently exists as backend runtime behavior, not as a new public API endpoint
+- scheduled runtime selects due users from learning preferences and `scheduled_review_runtime`
+- scheduled runtime uses `preferred_review_time` and `preferred_review_timezone` to determine each user's due local day/time
+- scheduled runtime uses a short per-user lease to protect repeated ticks and restarts
+- scheduled runtime creates at most one scheduled session per user local day
+- `next_due_at` advances after scheduled-session creation, confirmed existing scheduled session, or no eligible items
+- Telegram delivery is attempted only for newly created scheduled sessions
+- Telegram delivery failure after scheduled-session creation does not allow a second scheduled session for that same user local day
+- manual `/review` remains a separate explicit path and does not update scheduled runtime markers
+- dedicated worker invocation exists as a separate process that runs the scheduled runtime on a 60-second cadence
+- `processing_jobs` integration and generic worker/job orchestration remain deferred
 
 ## 6. Reserved for future phases
 
@@ -516,7 +583,7 @@ Current MVP client boundary remains backend access-model only.
 - Same backend core serves bot, mobile, and narrow web client surfaces
 - Shared settings/preferences behavior should stay aligned across mobile and web where applicable
 - Bot and app must use the same vocabulary capture logic
-- Review answers must update learning state server-side
+- Review answer evaluation stays server-side, and learning-state updates remain server-side when the runtime item is still review-compatible
 - Access checks must happen server-side
 - OCR is planned but out of MVP scope
 - Payment is planned from day one but not fully activated in MVP

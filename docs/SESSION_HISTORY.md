@@ -36,6 +36,162 @@ Short description of the next smallest recommended step.
 
 ---
 
+## 2026-04-22 — Scheduled daily review runtime and worker path accepted
+
+#### Context
+Several narrow backend slices completed the scheduled daily review path from runtime state through worker invocation and production Compose wiring.
+
+#### Decisions
+- Scheduled daily review remains a backend runtime concern, not a new public API endpoint.
+- Manual `/review` remains separate and unchanged.
+- The dedicated worker runs the scheduled runtime core; it does not reimplement due-user selection, lease/claim logic, session creation, or Telegram delivery behavior.
+- Production runtime uses Docker Compose with separate `api` and `worker` services; no systemd backend runtime was introduced.
+- `processing_jobs` and generic worker/job orchestration remain deferred.
+
+#### Work completed
+- Added scheduled review runtime state and traceability with `preferred_review_timezone`, `scheduled_review_runtime`, manual/scheduled session origins, and scheduled local-date markers.
+- Implemented the callable scheduled runtime core for due-user selection, lease/claim handling, local-day idempotency, scheduled session creation, marker advancement, and Telegram delivery attempts for newly created scheduled sessions.
+- Added a dedicated scheduled-review worker entrypoint with a 60-second loop, per-tick failure isolation, and minimal logging.
+- Added production Docker Compose wiring for a separate long-running worker service using the same backend env-file family as `api`.
+
+#### Accepted outputs
+- Scheduled daily review can be invoked by a separate worker process without changing manual review behavior.
+- At most one scheduled session is created per user local day.
+- Telegram delivery is attempted only for newly created scheduled sessions.
+- The production backend Compose runtime now includes separate `api` and `worker` services.
+
+#### Deferred / not now
+- `processing_jobs` integration for scheduled review execution
+- generic worker/job orchestration platform
+- broader retry framework, delivery-attempt history, notification center, or messaging-platform redesign
+- review, Telegram, auth, or proxy redesign
+
+#### Next step
+Run live functional verification with eligible linked users in the production-like runtime and confirm scheduled sessions are created and delivered as expected.
+
+---
+
+## 2026-04-21 — Scheduled daily review runtime core accepted
+
+#### Context
+The scheduled daily review DB foundation was already in place, and the next narrow backend slice added the first real scheduled runtime execution path without implementing a full scheduler daemon or broad worker platform.
+
+#### Decisions
+- Scheduled daily review remains separate from manual `/review`; manual review does not update or block scheduled runtime markers.
+- The anti-duplicate rule is one scheduled review session created per user local day, not one successfully delivered Telegram message.
+- The scheduled runtime exists as a callable backend service; the scheduler daemon/worker invocation loop remains separate follow-up work.
+- `processing_jobs` integration remains deferred for this slice.
+
+#### Work completed
+- Implemented scheduled due-user selection using learning preferences and `scheduled_review_runtime`.
+- Added durable claim/lease handling for repeated ticks and worker restarts.
+- Enforced local-day idempotency for scheduled review session creation.
+- Created scheduled sessions with `origin = scheduled` and `scheduled_review_local_date`.
+- Advanced scheduled runtime markers after new session creation, confirmed existing scheduled session, or no eligible items.
+- Attempted Telegram delivery only for newly created scheduled sessions.
+
+#### Accepted outputs
+- The scheduled daily review DB/runtime foundation now includes `learning_preferences.preferred_review_timezone`, `scheduled_review_runtime`, `review_sessions.origin`, and `review_sessions.scheduled_review_local_date`.
+- The scheduled runtime core can find due users, claim them, create at most one scheduled session per local day, and advance runtime state to avoid duplicate creation or hot-looping.
+- Telegram delivery failure after scheduled session creation does not create another scheduled session for the same local day.
+- Manual `/review` remains an explicit separate path and does not update scheduled runtime markers.
+
+#### Deferred / not now
+- full scheduler daemon or always-running worker invocation loop
+- `processing_jobs` integration for scheduled review execution
+- notification-center or generic messaging-platform design
+- delivery-attempt history table, retry queue redesign, review redesign, Telegram redesign, or auth redesign
+
+#### Next step
+Add the narrow scheduler/worker invocation path that calls the accepted scheduled runtime service, without broadening into a generic job platform.
+
+---
+
+## 2026-04-15 — Backend baseline Slices A-D implemented
+
+#### Context
+The accepted backend/client baseline update moved from docs/planning into narrow backend implementation slices covering shared preferences, optional translation support, backend-owned soft delete, and review compatibility protection.
+
+#### Decisions
+- Slice A remains a shared-preferences foundation only: `preferred_translation_language` was added without redesigning preferences, auth, review, or enrichment behavior beyond storing the setting.
+- Slice B keeps the existing payload shape while making `translation` nullable, keeps `short_explanation` source-language-first, and preserves synchronous ready-card behavior for API and Telegram capture.
+- Slice C uses backend-owned soft delete with a real authenticated user-scoped delete endpoint and treats soft-deleted items as unavailable in normal dictionary read paths.
+- Slice D remains a narrow review compatibility patch only and does not add new review modes, explanation-first review, or stored-session rewrites.
+
+#### Work completed
+- Implemented Slice A:
+  - added nullable `preferred_translation_language` to `learning_preferences`
+  - added an additive migration
+  - updated shared preferences read/update schemas and service logic
+- Implemented Slice B:
+  - made stored `translation` nullable
+  - updated capture/list/details payload contracts to keep `translation` present but nullable
+  - threaded `preferred_translation_language` into enrichment/capture handling
+  - made Telegram ready-card formatting null-safe
+- Implemented Slice C:
+  - added backend-owned soft-delete persistence for vocabulary items
+  - added `DELETE /vocab/{item_id}` as an authenticated user-scoped soft-delete endpoint
+  - excluded soft-deleted items from normal dictionary list/details reads
+- Implemented Slice D:
+  - kept existing MCQ review generation guards for untranslated/deleted items
+  - added a narrow runtime-safe answer-submission compatibility check so no longer active review items do not update learning state
+
+#### Accepted outputs
+- `preferred_translation_language` now exists in the shared backend preferences contract and remains nullable.
+- Translation now remains in the existing payload shape while becoming nullable for capture and dictionary reads.
+- Telegram capture still returns an immediate ready card after the nullable-translation change.
+- Soft delete is now implemented as a real backend-owned authenticated endpoint with non-destructive storage.
+- Soft-deleted items now disappear from normal dictionary list/details reads and are excluded from active review selection paths.
+- Current review flow remains snapshot-based and shared across API and Telegram, with narrow compatibility protection rather than redesign.
+
+#### Deferred / not now
+- lazy refresh or old-card regeneration after preference changes
+- restore flow, hard delete, or deleted-item re-capture semantics
+- explanation-first review or broader MCQ/review redesign
+- billing work, sync/conflict protocol work, or mobile/client implementation
+
+#### Next step
+Use the implemented Slice A-D backend baseline as the source for future client handoff and keep any remaining follow-up work narrow, compatibility-oriented, and separate from these accepted slices.
+
+---
+
+## 2026-04-14 — Client/settings baseline refined in docs
+
+#### Context
+Accepted client/backend baseline changes needed to be reflected across the project docs without changing architecture direction or reopening unrelated scope.
+
+#### Decisions
+- Current mobile scope includes auth, dictionary list, search, language/status filters, card details, manual add, Delete from dictionary, settings, `preferred_translation_language`, and cache-only local storage for dictionary list/details.
+- Current mobile scope excludes manual status change, app-side review UI, OCR, billing UI/flows, advanced analytics, gamification, and social features.
+- Narrow web-client scope now includes a settings screen using the same backend settings/preferences endpoints where applicable.
+- Card explanation remains stored in the source word language, and translation is stored only when `preferred_translation_language` is set.
+- Changing `preferred_translation_language` does not immediately regenerate old cards; older cards refresh lazily later.
+- Delete from dictionary maps to backend soft delete.
+- Client cache remains cache-only; the backend remains the source of truth.
+- Billing remains backend access-model only for now.
+
+#### Work completed
+- Updated the source-of-truth docs to align product, backlog, architecture, API, mobile-baseline, web-scope, and index wording with the accepted baseline.
+- Removed current-scope wording that implied manual status change in the mobile client baseline.
+- Added concise settings, soft-delete, optional-translation, and cache-boundary clarifications where those rules materially affect the docs.
+
+#### Accepted outputs
+- The docs now consistently use `preferred_translation_language`.
+- Current mobile scope no longer implies manual status change.
+- Settings scope is reflected for both mobile and the narrow web client where relevant.
+- Delete behavior is documented as soft delete.
+
+#### Deferred / not now
+- implementation mechanics for lazy card refresh
+- offline-first sync/conflict design
+- billing screens or billing flows
+- app-side review UI
+
+#### Next step
+Use the updated docs baseline for future backend and client work without expanding scope beyond these accepted changes.
+
+---
+
 ## 2026-04-13 — Telegram link-state foundation added
 
 #### Context

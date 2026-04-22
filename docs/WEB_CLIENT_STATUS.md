@@ -87,9 +87,10 @@ Current implementation status
 - Card Details field coverage and behavior remain unchanged: translation, explanation, examples, canonical form, language, and learning status render when returned and allowed by existing data/preferences logic, and the back path to `/dictionary` remains in place.
 - protected settings route and screen are implemented
 - `/settings` uses the refreshed settings presentation with a narrower centered layout, updated typography/spacing, section structure, select styling, save/retry actions, and loading/success/error presentation.
-- `/settings` now includes `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, and `preferred_review_time`.
+- `/settings` now includes `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`.
 - Settings use the existing `GET /preferences/learning` load flow and `PUT /preferences/learning` save flow for all accepted learning-preference fields.
 - `preferred_translation_language` behavior remains unchanged: the existing label/value mapping and null-cleared backend behavior remain intact.
+- `preferred_review_timezone` is loaded and saved through the existing shared preferences flow; nullable or unset timezone values are handled safely and can be saved back as `null`.
 - `daily_review_target_count` uses step `5`, minimum `5`, and maximum `50`; temporarily null daily-review preference values are handled with narrow defensive defaults.
 - the existing Telegram link panel/functionality now lives on `/settings` and is visually integrated into the settings layout.
 - Telegram-related behavior remains unchanged: status loading, link completion, conflict handling, endpoint usage, and backend-owned semantics are unchanged; the code input and `Complete link` action are hidden when status is `linked`.

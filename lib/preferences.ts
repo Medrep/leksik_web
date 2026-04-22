@@ -3,6 +3,7 @@ import { BackendRequestError, fetchBackendJson } from "@/lib/backend-client";
 const DAILY_REVIEW_ENABLED_KEY = "daily_review_enabled";
 const DAILY_REVIEW_TARGET_COUNT_KEY = "daily_review_target_count";
 const PREFERRED_REVIEW_TIME_KEY = "preferred_review_time";
+const PREFERRED_REVIEW_TIMEZONE_KEY = "preferred_review_timezone";
 const PREFERRED_TRANSLATION_LANGUAGE_KEY = "preferred_translation_language";
 const DEFAULT_DAILY_REVIEW_ENABLED = false;
 const DEFAULT_DAILY_REVIEW_TARGET_COUNT = 10;
@@ -11,6 +12,7 @@ export type LearningPreferences = {
   dailyReviewEnabled: boolean;
   dailyReviewTargetCount: number;
   preferredReviewTime: string | null;
+  preferredReviewTimezone: string | null;
   preferredTranslationLanguage: string | null;
 };
 
@@ -71,6 +73,10 @@ function normalizeLearningPreferences(payload: unknown): LearningPreferences {
       record[PREFERRED_REVIEW_TIME_KEY],
       PREFERRED_REVIEW_TIME_KEY,
     ),
+    preferredReviewTimezone: normalizeNullableStringPreference(
+      record[PREFERRED_REVIEW_TIMEZONE_KEY],
+      PREFERRED_REVIEW_TIMEZONE_KEY,
+    ),
     preferredTranslationLanguage: normalizeNullableStringPreference(
       record[PREFERRED_TRANSLATION_LANGUAGE_KEY],
       PREFERRED_TRANSLATION_LANGUAGE_KEY,
@@ -83,6 +89,7 @@ function toLearningPreferencesPayload(preferences: LearningPreferences) {
     [DAILY_REVIEW_ENABLED_KEY]: preferences.dailyReviewEnabled,
     [DAILY_REVIEW_TARGET_COUNT_KEY]: preferences.dailyReviewTargetCount,
     [PREFERRED_REVIEW_TIME_KEY]: preferences.preferredReviewTime,
+    [PREFERRED_REVIEW_TIMEZONE_KEY]: preferences.preferredReviewTimezone,
     [PREFERRED_TRANSLATION_LANGUAGE_KEY]: preferences.preferredTranslationLanguage,
   };
 }

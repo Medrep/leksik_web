@@ -393,12 +393,14 @@ Allow the authenticated user to view and update accepted settings through backen
    - `daily_review_enabled`
    - `daily_review_target_count`
    - `preferred_review_time`
+   - `preferred_review_timezone`
 6. Web client sends the update through the accepted backend preferences endpoint.
 7. Backend persists and returns the updated preference state.
 
 ### Success result
-- user can view and update `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, and `preferred_review_time`
+- user can view and update `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`
 - `daily_review_target_count` uses step `5`, minimum `5`, and maximum `50`
+- nullable or unset `preferred_review_timezone` is handled safely and can be saved back as `null`
 - user can use the same Telegram status/loading/link-completion/conflict behavior that previously lived on Dictionary List
 - resulting settings state is confirmed by backend-owned behavior
 
@@ -414,7 +416,7 @@ Allow the authenticated user to view and update accepted settings through backen
 
 ### Boundaries
 - This is a narrow settings flow only.
-- Settings preferences remain limited to `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, and `preferred_review_time`.
+- Settings preferences remain limited to `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`.
 - The Telegram panel move is a placement change for existing behavior, not Telegram feature expansion.
 - It does not include profile/account-management expansion.
 - It does not include billing, admin, or security-center flows.

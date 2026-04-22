@@ -108,7 +108,7 @@ Source of truth for:
 
 Used only for:
 - structured enrichment
-- translation when `preferred_translation_language` is set
+- translation when `preferred_translation_language` is set and differs from the source language
 - short explanation in the source word language
 - examples
 - canonicalization support
@@ -125,7 +125,7 @@ Not used for:
 Handles:
 - current user context
 - access state
-- review and translation preferences
+- review, timezone, and translation preferences
 - future billing-ready entitlement checks
 
 ### Vocabulary Intake
@@ -138,7 +138,7 @@ Handles:
 Handles:
 - normalization
 - word vs phrase classification
-- translation when `preferred_translation_language` is set
+- translation when `preferred_translation_language` is set and differs from the source language
 - short explanation in the source word language
 - examples
 - vocabulary item creation/update
@@ -163,9 +163,18 @@ Handles:
 Handles:
 - eligible item selection
 - review session generation
+- scheduled/manual review session origin metadata
 - question generation
 - answer evaluation
 - learning state updates
+
+### Scheduled Review Runtime
+Handles:
+- callable backend runtime service for scheduled daily review processing
+- per-user scheduled-review due-time state
+- scheduler claim/lease state
+- scheduled local-date anti-duplicate markers
+- scheduled-session traceability markers
 
 ### Job Processing
 Handles:
@@ -197,6 +206,11 @@ Runs:
 - scheduled tasks
 
 Both can be built from the same repository and the same Docker image with different start commands.
+
+Current scheduled-review implementation note:
+- the backend has a callable scheduled runtime core for due-user selection, lease/claim handling, local-day idempotency, scheduled-session creation, runtime marker advancement, and Telegram delivery attempts for newly created scheduled sessions
+- a dedicated worker invocation loop exists and production Docker Compose wiring runs it as a separate service from the API
+- `processing_jobs` integration and generic worker/job orchestration remain deferred
 
 ## 6. Main end-to-end flows
 
@@ -230,11 +244,12 @@ Both can be built from the same repository and the same Docker image with differ
 5. Response returned to app
 
 ### Daily review generation flow
-1. Scheduler/worker selects users eligible for review
-2. Review module loads eligible learning states
-3. Review session is created
-4. Review questions are generated and stored
-5. Bot can later fetch/send the session
+1. Scheduler/worker invocation calls the scheduled runtime core for users eligible for review
+2. Scheduled Review Runtime claims due users with a short lease
+3. Review module loads eligible learning states
+4. At most one scheduled review session is created per user local day
+5. Runtime markers are advanced so repeated ticks do not duplicate or hot-loop
+6. Telegram delivery is attempted only for newly created scheduled sessions
 
 ### Review answer flow
 1. Bot sends selected answer to backend

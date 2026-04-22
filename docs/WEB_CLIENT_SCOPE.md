@@ -131,6 +131,7 @@ Current accepted settings scope is limited to:
 - `daily_review_enabled`
 - `daily_review_target_count`
 - `preferred_review_time`
+- `preferred_review_timezone`
 
 Settings must use the same backend settings/preferences endpoints as mobile where applicable.
 The relocated Telegram panel keeps its existing backend-owned status/completion behavior and does not expand settings preferences.
@@ -307,6 +308,7 @@ Expected backend/API surface:
 
 Current accepted field to support:
 - `preferred_translation_language`
+- `preferred_review_timezone`
 
 ### Dictionary list and search
 Expected backend/API surface:

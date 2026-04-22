@@ -62,6 +62,16 @@ function toReviewTimeBackendValue(value: string) {
   return trimmedValue ? trimmedValue : null;
 }
 
+function toReviewTimezoneInputValue(value: string | null) {
+  return value ?? "";
+}
+
+function toReviewTimezoneBackendValue(value: string) {
+  const trimmedValue = value.trim();
+
+  return trimmedValue ? trimmedValue : null;
+}
+
 function normalizeDailyReviewTargetCount(value: number) {
   if (!Number.isFinite(value)) {
     return 10;
@@ -123,12 +133,16 @@ export function SettingsScreen() {
   const [draftPreferredTranslationLanguage, setDraftPreferredTranslationLanguage] =
     useState<TranslationLanguageSelectValue>("");
   const [draftPreferredReviewTime, setDraftPreferredReviewTime] = useState("");
+  const [draftPreferredReviewTimezone, setDraftPreferredReviewTimezone] = useState("");
   const [loadedPreferences, setLoadedPreferences] = useState<LearningPreferences | null>(null);
   const [savedDailyReviewEnabled, setSavedDailyReviewEnabled] = useState(false);
   const [savedDailyReviewTargetCount, setSavedDailyReviewTargetCount] = useState(10);
   const [savedPreferredTranslationLanguage, setSavedPreferredTranslationLanguage] =
     useState<TranslationLanguageCode | null>(null);
   const [savedPreferredReviewTime, setSavedPreferredReviewTime] = useState<string | null>(null);
+  const [savedPreferredReviewTimezone, setSavedPreferredReviewTimezone] = useState<string | null>(
+    null,
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -159,15 +173,22 @@ export function SettingsScreen() {
           preferences.dailyReviewTargetCount,
         );
         const nextPreferredReviewTime = toReviewTimeInputValue(preferences.preferredReviewTime);
+        const nextPreferredReviewTimezone = toReviewTimezoneInputValue(
+          preferences.preferredReviewTimezone,
+        );
         setLoadedPreferences(preferences);
         setSavedDailyReviewEnabled(preferences.dailyReviewEnabled);
         setSavedDailyReviewTargetCount(nextDailyReviewTargetCount);
         setSavedPreferredTranslationLanguage(toBackendValue(nextValue));
         setSavedPreferredReviewTime(toReviewTimeBackendValue(nextPreferredReviewTime));
+        setSavedPreferredReviewTimezone(
+          toReviewTimezoneBackendValue(nextPreferredReviewTimezone),
+        );
         setDraftDailyReviewEnabled(preferences.dailyReviewEnabled);
         setDraftDailyReviewTargetCount(nextDailyReviewTargetCount);
         setDraftPreferredTranslationLanguage(nextValue);
         setDraftPreferredReviewTime(nextPreferredReviewTime);
+        setDraftPreferredReviewTimezone(nextPreferredReviewTimezone);
       } catch (error) {
         if (controller.signal.aborted) {
           return;
@@ -217,6 +238,7 @@ export function SettingsScreen() {
           dailyReviewEnabled: draftDailyReviewEnabled,
           dailyReviewTargetCount: draftDailyReviewTargetCount,
           preferredReviewTime: toReviewTimeBackendValue(draftPreferredReviewTime),
+          preferredReviewTimezone: toReviewTimezoneBackendValue(draftPreferredReviewTimezone),
           preferredTranslationLanguage: toBackendValue(draftPreferredTranslationLanguage),
         },
       });
@@ -226,15 +248,20 @@ export function SettingsScreen() {
         updatedPreferences.dailyReviewTargetCount,
       );
       const nextPreferredReviewTime = toReviewTimeInputValue(updatedPreferences.preferredReviewTime);
+      const nextPreferredReviewTimezone = toReviewTimezoneInputValue(
+        updatedPreferences.preferredReviewTimezone,
+      );
       setLoadedPreferences(updatedPreferences);
       setSavedDailyReviewEnabled(updatedPreferences.dailyReviewEnabled);
       setSavedDailyReviewTargetCount(nextDailyReviewTargetCount);
       setSavedPreferredTranslationLanguage(toBackendValue(nextValue));
       setSavedPreferredReviewTime(toReviewTimeBackendValue(nextPreferredReviewTime));
+      setSavedPreferredReviewTimezone(toReviewTimezoneBackendValue(nextPreferredReviewTimezone));
       setDraftDailyReviewEnabled(updatedPreferences.dailyReviewEnabled);
       setDraftDailyReviewTargetCount(nextDailyReviewTargetCount);
       setDraftPreferredTranslationLanguage(nextValue);
       setDraftPreferredReviewTime(nextPreferredReviewTime);
+      setDraftPreferredReviewTimezone(nextPreferredReviewTimezone);
       if (user?.id) {
         invalidateCachedDictionaryReadDataForUser(user.id);
       }
@@ -253,12 +280,14 @@ export function SettingsScreen() {
 
   const normalizedDraftValue = toBackendValue(draftPreferredTranslationLanguage);
   const normalizedDraftReviewTime = toReviewTimeBackendValue(draftPreferredReviewTime);
+  const normalizedDraftReviewTimezone = toReviewTimezoneBackendValue(draftPreferredReviewTimezone);
   const hasUnsavedChanges =
     loadedPreferences !== null &&
     (normalizedDraftValue !== savedPreferredTranslationLanguage ||
       draftDailyReviewEnabled !== savedDailyReviewEnabled ||
       draftDailyReviewTargetCount !== savedDailyReviewTargetCount ||
-      normalizedDraftReviewTime !== savedPreferredReviewTime);
+      normalizedDraftReviewTime !== savedPreferredReviewTime ||
+      normalizedDraftReviewTimezone !== savedPreferredReviewTimezone);
 
   function updateDailyReviewTargetCount(nextValue: number) {
     setDraftDailyReviewTargetCount(normalizeDailyReviewTargetCount(nextValue));
@@ -395,6 +424,25 @@ export function SettingsScreen() {
               value={draftPreferredReviewTime}
               onChange={(event) => {
                 setDraftPreferredReviewTime(event.currentTarget.value);
+                setErrorMessage(null);
+                setSuccessMessage(null);
+              }}
+              disabled={isLoading || isSaving}
+            />
+          </SettingsControlRow>
+
+          <SettingsControlRow
+            label="Preferred review timezone"
+            copy="IANA timezone for the daily review reminder."
+          >
+            <input
+              className="w-full rounded-lg border border-token-border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 focus:border-token-brand disabled:cursor-not-allowed disabled:opacity-60"
+              type="text"
+              name="preferred_review_timezone"
+              value={draftPreferredReviewTimezone}
+              placeholder="Europe/Warsaw"
+              onChange={(event) => {
+                setDraftPreferredReviewTimezone(event.currentTarget.value);
                 setErrorMessage(null);
                 setSuccessMessage(null);
               }}

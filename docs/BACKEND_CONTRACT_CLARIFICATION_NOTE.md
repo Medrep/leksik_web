@@ -204,6 +204,26 @@ Confirmed endpoint role:
 Accepted baseline note:
 - used by the narrow web settings screen where applicable
 - current translation-preference field name is `preferred_translation_language`
+- scheduled-review timezone is represented as `preferred_review_timezone`
+
+Confirmed success shape:
+
+```json
+{
+  "daily_review_enabled": true,
+  "daily_review_target_count": 10,
+  "preferred_review_time": "18:30:00",
+  "preferred_review_timezone": "Europe/Warsaw",
+  "preferred_translation_language": "en"
+}
+```
+
+Field notes:
+- `daily_review_enabled` is required
+- `daily_review_target_count` is required
+- `preferred_review_time` is optional and may be `null`
+- `preferred_review_timezone` is optional and may be `null`
+- `preferred_translation_language` is optional and may be `null`
 
 ### PUT /preferences/learning
 
@@ -212,8 +232,11 @@ Confirmed endpoint role:
 
 Accepted baseline note:
 - used by the narrow web settings screen where applicable
+- accepts the same learning-preference field family returned by `GET /preferences/learning`
 - changing `preferred_translation_language` does not immediately regenerate old cards
 - older cards refresh lazily later
+- `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone` apply to the scheduled daily-review path
+- manual `/review` remains a separate explicit path and is not blocked by `daily_review_enabled`
 
 ## Safe web-client assumptions
 

@@ -384,10 +384,12 @@ Provide one narrow authenticated settings/preferences screen for accepted backen
   - `daily_review_enabled`
   - `daily_review_target_count`
   - `preferred_review_time`
+  - `preferred_review_timezone`
 - existing `preferred_translation_language` label/value mapping and null-cleared backend behavior
 - daily review enabled control
 - daily review target count control using step `5`, minimum `5`, and maximum `50`
 - preferred review time control
+- preferred review timezone control with nullable/unset values handled safely through the shared preferences contract
 - refreshed select control, save action, retry action, and loading/success/error presentation
 - relocated existing Telegram link-status/completion panel, visually integrated into the settings layout
 - existing Telegram status loading, link completion, and conflict presentation without behavior expansion; code input and `Complete link` are hidden when status is `linked`
