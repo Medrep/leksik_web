@@ -304,21 +304,23 @@ export function SettingsScreen() {
       const nextDailyReviewTargetCount = normalizeDailyReviewTargetCount(
         updatedPreferences.dailyReviewTargetCount,
       );
-      const nextPreferredReviewTime = toReviewTimeInputValue(updatedPreferences.preferredReviewTime);
-      const nextPreferredReviewTimezone = toReviewTimezoneInputValue(
+      const savedPreferredReviewTime = toReviewTimeInputValue(
+        updatedPreferences.preferredReviewTime,
+      );
+      const savedPreferredReviewTimezone = toReviewTimezoneInputValue(
         updatedPreferences.preferredReviewTimezone,
       );
       setLoadedPreferences(updatedPreferences);
       setSavedDailyReviewEnabled(updatedPreferences.dailyReviewEnabled);
       setSavedDailyReviewTargetCount(nextDailyReviewTargetCount);
       setSavedPreferredTranslationLanguage(toBackendValue(nextValue));
-      setSavedPreferredReviewTime(toReviewTimeBackendValue(nextPreferredReviewTime));
-      setSavedPreferredReviewTimezone(toReviewTimezoneBackendValue(nextPreferredReviewTimezone));
+      setSavedPreferredReviewTime(toReviewTimeBackendValue(savedPreferredReviewTime));
+      setSavedPreferredReviewTimezone(toReviewTimezoneBackendValue(savedPreferredReviewTimezone));
       setDraftDailyReviewEnabled(updatedPreferences.dailyReviewEnabled);
       setDraftDailyReviewTargetCount(nextDailyReviewTargetCount);
       setDraftPreferredTranslationLanguage(nextValue);
-      setDraftPreferredReviewTime(nextPreferredReviewTime);
-      setDraftPreferredReviewTimezone(nextPreferredReviewTimezone);
+      setDraftPreferredReviewTime(savedPreferredReviewTime);
+      setDraftPreferredReviewTimezone(savedPreferredReviewTimezone);
       if (user?.id) {
         invalidateCachedDictionaryReadDataForUser(user.id);
       }

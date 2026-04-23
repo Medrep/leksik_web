@@ -96,6 +96,16 @@ Current required environment for this slice:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_API_BASE_URL`
 
+## Local build troubleshooting
+
+If `npm run build` hangs or behaves inconsistently because of broken local build/install state, a clean local rebuild may help:
+
+```sh
+rm -rf node_modules .next
+npm install
+npm run build
+```
+
 ## Source docs
 
 Use these files as the repository source of truth for the accepted boundary:
