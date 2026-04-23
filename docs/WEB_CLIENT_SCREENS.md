@@ -295,8 +295,8 @@ Provide the main authenticated web-client screen for browsing and searching the 
 ### Key UI blocks
 - minimal authenticated header/shell
 - product mark / identity
+- settings gear entry to `/settings` in the shared authenticated header before Sign out
 - sign-out action
-- minimal authenticated settings navigation entry
 - dictionary search input
 - dictionary result count or equivalent lightweight list context
 - responsive list/grid of user-scoped dictionary items
@@ -337,6 +337,7 @@ Show the accepted card fields for one user-scoped dictionary item together with 
 ### Key UI blocks
 - back navigation to Dictionary List at `/dictionary`
 - minimal authenticated header pattern if retained by layout
+- settings gear entry to `/settings` when presented in the shared authenticated layout
 - sign-out action when presented in the shared authenticated layout
 - word or phrase
 - compact metadata presentation
@@ -376,6 +377,7 @@ Provide one narrow authenticated settings/preferences screen for accepted backen
 
 ### Key UI blocks
 - minimal authenticated header/shell
+- settings gear entry to `/settings` in the shared authenticated header before Sign out
 - screen title
 - sign-out action when presented in the shared authenticated layout
 - refreshed narrower centered settings presentation with updated spacing, typography, and section structure
@@ -448,6 +450,7 @@ The following screens may share one minimal authenticated layout pattern:
 Shared traits may include:
 - lightweight header
 - product mark
+- settings gear entry linking to `/settings` before Sign out
 - sign-out action
 - light-theme presentation only
 - no explanatory side panels or internal helper chrome

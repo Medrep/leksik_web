@@ -14,7 +14,7 @@ export function PublicLayoutShell({ children }: PublicLayoutShellProps) {
             "radial-gradient(circle at 50% 12%, rgba(202, 128, 28, 0.08), transparent 18rem), radial-gradient(circle at 50% 100%, rgba(202, 128, 28, 0.06), transparent 24rem)",
         }}
       />
-      <main className="relative z-10 mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl items-center justify-center py-8 sm:py-10">
+      <main className="relative z-10 mx-auto flex min-h-[calc(100vh-5rem)] w-full min-w-0 max-w-6xl items-center justify-center py-8 sm:py-10">
         {children}
       </main>
     </div>

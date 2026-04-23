@@ -28,13 +28,13 @@ export function PublicAuthCard({
     <section
       className={
         isFormVariant
-          ? "auth-appear w-full max-w-[25rem] px-0 py-0 sm:rounded-2xl sm:border sm:border-token-border sm:bg-token-surfaceStrong sm:px-8 sm:py-8"
+          ? "auth-appear w-full min-w-0 max-w-full px-0 py-0 sm:max-w-[25rem] sm:rounded-2xl sm:border sm:border-token-border sm:bg-token-surfaceStrong sm:px-8 sm:py-8"
           : isConfirmationVariant
-            ? "auth-appear w-full max-w-[25rem] px-0 py-0 text-center sm:rounded-2xl sm:border sm:border-token-border sm:bg-token-surfaceStrong sm:px-8 sm:py-8"
-            : "auth-appear shell-panel w-full max-w-[30rem] rounded-[1.6rem] px-6 py-7 sm:px-8 sm:py-8"
+            ? "auth-appear w-full min-w-0 max-w-full px-0 py-0 text-center sm:max-w-[25rem] sm:rounded-2xl sm:border sm:border-token-border sm:bg-token-surfaceStrong sm:px-8 sm:py-8"
+            : "auth-appear shell-panel w-full min-w-0 max-w-full rounded-[1.6rem] px-6 py-7 sm:max-w-[30rem] sm:px-8 sm:py-8"
       }
     >
-      <div>
+      <div className="min-w-0 max-w-full">
         {backHref ? (
           <Link
             className={

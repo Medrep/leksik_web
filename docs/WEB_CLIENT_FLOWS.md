@@ -380,7 +380,7 @@ Card details are limited to accepted dictionary/card fields:
 Allow the authenticated user to view and update accepted settings through backend-owned preference behavior and access the relocated existing Telegram link panel.
 
 ### Entry points
-- from minimal authenticated shell/header
+- from the settings gear in the minimal authenticated shell/header
 - from accepted authenticated navigation within dictionary/settings scope
 
 ### Main path

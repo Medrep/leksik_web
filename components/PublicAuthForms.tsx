@@ -26,10 +26,10 @@ type RecoveryValues = {
 type FieldErrors<T extends string> = Partial<Record<T, string>>;
 
 const authInputBaseClassName =
-  "w-full rounded-lg border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 placeholder:text-token-muted/45 focus:border-token-brand";
-const authLabelClassName = "grid gap-1 text-xs text-token-muted";
+  "w-full min-w-0 max-w-full rounded-lg border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 placeholder:text-token-muted/45 focus:border-token-brand";
+const authLabelClassName = "grid min-w-0 max-w-full gap-1 text-xs text-token-muted";
 const authPrimaryButtonClassName =
-  "inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-token-brand px-5 text-sm font-semibold text-white transition duration-200 hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-11 w-full min-w-0 max-w-full items-center justify-center rounded-lg bg-token-brand px-5 text-sm font-semibold text-white transition duration-200 hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60";
 
 function getAuthInputClassName(hasError: boolean) {
   return `${authInputBaseClassName} ${
@@ -66,7 +66,7 @@ function FieldError({ message }: { message?: string }) {
     return null;
   }
 
-  return <p className="text-xs leading-5 text-[#8A3328]">{message}</p>;
+  return <p className="min-w-0 break-words text-xs leading-5 text-[#8A3328]">{message}</p>;
 }
 
 function StatusMessage({
@@ -86,8 +86,8 @@ function StatusMessage({
       aria-live={tone === "error" ? "assertive" : "polite"}
       className={
         tone === "error"
-          ? "rounded-[0.625rem] border border-[#E8B7AF] bg-[#FFF4F1] px-3.5 py-3 text-[0.8125rem] leading-5 text-[#8A3328]"
-          : "rounded-[0.625rem] border border-token-border bg-[#FEFAF2] px-3.5 py-3 text-[0.8125rem] leading-5 text-token-muted"
+          ? "min-w-0 max-w-full break-words rounded-[0.625rem] border border-[#E8B7AF] bg-[#FFF4F1] px-3.5 py-3 text-[0.8125rem] leading-5 text-[#8A3328]"
+          : "min-w-0 max-w-full break-words rounded-[0.625rem] border border-token-border bg-[#FEFAF2] px-3.5 py-3 text-[0.8125rem] leading-5 text-token-muted"
       }
     >
       {message}
@@ -183,7 +183,7 @@ export function SignUpForm() {
   }
 
   return (
-    <form className="grid gap-3" onSubmit={handleSubmit} noValidate>
+    <form className="grid min-w-0 max-w-full gap-3" onSubmit={handleSubmit} noValidate>
       <StatusMessage tone={statusTone} message={statusMessage} />
       <label className={authLabelClassName}>
         <span>Display name</span>
@@ -333,7 +333,7 @@ export function SignInForm() {
   }
 
   return (
-    <form className="grid gap-3" onSubmit={handleSubmit} noValidate>
+    <form className="grid min-w-0 max-w-full gap-3" onSubmit={handleSubmit} noValidate>
       <StatusMessage tone={statusTone} message={statusMessage} />
       <label className={authLabelClassName}>
         <span>Email</span>
@@ -446,7 +446,7 @@ export function PasswordRecoveryForm() {
   }
 
   return (
-    <form className="grid gap-3" onSubmit={handleSubmit} noValidate>
+    <form className="grid min-w-0 max-w-full gap-3" onSubmit={handleSubmit} noValidate>
       <StatusMessage tone={statusTone} message={statusMessage} />
       <label className={authLabelClassName}>
         <span>Email</span>

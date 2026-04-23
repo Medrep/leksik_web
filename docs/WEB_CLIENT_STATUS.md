@@ -28,7 +28,7 @@ Accepted scope implemented
 - responsive browser support for mobile and desktop
 - protected narrow settings route
 - narrow settings screen for accepted learning preferences and the relocated existing Telegram link panel
-- minimal authenticated settings navigation entry
+- minimal authenticated header settings gear entry to `/settings`
 - dictionary rendering aligned to the accepted explanation/translation rule
 - empty dictionary state with a simple CTA inside Telegram-first product boundaries
 - narrow details-first delete flow from Card Details only
@@ -112,6 +112,7 @@ Current implementation status
   - relevant settings changes
 - dark theme support and theme-toggle UI have been removed; the web client now uses the light-theme presentation only.
 - shared public and authenticated layouts are implemented
+- the authenticated shared header now includes a settings gear icon before the existing Sign out action; it links to `/settings`, and sign-out behavior remains unchanged.
 - production build passes
 
 Known confirmed contract points
