@@ -30,6 +30,33 @@ const TRANSLATION_LANGUAGE_OPTIONS: ReadonlyArray<{
   { label: "Polish", value: "pl" },
 ];
 
+const REVIEW_TIMEZONE_OPTIONS: ReadonlyArray<{
+  label: string;
+  value: string;
+}> = [
+  { label: "No timezone", value: "" },
+  { label: "UTC", value: "UTC" },
+  { label: "Europe/Warsaw", value: "Europe/Warsaw" },
+  { label: "Europe/Berlin", value: "Europe/Berlin" },
+  { label: "Europe/London", value: "Europe/London" },
+  { label: "Europe/Paris", value: "Europe/Paris" },
+  { label: "Europe/Rome", value: "Europe/Rome" },
+  { label: "Europe/Madrid", value: "Europe/Madrid" },
+  { label: "Europe/Kyiv", value: "Europe/Kyiv" },
+  { label: "America/New_York", value: "America/New_York" },
+  { label: "America/Chicago", value: "America/Chicago" },
+  { label: "America/Denver", value: "America/Denver" },
+  { label: "America/Los_Angeles", value: "America/Los_Angeles" },
+  { label: "America/Toronto", value: "America/Toronto" },
+  { label: "America/Sao_Paulo", value: "America/Sao_Paulo" },
+  { label: "Asia/Dubai", value: "Asia/Dubai" },
+  { label: "Asia/Kolkata", value: "Asia/Kolkata" },
+  { label: "Asia/Singapore", value: "Asia/Singapore" },
+  { label: "Asia/Tokyo", value: "Asia/Tokyo" },
+  { label: "Asia/Seoul", value: "Asia/Seoul" },
+  { label: "Australia/Sydney", value: "Australia/Sydney" },
+];
+
 function isTranslationLanguageCode(value: string): value is TranslationLanguageCode {
   return TRANSLATION_LANGUAGE_OPTIONS.some(
     (option) => option.value !== "" && option.value === value,
@@ -70,6 +97,25 @@ function toReviewTimezoneBackendValue(value: string) {
   const trimmedValue = value.trim();
 
   return trimmedValue ? trimmedValue : null;
+}
+
+function getReviewTimezoneOptions(selectedValue: string) {
+  const normalizedSelectedValue = toReviewTimezoneBackendValue(selectedValue);
+
+  if (
+    normalizedSelectedValue === null ||
+    REVIEW_TIMEZONE_OPTIONS.some((option) => option.value === normalizedSelectedValue)
+  ) {
+    return REVIEW_TIMEZONE_OPTIONS;
+  }
+
+  return [
+    ...REVIEW_TIMEZONE_OPTIONS,
+    {
+      label: `${normalizedSelectedValue} (current)`,
+      value: normalizedSelectedValue,
+    },
+  ];
 }
 
 function normalizeDailyReviewTargetCount(value: number) {
@@ -226,6 +272,17 @@ export function SettingsScreen() {
       return;
     }
 
+    const nextPreferredReviewTime = toReviewTimeBackendValue(draftPreferredReviewTime);
+    const nextPreferredReviewTimezone = toReviewTimezoneBackendValue(
+      draftPreferredReviewTimezone,
+    );
+
+    if (draftDailyReviewEnabled && (!nextPreferredReviewTime || !nextPreferredReviewTimezone)) {
+      setErrorMessage("Daily review requires both a review time and timezone.");
+      setSuccessMessage(null);
+      return;
+    }
+
     setIsSaving(true);
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -237,8 +294,8 @@ export function SettingsScreen() {
           ...loadedPreferences,
           dailyReviewEnabled: draftDailyReviewEnabled,
           dailyReviewTargetCount: draftDailyReviewTargetCount,
-          preferredReviewTime: toReviewTimeBackendValue(draftPreferredReviewTime),
-          preferredReviewTimezone: toReviewTimezoneBackendValue(draftPreferredReviewTimezone),
+          preferredReviewTime: nextPreferredReviewTime,
+          preferredReviewTimezone: nextPreferredReviewTimezone,
           preferredTranslationLanguage: toBackendValue(draftPreferredTranslationLanguage),
         },
       });
@@ -281,6 +338,7 @@ export function SettingsScreen() {
   const normalizedDraftValue = toBackendValue(draftPreferredTranslationLanguage);
   const normalizedDraftReviewTime = toReviewTimeBackendValue(draftPreferredReviewTime);
   const normalizedDraftReviewTimezone = toReviewTimezoneBackendValue(draftPreferredReviewTimezone);
+  const reviewTimezoneOptions = getReviewTimezoneOptions(draftPreferredReviewTimezone);
   const hasUnsavedChanges =
     loadedPreferences !== null &&
     (normalizedDraftValue !== savedPreferredTranslationLanguage ||
@@ -310,7 +368,7 @@ export function SettingsScreen() {
           Translation, review, and Telegram connection.
         </p>
 
-        <form className="mt-5 grid gap-4" onSubmit={(event) => void handleSubmit(event)}>
+        <form className="mt-5 grid gap-4" onSubmit={(event) => void handleSubmit(event)} noValidate>
           <SettingsControlRow
             label="Preferred translation language"
             copy="Used on dictionary cards."
@@ -422,6 +480,8 @@ export function SettingsScreen() {
               className="w-full rounded-lg border border-token-border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 focus:border-token-brand disabled:cursor-not-allowed disabled:opacity-60"
               type="time"
               value={draftPreferredReviewTime}
+              required={draftDailyReviewEnabled}
+              aria-invalid={draftDailyReviewEnabled && !normalizedDraftReviewTime}
               onChange={(event) => {
                 setDraftPreferredReviewTime(event.currentTarget.value);
                 setErrorMessage(null);
@@ -435,19 +495,25 @@ export function SettingsScreen() {
             label="Preferred review timezone"
             copy="IANA timezone for the daily review reminder."
           >
-            <input
+            <select
               className="w-full rounded-lg border border-token-border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 focus:border-token-brand disabled:cursor-not-allowed disabled:opacity-60"
-              type="text"
               name="preferred_review_timezone"
               value={draftPreferredReviewTimezone}
-              placeholder="Europe/Warsaw"
+              required={draftDailyReviewEnabled}
+              aria-invalid={draftDailyReviewEnabled && !normalizedDraftReviewTimezone}
               onChange={(event) => {
-                setDraftPreferredReviewTimezone(event.currentTarget.value);
+                setDraftPreferredReviewTimezone(event.target.value);
                 setErrorMessage(null);
                 setSuccessMessage(null);
               }}
               disabled={isLoading || isSaving}
-            />
+            >
+              {reviewTimezoneOptions.map((option) => (
+                <option key={option.value || "none"} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </SettingsControlRow>
 
           <div className="grid gap-3">
