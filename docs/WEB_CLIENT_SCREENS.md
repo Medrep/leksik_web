@@ -433,6 +433,7 @@ The following screens may share one common public layout pattern:
 Shared traits may include:
 - centered auth-entry content
 - refreshed form presentation on Sign Up, Sign In, and Password Recovery
+- mobile width containment for auth layout, cards, forms, inputs, buttons, and status/error text so the public auth form surface does not clip or overflow horizontally
 - refreshed confirmation presentation on Sign Up Confirmation and Password Recovery Confirmation
 - lightweight branding
 - consistent navigation/back pattern
@@ -440,6 +441,7 @@ Shared traits may include:
 
 This is a presentation pattern only.
 It does not imply additional product scope.
+It does not change auth routing, validation, fields, submit behavior, or backend integration.
 
 ### Authenticated layout
 The following screens may share one minimal authenticated layout pattern:

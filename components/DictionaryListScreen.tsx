@@ -284,12 +284,7 @@ export function DictionaryListScreen() {
               : `${visibleItems.length} word${visibleItems.length === 1 ? "" : "s"}`}
             {hasQuery ? ` for “${activeQuery}”` : ""}
           </p>
-          <div className="flex items-center gap-4">
-            {isRefreshing ? <p className="text-xs text-token-muted">Updating results…</p> : null}
-            <Link className="text-xs font-medium text-token-brand transition hover:brightness-95" href="/settings">
-              Settings
-            </Link>
-          </div>
+          {isRefreshing ? <p className="text-xs text-token-muted">Updating results…</p> : null}
         </div>
 
         {!showInitialLoading && isLoadingPreferences ? (

@@ -66,7 +66,9 @@ Current implementation status
 - `/` now renders the real Landing / Entry screen with product mark/name, short supporting copy, a primary Sign in action to `/sign-in`, and a secondary Create account action to `/sign-up`.
 - public auth-entry screens are implemented
 - `/sign-up`, `/sign-in`, and `/password-recovery` use the refreshed public auth form presentation for layout, spacing, typography, labels, inline field errors, and auth/config error blocks.
+- mobile width containment for the shared public auth layout/card/form layer has been tightened so `/sign-up`, `/sign-in`, and `/password-recovery` do not force horizontal overflow through inputs, buttons, cards, or status/error text.
 - sign-up now presents the name field with the UI label `Display name`; auth behavior, validation, submit flow, route structure, and backend integration remain unchanged.
+- public auth behavior remains unchanged: routing, validation, fields, submit logic, and backend integration were not changed by the mobile containment fix.
 - `/sign-up/confirmation` and `/password-recovery/confirmation` use the refreshed public confirmation presentation with narrower centered layout, updated icon treatment, supporting copy layout, and button-style actions.
 - confirmation behavior remains unchanged: sign-up confirmation routes to sign in with existing `next` handling, password recovery confirmation links back to sign in and reset-again, and no resend-email implementation or backend call was added.
 - successful sign-up now redirects to a dedicated check-your-email confirmation screen
