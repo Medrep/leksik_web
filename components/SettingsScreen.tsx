@@ -13,30 +13,18 @@ import {
 } from "@/lib/preferences";
 import { invalidateCachedDictionaryReadDataForUser } from "@/lib/vocab-cache";
 
-type TranslationLanguageCode = "en" | "ru" | "pl";
-type TranslationLanguageSelectValue = "" | TranslationLanguageCode;
-type LearningLanguageCode = "en" | "pl" | "ru" | "uk" | "de" | "es" | "pt";
-type LearningLanguageSelectValue = "" | LearningLanguageCode;
+type LanguageCode = "en" | "pl" | "ru" | "uk" | "de" | "es" | "pt";
+type TranslationLanguageSelectValue = "" | LanguageCode;
+type LearningLanguageSelectValue = "" | LanguageCode;
 
 const DAILY_REVIEW_TARGET_STEP = 5;
 const DAILY_REVIEW_TARGET_MIN = 5;
 const DAILY_REVIEW_TARGET_MAX = 50;
 
-const TRANSLATION_LANGUAGE_OPTIONS: ReadonlyArray<{
+const LANGUAGE_OPTIONS: ReadonlyArray<{
   label: string;
-  value: TranslationLanguageSelectValue;
+  value: LanguageCode;
 }> = [
-  { label: "No translation", value: "" },
-  { label: "English", value: "en" },
-  { label: "Russian", value: "ru" },
-  { label: "Polish", value: "pl" },
-];
-
-const LEARNING_LANGUAGE_OPTIONS: ReadonlyArray<{
-  label: string;
-  value: LearningLanguageSelectValue;
-}> = [
-  { label: "Not selected", value: "" },
   { label: "English", value: "en" },
   { label: "Polish", value: "pl" },
   { label: "Russian", value: "ru" },
@@ -45,6 +33,16 @@ const LEARNING_LANGUAGE_OPTIONS: ReadonlyArray<{
   { label: "Spanish", value: "es" },
   { label: "Portuguese", value: "pt" },
 ];
+
+const TRANSLATION_LANGUAGE_OPTIONS: ReadonlyArray<{
+  label: string;
+  value: TranslationLanguageSelectValue;
+}> = [{ label: "No translation", value: "" }, ...LANGUAGE_OPTIONS];
+
+const LEARNING_LANGUAGE_OPTIONS: ReadonlyArray<{
+  label: string;
+  value: LearningLanguageSelectValue;
+}> = [{ label: "Not selected", value: "" }, ...LANGUAGE_OPTIONS];
 
 const REVIEW_TIMEZONE_OPTIONS: ReadonlyArray<{
   label: string;
@@ -73,16 +71,8 @@ const REVIEW_TIMEZONE_OPTIONS: ReadonlyArray<{
   { label: "Australia/Sydney", value: "Australia/Sydney" },
 ];
 
-function isTranslationLanguageCode(value: string): value is TranslationLanguageCode {
-  return TRANSLATION_LANGUAGE_OPTIONS.some(
-    (option) => option.value !== "" && option.value === value,
-  );
-}
-
-function isLearningLanguageCode(value: string): value is LearningLanguageCode {
-  return LEARNING_LANGUAGE_OPTIONS.some(
-    (option) => option.value !== "" && option.value === value,
-  );
+function isLanguageCode(value: string): value is LanguageCode {
+  return LANGUAGE_OPTIONS.some((option) => option.value === value);
 }
 
 function toSelectValue(value: string | null): TranslationLanguageSelectValue {
@@ -90,14 +80,14 @@ function toSelectValue(value: string | null): TranslationLanguageSelectValue {
     return "";
   }
 
-  if (isTranslationLanguageCode(value)) {
+  if (isLanguageCode(value)) {
     return value;
   }
 
   throw new Error("Backend returned an unsupported preferred_translation_language value.");
 }
 
-function toBackendValue(value: TranslationLanguageSelectValue): TranslationLanguageCode | null {
+function toBackendValue(value: TranslationLanguageSelectValue): LanguageCode | null {
   return value === "" ? null : value;
 }
 
@@ -106,7 +96,7 @@ function toLearningLanguageSelectValue(value: string | null): LearningLanguageSe
     return "";
   }
 
-  if (isLearningLanguageCode(value)) {
+  if (isLanguageCode(value)) {
     return value;
   }
 
@@ -224,7 +214,7 @@ export function SettingsScreen() {
   const [savedDailyReviewEnabled, setSavedDailyReviewEnabled] = useState(false);
   const [savedDailyReviewTargetCount, setSavedDailyReviewTargetCount] = useState(10);
   const [savedPreferredTranslationLanguage, setSavedPreferredTranslationLanguage] =
-    useState<TranslationLanguageCode | null>(null);
+    useState<LanguageCode | null>(null);
   const [savedLearningLanguage, setSavedLearningLanguage] = useState<string | null>(null);
   const [savedPreferredReviewTime, setSavedPreferredReviewTime] = useState<string | null>(null);
   const [savedPreferredReviewTimezone, setSavedPreferredReviewTimezone] = useState<string | null>(

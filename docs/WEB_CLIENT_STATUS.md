@@ -92,6 +92,7 @@ Current implementation status
 - `/settings` now includes `learning_language`, `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`.
 - Settings use the existing `GET /preferences/learning` load flow and `PUT /preferences/learning` save flow for all accepted learning-preference fields.
 - `learning_language` is nullable, uses the existing shared learning-preferences endpoints, and is presented only as a hint for interpreting newly captured words or phrases.
+- `learning_language` and `preferred_translation_language` share the same controlled non-null language options: `en`, `pl`, `ru`, `uk`, `de`, `es`, and `pt`.
 - `preferred_translation_language` behavior remains unchanged: the existing label/value mapping and null-cleared backend behavior remain intact.
 - `preferred_review_timezone` is loaded and saved through the existing shared preferences flow; nullable or unset timezone values are handled safely and can be saved back as `null`.
 - `daily_review_target_count` uses step `5`, minimum `5`, and maximum `50`; temporarily null daily-review preference values are handled with narrow defensive defaults.

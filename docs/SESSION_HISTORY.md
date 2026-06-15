@@ -65,6 +65,32 @@ Verify the narrow Settings save/load behavior against the backend contract in no
 
 ---
 
+## 2026-06-15 — Web client settings language options aligned
+
+#### Context
+Production verification confirmed the backend-supported non-null language set for both `preferred_translation_language` and `learning_language`.
+
+#### Decisions
+- Both settings fields use the same controlled non-null language options.
+- Existing nullable UI labels remain field-specific: translation keeps its shipped null option, and learning language keeps `Not selected`.
+- Existing settings load/save behavior and field meanings remain unchanged.
+
+#### Work completed
+- Added missing `uk`, `de`, `es`, and `pt` options to `preferred_translation_language`.
+- Reused one local non-null language options source for both settings fields.
+- Preserved the narrow Settings screen, helper copy, and endpoint usage.
+
+#### Deferred / not now
+- backend changes
+- settings redesign
+- null-label redesign
+- onboarding, review, Telegram, mobile, or billing changes
+
+#### Next step
+Keep future language-option changes aligned with the shared backend preferences contract.
+
+---
+
 ## 2026-04-22 — Scheduled daily review runtime and worker path accepted
 
 #### Context
