@@ -36,6 +36,35 @@ Short description of the next smallest recommended step.
 
 ---
 
+## 2026-06-15 — Web client settings learning language field added
+
+#### Context
+The shared learning-preferences backend contract added nullable `learning_language`, and the narrow web Settings screen needed to expose it without expanding settings scope.
+
+#### Decisions
+- `learning_language` is a hint for interpreting newly captured words and phrases, not a hard language restriction.
+- The web client continues using the existing `GET /preferences/learning` and `PUT /preferences/learning` settings path.
+- Existing `preferred_translation_language` behavior remains translation-output-only and unchanged.
+
+#### Work completed
+- Added `learning_language` to the web learning-preferences model and Settings draft/saved state.
+- Added a nullable `I’m learning` select to `/settings` with controlled language options and `Not selected`.
+- Preserved existing daily review, translation-language, and Telegram settings behavior.
+
+#### Deferred / not now
+- backend changes
+- settings redesign
+- onboarding changes
+- mandatory language selection
+- language mismatch warnings
+- capture-time prompts
+- card regeneration or backfill
+
+#### Next step
+Verify the narrow Settings save/load behavior against the backend contract in normal browser smoke testing.
+
+---
+
 ## 2026-04-22 — Scheduled daily review runtime and worker path accepted
 
 #### Context

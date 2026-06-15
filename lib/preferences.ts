@@ -5,6 +5,7 @@ const DAILY_REVIEW_TARGET_COUNT_KEY = "daily_review_target_count";
 const PREFERRED_REVIEW_TIME_KEY = "preferred_review_time";
 const PREFERRED_REVIEW_TIMEZONE_KEY = "preferred_review_timezone";
 const PREFERRED_TRANSLATION_LANGUAGE_KEY = "preferred_translation_language";
+const LEARNING_LANGUAGE_KEY = "learning_language";
 const DEFAULT_DAILY_REVIEW_ENABLED = false;
 const DEFAULT_DAILY_REVIEW_TARGET_COUNT = 10;
 
@@ -14,6 +15,7 @@ export type LearningPreferences = {
   preferredReviewTime: string | null;
   preferredReviewTimezone: string | null;
   preferredTranslationLanguage: string | null;
+  learningLanguage: string | null;
 };
 
 function normalizeBooleanPreference(value: unknown, key: string) {
@@ -81,6 +83,10 @@ function normalizeLearningPreferences(payload: unknown): LearningPreferences {
       record[PREFERRED_TRANSLATION_LANGUAGE_KEY],
       PREFERRED_TRANSLATION_LANGUAGE_KEY,
     ),
+    learningLanguage: normalizeNullableStringPreference(
+      record[LEARNING_LANGUAGE_KEY],
+      LEARNING_LANGUAGE_KEY,
+    ),
   };
 }
 
@@ -91,6 +97,7 @@ function toLearningPreferencesPayload(preferences: LearningPreferences) {
     [PREFERRED_REVIEW_TIME_KEY]: preferences.preferredReviewTime,
     [PREFERRED_REVIEW_TIMEZONE_KEY]: preferences.preferredReviewTimezone,
     [PREFERRED_TRANSLATION_LANGUAGE_KEY]: preferences.preferredTranslationLanguage,
+    [LEARNING_LANGUAGE_KEY]: preferences.learningLanguage,
   };
 }
 

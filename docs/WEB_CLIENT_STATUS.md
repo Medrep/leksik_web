@@ -89,8 +89,9 @@ Current implementation status
 - Card Details field coverage and behavior remain unchanged: translation, explanation, examples, canonical form, language, and learning status render when returned and allowed by existing data/preferences logic, and the back path to `/dictionary` remains in place.
 - protected settings route and screen are implemented
 - `/settings` uses the refreshed settings presentation with a narrower centered layout, updated typography/spacing, section structure, select styling, save/retry actions, and loading/success/error presentation.
-- `/settings` now includes `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`.
+- `/settings` now includes `learning_language`, `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`.
 - Settings use the existing `GET /preferences/learning` load flow and `PUT /preferences/learning` save flow for all accepted learning-preference fields.
+- `learning_language` is nullable, uses the existing shared learning-preferences endpoints, and is presented only as a hint for interpreting newly captured words or phrases.
 - `preferred_translation_language` behavior remains unchanged: the existing label/value mapping and null-cleared backend behavior remain intact.
 - `preferred_review_timezone` is loaded and saved through the existing shared preferences flow; nullable or unset timezone values are handled safely and can be saved back as `null`.
 - `daily_review_target_count` uses step `5`, minimum `5`, and maximum `50`; temporarily null daily-review preference values are handled with narrow defensive defaults.
@@ -141,6 +142,7 @@ Known confirmed contract points
   - examples
   - learning_status
   - preferred_translation_language
+  - learning_language
 
 Known explicitly provisional contract points
 - exact GET /vocab response envelope and item schema beyond the current accepted narrow field family
