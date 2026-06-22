@@ -310,8 +310,8 @@ export function TelegramCompletionPageShell({
       : "border-token-border bg-[#FEFAF2] text-token-muted";
 
   return (
-    <section className="auth-appear w-full max-w-[25rem] px-0 py-0 text-center sm:rounded-2xl sm:border sm:border-token-border sm:bg-token-surfaceStrong sm:px-8 sm:py-8">
-      <div className="flex flex-col items-center">
+    <section className="auth-appear w-full min-w-0 max-w-[25rem] px-0 py-0 text-center sm:rounded-2xl sm:border sm:border-token-border sm:bg-token-surfaceStrong sm:px-8 sm:py-8">
+      <div className="flex w-full min-w-0 flex-col items-center">
         <StateIcon icon={copy.icon} tone={copy.tone} />
         <p
           className={
@@ -325,7 +325,7 @@ export function TelegramCompletionPageShell({
         <h1 className="mt-2 text-[1.3125rem] font-medium leading-tight text-token-text">{copy.title}</h1>
         <p className="mx-auto mt-2 max-w-[17rem] text-[0.8125rem] leading-6 text-token-muted">{copy.description}</p>
 
-        <div className={`mt-6 w-full rounded-[0.75rem] border px-4 py-3 text-left ${detailClassName}`}>
+        <div className={`mt-6 w-full min-w-0 rounded-[0.75rem] border px-4 py-3 text-left ${detailClassName}`}>
           <p className="text-[0.8125rem] font-medium text-token-text">{copy.detailTitle}</p>
           <p className="mt-1 text-[0.8125rem] leading-5">{detailMessage}</p>
         </div>

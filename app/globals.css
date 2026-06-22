@@ -16,8 +16,10 @@
     --brand-soft: rgba(202, 128, 28, 0.12);
   }
 
-  * {
-    @apply box-border;
+  *,
+  ::before,
+  ::after {
+    @apply box-border min-w-0;
   }
 
   html,
@@ -26,7 +28,7 @@
   }
 
   body {
-    @apply m-0 bg-token-bg text-token-text antialiased;
+    @apply m-0 min-w-0 bg-token-bg text-token-text antialiased;
     background-image:
       radial-gradient(circle at top left, rgba(255, 255, 255, 0.55), transparent 24rem),
       linear-gradient(180deg, var(--bg) 0%, var(--bg-accent) 100%);
@@ -34,6 +36,10 @@
       background-color 180ms ease,
       color 180ms ease,
       background-image 180ms ease;
+  }
+
+  body > * {
+    @apply w-full min-w-0 max-w-full;
   }
 
   a {

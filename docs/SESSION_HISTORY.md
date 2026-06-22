@@ -36,6 +36,25 @@ Short description of the next smallest recommended step.
 
 ---
 
+## 2026-06-22 — Web client root overflow source fixed
+
+#### Context
+Real mobile runtime screenshots still showed horizontal overflow after the earlier responsive containment patch, affecting both public auth and authenticated dictionary surfaces.
+
+#### Work completed
+- Added shared root shrink containment so app boxes and the body width chain stay within the viewport.
+- Tightened protected route panels, Telegram completion shell content, the sign-in footer row, and dictionary result links/cards so flex/grid children cannot force intrinsic-width overflow.
+
+#### Deferred / not now
+- backend changes
+- API, auth, or business-logic changes
+- screen redesigns or new product scope
+
+#### Next step
+Keep future shell rows and grid/list children explicitly shrinkable and full-width within their parent containers.
+
+---
+
 ## 2026-06-22 — Web client shared responsive containment fixed
 
 #### Context

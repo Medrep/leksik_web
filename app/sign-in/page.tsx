@@ -22,7 +22,7 @@ export default function SignInPage({ searchParams }: SignInPageProps) {
         backHref="/"
         backLabel="Back"
         footer={
-          <div className="flex items-center justify-center gap-1">
+          <div className="flex min-w-0 flex-wrap items-center justify-center gap-1">
             <span>No account?</span>
             <Link className="text-token-brand" href={buildHrefWithNext("/sign-up", nextRoute)}>
               Sign up

@@ -24,9 +24,9 @@ function ResultCard({ item }: { item: DictionaryListItem }) {
   const previewText = item.translation ?? item.explanation ?? "Open to view this saved word.";
 
   return (
-    <Link className="min-w-0 max-w-full" href={`/dictionary/${item.id}`}>
-      <article className="min-h-[5.375rem] min-w-0 max-w-full rounded-xl border border-token-border bg-token-surfaceStrong px-4 py-3.5 transition hover:border-token-brand hover:bg-token-surface">
-        <div className="flex min-w-0 items-start justify-between gap-3">
+    <Link className="block w-full min-w-0 max-w-full" href={`/dictionary/${item.id}`}>
+      <article className="min-h-[5.375rem] w-full min-w-0 max-w-full rounded-xl border border-token-border bg-token-surfaceStrong px-4 py-3.5 transition hover:border-token-brand hover:bg-token-surface">
+        <div className="flex w-full min-w-0 items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-[0.9375rem] font-medium leading-6 text-token-text">
               {item.title}

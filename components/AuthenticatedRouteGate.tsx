@@ -14,8 +14,8 @@ function GatePanel({
   action?: React.ReactNode;
 }) {
   return (
-    <section className="shell-panel auth-appear min-w-0 max-w-full rounded-[1.4rem] px-6 py-10 sm:px-8 sm:py-12">
-      <div className="mx-auto flex min-w-0 max-w-xl flex-col items-start gap-4">
+    <section className="shell-panel auth-appear w-full min-w-0 max-w-full rounded-[1.4rem] px-6 py-10 sm:px-8 sm:py-12">
+      <div className="mx-auto flex w-full min-w-0 max-w-xl flex-col items-start gap-4">
         <div className="min-w-0 max-w-full">
           <h1 className="break-words text-3xl font-semibold leading-tight tracking-[-0.03em] text-token-text sm:text-4xl">
             {title}
