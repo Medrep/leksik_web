@@ -165,13 +165,13 @@ function SettingsControlRow({
   label: string;
 }) {
   return (
-    <section className="border-t border-token-border pt-4">
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(11rem,0.42fr)] sm:items-start">
-        <div>
+    <section className="min-w-0 max-w-full border-t border-token-border pt-4">
+      <div className="grid min-w-0 max-w-full gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(11rem,0.42fr)] sm:items-start">
+        <div className="min-w-0 max-w-full">
           <h2 className="text-[0.6875rem] uppercase tracking-[0.16em] text-token-muted/65">
             {label}
           </h2>
-          <p className="mt-1 text-[0.8125rem] leading-5 text-token-muted">{copy}</p>
+          <p className="mt-1 break-words text-[0.8125rem] leading-5 text-token-muted">{copy}</p>
         </div>
         {children}
       </div>
@@ -194,8 +194,8 @@ function SettingsStateMessage({
         : "border-token-border bg-[#FEFAF2] text-token-muted";
 
   return (
-    <div className={`rounded-xl border px-4 py-3 ${toneClassName}`}>
-      <p className="text-[0.8125rem] leading-5">{message}</p>
+    <div className={`min-w-0 max-w-full rounded-xl border px-4 py-3 ${toneClassName}`}>
+      <p className="break-words text-[0.8125rem] leading-5">{message}</p>
     </div>
   );
 }
@@ -398,21 +398,21 @@ export function SettingsScreen() {
   }
 
   return (
-    <section className="auth-appear mx-auto grid w-full max-w-[40rem] gap-6">
-      <div className="flex items-center justify-between gap-3 border-b border-token-border pb-4">
+    <section className="auth-appear mx-auto grid w-full min-w-0 max-w-full gap-6 sm:max-w-[40rem]">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-token-border pb-4">
         <Link className="inline-flex items-center gap-2 text-[0.8125rem] text-token-muted transition hover:text-token-brand" href="/dictionary">
           <span aria-hidden="true">←</span>
           Dictionary
         </Link>
       </div>
 
-      <article>
-        <h1 className="text-[1.3125rem] font-medium leading-tight text-token-text">Settings</h1>
-        <p className="mt-1 text-[0.8125rem] leading-6 text-token-muted">
+      <article className="min-w-0 max-w-full">
+        <h1 className="break-words text-[1.3125rem] font-medium leading-tight text-token-text">Settings</h1>
+        <p className="mt-1 break-words text-[0.8125rem] leading-6 text-token-muted">
           Translation, review, and Telegram connection.
         </p>
 
-        <form className="mt-5 grid gap-4" onSubmit={(event) => void handleSubmit(event)} noValidate>
+        <form className="mt-5 grid min-w-0 max-w-full gap-4" onSubmit={(event) => void handleSubmit(event)} noValidate>
           <SettingsControlRow
             label="I’m learning"
             copy="Used as a hint when interpreting new words. You can still save words from other languages."

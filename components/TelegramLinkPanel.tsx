@@ -206,14 +206,14 @@ export function TelegramLinkPanel() {
   }
 
   return (
-    <section className="border-t border-token-border pt-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="max-w-xl">
+    <section className="min-w-0 max-w-full border-t border-token-border pt-5">
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 max-w-xl">
           <p className="text-[0.6875rem] uppercase tracking-[0.16em] text-token-muted/65">Telegram</p>
           <h2 className={`mt-2 text-[0.9375rem] font-medium leading-6 ${currentCopy.accentClassName}`}>{currentCopy.headline}</h2>
-          <p className="mt-1 text-[0.8125rem] leading-5 text-token-muted">{currentCopy.description}</p>
+          <p className="mt-1 break-words text-[0.8125rem] leading-5 text-token-muted">{currentCopy.description}</p>
           {observedAccount ? (
-            <p className="mt-3 text-[0.8125rem] text-token-muted">Observed account: {observedAccount}</p>
+            <p className="mt-3 break-words text-[0.8125rem] text-token-muted">Observed account: {observedAccount}</p>
           ) : null}
         </div>
 
@@ -227,8 +227,8 @@ export function TelegramLinkPanel() {
       ) : null}
 
       {!isLoading && shouldShowForm ? (
-        <form className="mt-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]" onSubmit={handleSubmit}>
-          <label className="grid gap-2">
+        <form className="mt-5 grid min-w-0 max-w-full gap-3 sm:grid-cols-[minmax(0,1fr)_auto]" onSubmit={handleSubmit}>
+          <label className="grid min-w-0 gap-2">
             <span className="text-[0.8125rem] font-medium text-token-text">One-time Telegram code</span>
             <input
               className="w-full rounded-lg border border-token-border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 focus:border-token-brand disabled:cursor-not-allowed disabled:opacity-60"

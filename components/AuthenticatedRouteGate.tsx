@@ -14,13 +14,13 @@ function GatePanel({
   action?: React.ReactNode;
 }) {
   return (
-    <section className="shell-panel auth-appear rounded-[1.4rem] px-6 py-10 sm:px-8 sm:py-12">
-      <div className="mx-auto flex max-w-xl flex-col items-start gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold leading-tight tracking-[-0.03em] text-token-text sm:text-4xl">
+    <section className="shell-panel auth-appear min-w-0 max-w-full rounded-[1.4rem] px-6 py-10 sm:px-8 sm:py-12">
+      <div className="mx-auto flex min-w-0 max-w-xl flex-col items-start gap-4">
+        <div className="min-w-0 max-w-full">
+          <h1 className="break-words text-3xl font-semibold leading-tight tracking-[-0.03em] text-token-text sm:text-4xl">
             {title}
           </h1>
-          <p className="mt-3 max-w-xl text-base leading-7 text-token-muted">{description}</p>
+          <p className="mt-3 max-w-xl break-words text-base leading-7 text-token-muted">{description}</p>
         </div>
         {action}
       </div>

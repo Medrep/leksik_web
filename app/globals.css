@@ -22,7 +22,7 @@
 
   html,
   body {
-    @apply min-h-full;
+    @apply min-h-full w-full max-w-full;
   }
 
   body {
@@ -38,6 +38,20 @@
 
   a {
     @apply text-inherit no-underline;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    @apply max-w-full;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    @apply min-w-0;
   }
 }
 

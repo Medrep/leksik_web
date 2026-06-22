@@ -10,7 +10,7 @@ import { fetchDictionaryList, getVocabRequestMessage, type DictionaryListItem } 
 
 function LoadingCard() {
   return (
-    <div className="rounded-xl border border-token-border bg-token-brandSoft/40 p-4">
+    <div className="min-w-0 max-w-full rounded-xl border border-token-border bg-token-brandSoft/40 p-4">
       <p className="text-[0.9375rem] font-medium text-token-text">Dictionary loading</p>
       <p className="mt-1 text-[0.8125rem] leading-5 text-token-muted">Loading words…</p>
       <div className="mt-3 h-3 w-2/5 rounded-full bg-token-brandSoft" />
@@ -24,9 +24,9 @@ function ResultCard({ item }: { item: DictionaryListItem }) {
   const previewText = item.translation ?? item.explanation ?? "Open to view this saved word.";
 
   return (
-    <Link href={`/dictionary/${item.id}`}>
-      <article className="min-h-[5.375rem] rounded-xl border border-token-border bg-token-surfaceStrong px-4 py-3.5 transition hover:border-token-brand hover:bg-token-surface">
-        <div className="flex items-start justify-between gap-3">
+    <Link className="min-w-0 max-w-full" href={`/dictionary/${item.id}`}>
+      <article className="min-h-[5.375rem] min-w-0 max-w-full rounded-xl border border-token-border bg-token-surfaceStrong px-4 py-3.5 transition hover:border-token-brand hover:bg-token-surface">
+        <div className="flex min-w-0 items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-[0.9375rem] font-medium leading-6 text-token-text">
               {item.title}
@@ -65,9 +65,9 @@ function StateCard({
         : "border-token-border bg-token-surfaceStrong text-token-muted";
 
   return (
-    <div className={`rounded-xl border p-4 ${toneClassName}`}>
+    <div className={`min-w-0 max-w-full rounded-xl border p-4 ${toneClassName}`}>
       <p className="text-[0.9375rem] font-medium text-token-text">{title}</p>
-      <p className="mt-1 text-[0.8125rem] leading-5">{copy}</p>
+      <p className="mt-1 break-words text-[0.8125rem] leading-5">{copy}</p>
       {action ? <div className="mt-3">{action}</div> : null}
     </div>
   );
@@ -243,9 +243,9 @@ export function DictionaryListScreen() {
   const showEmptyState = !showInitialLoading && !errorMessage && visibleItems.length === 0;
 
   return (
-    <section className="auth-appear grid gap-4">
-      <div className="grid gap-4">
-        <div className="rounded-xl border border-token-border bg-token-surfaceStrong">
+    <section className="auth-appear grid min-w-0 max-w-full gap-4">
+      <div className="grid min-w-0 max-w-full gap-4">
+        <div className="min-w-0 max-w-full rounded-xl border border-token-border bg-token-surfaceStrong">
           <div className="relative flex items-center">
             <svg
               aria-hidden="true"
@@ -259,7 +259,7 @@ export function DictionaryListScreen() {
               <path d="M10 10L12.5 12.5" strokeLinecap="round" />
             </svg>
             <input
-              className="min-h-11 w-full bg-transparent py-2 pl-9 pr-16 text-sm text-token-text outline-none placeholder:text-token-muted/45"
+              className="min-h-11 w-full min-w-0 bg-transparent py-2 pl-9 pr-16 text-sm text-token-text outline-none placeholder:text-token-muted/45"
               type="search"
               placeholder="Search words..."
               value={searchText}
@@ -277,8 +277,8 @@ export function DictionaryListScreen() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs text-token-muted/70">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+          <p className="min-w-0 break-words text-xs text-token-muted/70">
             {showInitialLoading
               ? "Loading words..."
               : `${visibleItems.length} word${visibleItems.length === 1 ? "" : "s"}`}
@@ -296,7 +296,7 @@ export function DictionaryListScreen() {
         ) : null}
 
         {showInitialLoading ? (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid min-w-0 max-w-full gap-3 md:grid-cols-2 xl:grid-cols-3">
             <LoadingCard />
             <LoadingCard />
             <LoadingCard />
@@ -335,7 +335,7 @@ export function DictionaryListScreen() {
         ) : null}
 
         {!showInitialLoading && !errorMessage && visibleItems.length > 0 ? (
-          <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid min-w-0 max-w-full gap-2.5 md:grid-cols-2 xl:grid-cols-3">
             {visibleItems.map((item) => (
               <ResultCard key={item.id} item={item} />
             ))}

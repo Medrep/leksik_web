@@ -27,7 +27,7 @@ export function SignOutButton() {
   }
 
   return (
-    <div className="flex flex-col items-end gap-2">
+    <div className="flex min-w-0 flex-col items-end gap-2">
       <button
         className="text-sm text-token-muted transition hover:text-token-brand disabled:cursor-not-allowed disabled:opacity-60"
         type="button"
@@ -36,7 +36,7 @@ export function SignOutButton() {
       >
         {isSubmitting ? "Signing out..." : "Sign out"}
       </button>
-      {errorMessage ? <p className="max-w-[18rem] text-right text-xs leading-5 text-red-700">{errorMessage}</p> : null}
+      {errorMessage ? <p className="max-w-full break-words text-right text-xs leading-5 text-red-700 sm:max-w-[18rem]">{errorMessage}</p> : null}
     </div>
   );
 }

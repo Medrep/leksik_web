@@ -25,7 +25,7 @@ type CardDetailsScreenProps = {
 
 function LoadingBlock() {
   return (
-    <div className="rounded-xl border border-token-border bg-token-brandSoft/40 p-4">
+    <div className="min-w-0 max-w-full rounded-xl border border-token-border bg-token-brandSoft/40 p-4">
       <p className="text-[0.9375rem] font-medium text-token-text">Card loading</p>
       <div className="mt-3 h-3 w-1/3 rounded-full bg-token-brandSoft" />
       <div className="mt-3 h-3 w-11/12 rounded-full bg-token-brandSoft" />
@@ -44,9 +44,9 @@ function DetailSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className={className}>
+    <section className={`min-w-0 max-w-full ${className}`}>
       <h3 className="text-[0.6875rem] uppercase tracking-[0.16em] text-token-muted/65">{label}</h3>
-      <div className="mt-2 text-[0.9375rem] leading-7 text-token-text">{children}</div>
+      <div className="mt-2 min-w-0 max-w-full break-words text-[0.9375rem] leading-7 text-token-text">{children}</div>
     </section>
   );
 }
@@ -66,9 +66,9 @@ function StatePanel({
       : "border-token-border bg-token-surfaceStrong text-token-muted";
 
   return (
-    <article className={`rounded-xl border p-4 ${toneClassName}`}>
+    <article className={`min-w-0 max-w-full rounded-xl border p-4 ${toneClassName}`}>
       <p className="text-[0.9375rem] font-medium text-token-text">{title}</p>
-      <p className="mt-1 text-[0.8125rem] leading-5">{copy}</p>
+      <p className="mt-1 break-words text-[0.8125rem] leading-5">{copy}</p>
     </article>
   );
 }
@@ -330,8 +330,8 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
   }
 
   return (
-    <section className="auth-appear mx-auto grid w-full max-w-[44rem] gap-6">
-      <div className="flex items-center justify-between gap-3 border-b border-token-border pb-4">
+    <section className="auth-appear mx-auto grid w-full min-w-0 max-w-full gap-6 sm:max-w-[44rem]">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-token-border pb-4">
         <Link className="inline-flex items-center gap-2 text-[0.8125rem] text-token-muted transition hover:text-token-brand" href="/dictionary">
           <span aria-hidden="true">←</span>
           Dictionary
@@ -344,7 +344,7 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
       </div>
 
       {isLoading ? (
-        <article className="grid gap-3">
+        <article className="grid min-w-0 max-w-full gap-3">
           <LoadingBlock />
           <LoadingBlock />
           <LoadingBlock />
@@ -360,29 +360,29 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
       ) : null}
 
       {!isLoading && !isNotFound && !detailsErrorMessage && details ? (
-        <article className="grid gap-6">
-          <div>
-            <h1 className="font-serifDisplay text-[3rem] font-normal leading-none text-token-text sm:text-[4rem]">
+        <article className="grid min-w-0 max-w-full gap-6">
+          <div className="min-w-0 max-w-full">
+            <h1 className="break-words font-serifDisplay text-[3rem] font-normal leading-none text-token-text sm:text-[4rem]">
               {details.title}
             </h1>
             {metadataParts.length > 0 ? (
-              <p className="mt-2 text-[0.8125rem] leading-5 text-token-muted">
+              <p className="mt-2 break-words text-[0.8125rem] leading-5 text-token-muted">
                 {metadataParts.join(" · ")}
               </p>
             ) : null}
             {details.canonicalForm ? (
-              <p className="mt-1 text-[0.6875rem] leading-5 text-token-muted/55">
+              <p className="mt-1 break-words text-[0.6875rem] leading-5 text-token-muted/55">
                 Canonical: {details.canonicalForm}
               </p>
             ) : null}
             {preferencesErrorMessage ? (
-              <p className="mt-3 max-w-md text-xs leading-5 text-token-muted/70">
+              <p className="mt-3 max-w-md break-words text-xs leading-5 text-token-muted/70">
                 Translation preference could not be loaded, so this card is shown without translation.
               </p>
             ) : null}
           </div>
 
-          <div className="grid gap-5 border-t border-token-border pt-5">
+          <div className="grid min-w-0 max-w-full gap-5 border-t border-token-border pt-5">
             {canShowTranslation ? (
               <DetailSection label="Translation">
                 <p className="text-token-text">{details.translation}</p>

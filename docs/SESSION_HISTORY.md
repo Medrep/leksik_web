@@ -36,6 +36,25 @@ Short description of the next smallest recommended step.
 
 ---
 
+## 2026-06-22 — Web client shared responsive containment fixed
+
+#### Context
+Mobile browser verification showed the narrow web client could still let shared public/authenticated layout content become wider than the viewport, clipping the right side of forms or page content.
+
+#### Work completed
+- Tightened shared public and authenticated shells, shared cards, route-gate panels, and core content wrappers with width, shrink, and long-content containment.
+- Removed shell-level horizontal clipping that could hide broken width calculations while keeping controls and content mobile-safe.
+
+#### Deferred / not now
+- backend changes
+- auth or endpoint-contract changes
+- screen redesigns or new product scope
+
+#### Next step
+Keep future screen work inside the shared containment primitives so mobile pages remain viewport-safe.
+
+---
+
 ## 2026-06-15 — Web client settings learning language field added
 
 #### Context
