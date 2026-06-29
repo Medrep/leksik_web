@@ -25,10 +25,13 @@
   html,
   body {
     @apply min-h-full w-full max-w-full;
+    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   body {
     @apply m-0 min-w-0 bg-token-bg text-token-text antialiased;
+    position: relative;
     background-image:
       radial-gradient(circle at top left, rgba(255, 255, 255, 0.55), transparent 24rem),
       linear-gradient(180deg, var(--bg) 0%, var(--bg-accent) 100%);
@@ -40,6 +43,9 @@
 
   body > * {
     @apply w-full min-w-0 max-w-full;
+    inline-size: 100%;
+    max-inline-size: 100%;
+    min-inline-size: 0;
   }
 
   a {

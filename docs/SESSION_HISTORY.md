@@ -36,6 +36,25 @@ Short description of the next smallest recommended step.
 
 ---
 
+## 2026-06-29 — Web client root and shared row overflow trace fixed
+
+#### Context
+Real mobile runtime screenshots still showed horizontal overflow after earlier containment attempts, including sign-in clipping and dictionary list content extending past the viewport.
+
+#### Work completed
+- Added root inline-size containment at `html`, `body`, and body children so the shared app width chain stays viewport-bound.
+- Tightened the shared public/authenticated shells, auth form/card wrappers, authenticated header controls, route-gate panel, and dictionary list grid/card rows so nested content cannot set an oversized intrinsic width.
+
+#### Deferred / not now
+- backend changes
+- API, auth, or business-logic changes
+- screen redesigns or new product scope
+
+#### Next step
+Keep future shared rows and repeated list/card children explicitly full-width and shrinkable inside their parent containers.
+
+---
+
 ## 2026-06-22 — Web client root overflow source fixed
 
 #### Context

@@ -34,7 +34,7 @@ export function PublicAuthCard({
             : "auth-appear shell-panel w-full min-w-0 max-w-full rounded-[1.6rem] px-6 py-7 sm:max-w-[30rem] sm:px-8 sm:py-8"
       }
     >
-      <div className="min-w-0 max-w-full">
+      <div className="w-full min-w-0 max-w-full">
         {backHref ? (
           <Link
             className={
@@ -75,14 +75,14 @@ export function PublicAuthCard({
           {description}
         </p>
 
-        <div className={isFormVariant ? "mt-5 min-w-0 max-w-full" : isConfirmationVariant ? "mt-6 min-w-0 max-w-full" : "mt-8 min-w-0 max-w-full"}>{children}</div>
+        <div className={isFormVariant ? "mt-5 w-full min-w-0 max-w-full" : isConfirmationVariant ? "mt-6 w-full min-w-0 max-w-full" : "mt-8 w-full min-w-0 max-w-full"}>{children}</div>
 
         {footer ? (
           <div
             className={
               isFormVariant || isConfirmationVariant
-                ? "mt-5 min-w-0 max-w-full break-words text-center text-[0.8125rem] text-token-muted"
-                : "mt-5 min-w-0 max-w-full break-words text-center text-sm text-token-muted"
+                ? "mt-5 w-full min-w-0 max-w-full break-words text-center text-[0.8125rem] text-token-muted"
+                : "mt-5 w-full min-w-0 max-w-full break-words text-center text-sm text-token-muted"
             }
           >
             {footer}

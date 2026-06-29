@@ -27,9 +27,9 @@ export function SignOutButton() {
   }
 
   return (
-    <div className="flex min-w-0 flex-col items-end gap-2">
+    <div className="flex min-w-0 max-w-full flex-col items-end gap-2">
       <button
-        className="text-sm text-token-muted transition hover:text-token-brand disabled:cursor-not-allowed disabled:opacity-60"
+        className="max-w-full truncate text-sm text-token-muted transition hover:text-token-brand disabled:cursor-not-allowed disabled:opacity-60"
         type="button"
         onClick={() => void handleClick()}
         disabled={isSubmitting}

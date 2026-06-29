@@ -165,9 +165,9 @@ function SettingsControlRow({
   label: string;
 }) {
   return (
-    <section className="min-w-0 max-w-full border-t border-token-border pt-4">
-      <div className="grid min-w-0 max-w-full gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(11rem,0.42fr)] sm:items-start">
-        <div className="min-w-0 max-w-full">
+    <section className="w-full min-w-0 max-w-full border-t border-token-border pt-4">
+      <div className="grid w-full min-w-0 max-w-full gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(11rem,0.42fr)] sm:items-start">
+        <div className="w-full min-w-0 max-w-full">
           <h2 className="text-[0.6875rem] uppercase tracking-[0.16em] text-token-muted/65">
             {label}
           </h2>
@@ -406,13 +406,13 @@ export function SettingsScreen() {
         </Link>
       </div>
 
-      <article className="min-w-0 max-w-full">
+      <article className="w-full min-w-0 max-w-full">
         <h1 className="break-words text-[1.3125rem] font-medium leading-tight text-token-text">Settings</h1>
         <p className="mt-1 break-words text-[0.8125rem] leading-6 text-token-muted">
           Translation, review, and Telegram connection.
         </p>
 
-        <form className="mt-5 grid min-w-0 max-w-full gap-4" onSubmit={(event) => void handleSubmit(event)} noValidate>
+        <form className="mt-5 grid w-full min-w-0 max-w-full gap-4" onSubmit={(event) => void handleSubmit(event)} noValidate>
           <SettingsControlRow
             label="I’m learning"
             copy="Used as a hint when interpreting new words. You can still save words from other languages."

@@ -27,7 +27,7 @@ type FieldErrors<T extends string> = Partial<Record<T, string>>;
 
 const authInputBaseClassName =
   "w-full min-w-0 max-w-full rounded-lg border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 placeholder:text-token-muted/45 focus:border-token-brand";
-const authLabelClassName = "grid min-w-0 max-w-full gap-1 text-xs text-token-muted";
+const authLabelClassName = "grid w-full min-w-0 max-w-full gap-1 text-xs text-token-muted";
 const authPrimaryButtonClassName =
   "inline-flex min-h-11 w-full min-w-0 max-w-full items-center justify-center rounded-lg bg-token-brand px-5 text-sm font-semibold text-white transition duration-200 hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60";
 
@@ -183,7 +183,7 @@ export function SignUpForm() {
   }
 
   return (
-    <form className="grid min-w-0 max-w-full gap-3" onSubmit={handleSubmit} noValidate>
+    <form className="grid w-full min-w-0 max-w-full gap-3" onSubmit={handleSubmit} noValidate>
       <StatusMessage tone={statusTone} message={statusMessage} />
       <label className={authLabelClassName}>
         <span>Display name</span>
@@ -333,7 +333,7 @@ export function SignInForm() {
   }
 
   return (
-    <form className="grid min-w-0 max-w-full gap-3" onSubmit={handleSubmit} noValidate>
+    <form className="grid w-full min-w-0 max-w-full gap-3" onSubmit={handleSubmit} noValidate>
       <StatusMessage tone={statusTone} message={statusMessage} />
       <label className={authLabelClassName}>
         <span>Email</span>
@@ -356,9 +356,9 @@ export function SignInForm() {
         <FieldError message={errors.email} />
       </label>
       <label className={authLabelClassName}>
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex w-full min-w-0 items-center justify-between gap-3">
           <span>Password</span>
-          <Link className="text-xs text-token-brand transition hover:brightness-95" href="/password-recovery">
+          <Link className="min-w-0 text-right text-xs text-token-brand transition hover:brightness-95" href="/password-recovery">
             Forgot password?
           </Link>
         </div>
@@ -446,7 +446,7 @@ export function PasswordRecoveryForm() {
   }
 
   return (
-    <form className="grid min-w-0 max-w-full gap-3" onSubmit={handleSubmit} noValidate>
+    <form className="grid w-full min-w-0 max-w-full gap-3" onSubmit={handleSubmit} noValidate>
       <StatusMessage tone={statusTone} message={statusMessage} />
       <label className={authLabelClassName}>
         <span>Email</span>

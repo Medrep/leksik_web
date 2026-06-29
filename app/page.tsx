@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="auth-appear min-h-screen bg-token-surfaceStrong px-8 py-10 text-token-text sm:px-10 sm:py-14">
-      <section className="mx-auto flex min-h-[calc(100svh-5rem)] w-full max-w-3xl flex-col justify-between text-center md:min-h-[calc(100vh-7rem)] md:justify-center md:gap-9">
+    <main className="auth-appear min-h-screen w-full min-w-0 max-w-full overflow-x-clip bg-token-surfaceStrong px-8 py-10 text-token-text sm:px-10 sm:py-14">
+      <section className="mx-auto flex min-h-[calc(100svh-5rem)] w-full min-w-0 max-w-3xl flex-col justify-between text-center md:min-h-[calc(100vh-7rem)] md:justify-center md:gap-9">
         <div className="flex flex-1 flex-col items-center justify-center pb-12 md:flex-none md:pb-0">
           <div className="inline-flex h-[3.375rem] w-[3.375rem] items-center justify-center rounded-[0.95rem] border border-token-brand bg-token-brandSoft font-serifDisplay text-[1.55rem] text-token-brand md:h-[3.75rem] md:w-[3.75rem] md:rounded-2xl md:text-[1.75rem]">
             L

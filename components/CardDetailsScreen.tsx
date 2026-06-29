@@ -25,7 +25,7 @@ type CardDetailsScreenProps = {
 
 function LoadingBlock() {
   return (
-    <div className="min-w-0 max-w-full rounded-xl border border-token-border bg-token-brandSoft/40 p-4">
+    <div className="w-full min-w-0 max-w-full rounded-xl border border-token-border bg-token-brandSoft/40 p-4">
       <p className="text-[0.9375rem] font-medium text-token-text">Card loading</p>
       <div className="mt-3 h-3 w-1/3 rounded-full bg-token-brandSoft" />
       <div className="mt-3 h-3 w-11/12 rounded-full bg-token-brandSoft" />
@@ -44,9 +44,9 @@ function DetailSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className={`min-w-0 max-w-full ${className}`}>
+    <section className={`w-full min-w-0 max-w-full ${className}`}>
       <h3 className="text-[0.6875rem] uppercase tracking-[0.16em] text-token-muted/65">{label}</h3>
-      <div className="mt-2 min-w-0 max-w-full break-words text-[0.9375rem] leading-7 text-token-text">{children}</div>
+      <div className="mt-2 w-full min-w-0 max-w-full break-words text-[0.9375rem] leading-7 text-token-text">{children}</div>
     </section>
   );
 }
@@ -344,7 +344,7 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
       </div>
 
       {isLoading ? (
-        <article className="grid min-w-0 max-w-full gap-3">
+        <article className="grid w-full min-w-0 max-w-full gap-3">
           <LoadingBlock />
           <LoadingBlock />
           <LoadingBlock />
@@ -360,8 +360,8 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
       ) : null}
 
       {!isLoading && !isNotFound && !detailsErrorMessage && details ? (
-        <article className="grid min-w-0 max-w-full gap-6">
-          <div className="min-w-0 max-w-full">
+        <article className="grid w-full min-w-0 max-w-full gap-6">
+          <div className="w-full min-w-0 max-w-full">
             <h1 className="break-words font-serifDisplay text-[3rem] font-normal leading-none text-token-text sm:text-[4rem]">
               {details.title}
             </h1>
@@ -382,7 +382,7 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
             ) : null}
           </div>
 
-          <div className="grid min-w-0 max-w-full gap-5 border-t border-token-border pt-5">
+          <div className="grid w-full min-w-0 max-w-full gap-5 border-t border-token-border pt-5">
             {canShowTranslation ? (
               <DetailSection label="Translation">
                 <p className="text-token-text">{details.translation}</p>

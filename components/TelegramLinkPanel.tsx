@@ -206,9 +206,9 @@ export function TelegramLinkPanel() {
   }
 
   return (
-    <section className="min-w-0 max-w-full border-t border-token-border pt-5">
-      <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 max-w-xl">
+    <section className="w-full min-w-0 max-w-full border-t border-token-border pt-5">
+      <div className="flex w-full min-w-0 flex-wrap items-start justify-between gap-3">
+        <div className="w-full min-w-0 max-w-xl">
           <p className="text-[0.6875rem] uppercase tracking-[0.16em] text-token-muted/65">Telegram</p>
           <h2 className={`mt-2 text-[0.9375rem] font-medium leading-6 ${currentCopy.accentClassName}`}>{currentCopy.headline}</h2>
           <p className="mt-1 break-words text-[0.8125rem] leading-5 text-token-muted">{currentCopy.description}</p>
@@ -217,7 +217,7 @@ export function TelegramLinkPanel() {
           ) : null}
         </div>
 
-        {status ? <span className={statusBadgeClassName(status.state)}>{status.state}</span> : null}
+        {status ? <span className={`${statusBadgeClassName(status.state)} max-w-full truncate`}>{status.state}</span> : null}
       </div>
 
       {isLoading ? (
@@ -227,7 +227,7 @@ export function TelegramLinkPanel() {
       ) : null}
 
       {!isLoading && shouldShowForm ? (
-        <form className="mt-5 grid min-w-0 max-w-full gap-3 sm:grid-cols-[minmax(0,1fr)_auto]" onSubmit={handleSubmit}>
+        <form className="mt-5 grid w-full min-w-0 max-w-full gap-3 sm:grid-cols-[minmax(0,1fr)_auto]" onSubmit={handleSubmit}>
           <label className="grid min-w-0 gap-2">
             <span className="text-[0.8125rem] font-medium text-token-text">One-time Telegram code</span>
             <input

@@ -4,7 +4,7 @@ import { SignOutButton } from "./SignOutButton";
 
 export function AuthenticatedLayoutShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen w-full min-w-0 max-w-full px-4 py-5 sm:px-6 sm:py-6">
+    <div className="relative min-h-screen w-full min-w-0 max-w-full overflow-x-clip px-4 py-5 sm:px-6 sm:py-6">
       <div
         className="pointer-events-none absolute inset-0 opacity-90"
         aria-hidden="true"
@@ -13,11 +13,11 @@ export function AuthenticatedLayoutShell({ children }: { children: React.ReactNo
             "radial-gradient(circle at 50% 0%, rgba(202, 128, 28, 0.08), transparent 20rem), linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0))",
         }}
       />
-      <header className="auth-appear relative z-10 mx-auto flex w-full min-w-0 max-w-full items-center justify-between gap-3 border-b border-token-border pb-4 sm:max-w-6xl">
+      <header className="auth-appear relative z-10 mx-auto flex w-full min-w-0 max-w-full items-center justify-between gap-3 self-stretch border-b border-token-border pb-4 sm:max-w-6xl">
         <div className="flex min-w-0 items-center gap-4">
           <BrandMark to="/dictionary" />
         </div>
-        <div className="flex min-w-0 shrink-0 items-center gap-3">
+        <div className="flex min-w-0 max-w-full shrink-0 items-center gap-3">
           <Link
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-token-muted transition hover:bg-token-brandSoft hover:text-token-brand"
             href="/settings"
@@ -41,7 +41,7 @@ export function AuthenticatedLayoutShell({ children }: { children: React.ReactNo
           <SignOutButton />
         </div>
       </header>
-      <main className="relative z-10 mx-auto flex w-full min-w-0 max-w-full flex-col gap-5 py-6 sm:max-w-6xl sm:py-8">
+      <main className="relative z-10 mx-auto flex w-full min-w-0 max-w-full flex-col gap-5 self-stretch py-6 sm:max-w-6xl sm:py-8">
         {children}
       </main>
     </div>
