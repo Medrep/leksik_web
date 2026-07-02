@@ -3,21 +3,32 @@
 import { type Session, type User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useState } from "react";
 import { resolveAuthenticatedEntry } from "@/lib/auth-bootstrap";
+import { BackendRequestError } from "@/lib/backend-client";
 import { appConfig } from "@/lib/config";
+import {
+  fetchLearningPreferences,
+  getPreferencesRequestMessage,
+  type LearningPreferences,
+} from "@/lib/preferences";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { clearAllCachedDictionaryReadData } from "@/lib/vocab-cache";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated" | "error";
 type BootstrapStatus = "idle" | "checking" | "ready" | "error";
+type LanguageSetupStatus = "idle" | "checking" | "complete" | "required" | "error";
 
 type AuthContextValue = {
   access: unknown;
   authStatus: AuthStatus;
   bootstrapError: string | null;
   bootstrapStatus: BootstrapStatus;
+  completeLanguageSetup: (preferences: LearningPreferences) => void;
   hasBrowserAuthConfig: boolean;
   hasBootstrapConfig: boolean;
   isProtectedReady: boolean;
+  languagePreferences: LearningPreferences | null;
+  languageSetupError: string | null;
+  languageSetupStatus: LanguageSetupStatus;
   me: unknown;
   refreshBootstrap: () => Promise<void>;
   session: Session | null;
@@ -27,10 +38,17 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function hasCompleteLanguageSetup(preferences: LearningPreferences) {
+  return Boolean(preferences.learningLanguage && preferences.preferredTranslationLanguage);
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authStatus, setAuthStatus] = useState<AuthStatus>("loading");
   const [bootstrapStatus, setBootstrapStatus] = useState<BootstrapStatus>("idle");
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
+  const [languageSetupStatus, setLanguageSetupStatus] = useState<LanguageSetupStatus>("idle");
+  const [languageSetupError, setLanguageSetupError] = useState<string | null>(null);
+  const [languagePreferences, setLanguagePreferences] = useState<LearningPreferences | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [me, setMe] = useState<unknown>(null);
@@ -59,16 +77,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setMe(null);
       setAccess(null);
       setBootstrapError(null);
+      setLanguageSetupError(null);
+      setLanguagePreferences(null);
 
       if (!nextSession?.access_token) {
         clearAllCachedDictionaryReadData();
         setAuthStatus("unauthenticated");
         setBootstrapStatus("idle");
+        setLanguageSetupStatus("idle");
         return;
       }
 
       setAuthStatus("authenticated");
       setBootstrapStatus("checking");
+      setLanguageSetupStatus("idle");
 
       const result = await resolveAuthenticatedEntry(nextSession.access_token);
 
@@ -80,6 +102,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setMe(result.me);
         setAccess(result.access);
         setBootstrapStatus("ready");
+        setLanguageSetupStatus("checking");
+
+        try {
+          const preferences = await fetchLearningPreferences({
+            accessToken: nextSession.access_token,
+          });
+
+          if (!isActive) {
+            return;
+          }
+
+          setLanguagePreferences(preferences);
+          setLanguageSetupStatus(hasCompleteLanguageSetup(preferences) ? "complete" : "required");
+        } catch (error) {
+          if (!isActive) {
+            return;
+          }
+
+          if (error instanceof BackendRequestError && error.status === 401) {
+            clearAllCachedDictionaryReadData();
+            setAuthStatus("unauthenticated");
+            setBootstrapStatus("idle");
+            setLanguageSetupStatus("idle");
+            setSession(null);
+            setUser(null);
+            setBootstrapError(error.message);
+            await supabase.auth.signOut();
+            return;
+          }
+
+          setLanguageSetupStatus("error");
+          setLanguageSetupError(
+            getPreferencesRequestMessage(error, "Language settings could not be loaded."),
+          );
+        }
         return;
       }
 
@@ -89,6 +146,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setBootstrapStatus("idle");
         setSession(null);
         setUser(null);
+        setLanguageSetupStatus("idle");
+        setLanguagePreferences(null);
         setBootstrapError(result.message);
         await supabase.auth.signOut();
         return;
@@ -142,6 +201,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setBootstrapStatus("checking");
     setBootstrapError(null);
+    setLanguageSetupStatus("idle");
+    setLanguageSetupError(null);
+    setLanguagePreferences(null);
 
     const result = await resolveAuthenticatedEntry(session.access_token);
 
@@ -150,6 +212,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAccess(result.access);
       setBootstrapStatus("ready");
       setAuthStatus("authenticated");
+      setLanguageSetupStatus("checking");
+
+      try {
+        const preferences = await fetchLearningPreferences({
+          accessToken: session.access_token,
+        });
+
+        setLanguagePreferences(preferences);
+        setLanguageSetupStatus(hasCompleteLanguageSetup(preferences) ? "complete" : "required");
+      } catch (error) {
+        if (error instanceof BackendRequestError && error.status === 401) {
+          clearAllCachedDictionaryReadData();
+          setAuthStatus("unauthenticated");
+          setBootstrapStatus("idle");
+          setSession(null);
+          setUser(null);
+          setMe(null);
+          setAccess(null);
+          setLanguageSetupStatus("idle");
+          setLanguagePreferences(null);
+          setBootstrapError(error.message);
+
+          if (appConfig.hasSupabaseBrowserAuth) {
+            const supabase = getSupabaseBrowserClient();
+            await supabase.auth.signOut();
+          }
+
+          return;
+        }
+
+        setLanguageSetupStatus("error");
+        setLanguageSetupError(
+          getPreferencesRequestMessage(error, "Language settings could not be loaded."),
+        );
+      }
       return;
     }
 
@@ -161,6 +258,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setMe(null);
       setAccess(null);
+      setLanguageSetupStatus("idle");
+      setLanguagePreferences(null);
       setBootstrapError(result.message);
 
       if (appConfig.hasSupabaseBrowserAuth) {
@@ -173,6 +272,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setBootstrapStatus("error");
     setBootstrapError(result.message);
+    setLanguageSetupStatus("idle");
   }
 
   async function signOut() {
@@ -198,8 +298,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuthStatus("unauthenticated");
     setBootstrapStatus("idle");
     setBootstrapError(null);
+    setLanguageSetupStatus("idle");
+    setLanguageSetupError(null);
+    setLanguagePreferences(null);
 
     return { error: null };
+  }
+
+  function completeLanguageSetup(preferences: LearningPreferences) {
+    setLanguagePreferences(preferences);
+    setLanguageSetupError(null);
+    setLanguageSetupStatus(hasCompleteLanguageSetup(preferences) ? "complete" : "required");
   }
 
   return (
@@ -209,9 +318,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authStatus,
         bootstrapError,
         bootstrapStatus,
+        completeLanguageSetup,
         hasBrowserAuthConfig: appConfig.hasSupabaseBrowserAuth,
         hasBootstrapConfig: appConfig.hasAuthBootstrapConfig,
-        isProtectedReady: authStatus === "authenticated" && bootstrapStatus === "ready",
+        isProtectedReady:
+          authStatus === "authenticated" &&
+          bootstrapStatus === "ready" &&
+          languageSetupStatus === "complete",
+        languagePreferences,
+        languageSetupError,
+        languageSetupStatus,
         me,
         refreshBootstrap,
         session,

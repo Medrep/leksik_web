@@ -11,28 +11,15 @@ import {
   type LearningPreferences,
   updateLearningPreferences,
 } from "@/lib/preferences";
+import { isLanguageCode, LANGUAGE_OPTIONS, type LanguageCode } from "@/lib/language-options";
 import { invalidateCachedDictionaryReadDataForUser } from "@/lib/vocab-cache";
 
-type LanguageCode = "en" | "pl" | "ru" | "uk" | "de" | "es" | "pt";
 type TranslationLanguageSelectValue = "" | LanguageCode;
 type LearningLanguageSelectValue = "" | LanguageCode;
 
 const DAILY_REVIEW_TARGET_STEP = 5;
 const DAILY_REVIEW_TARGET_MIN = 5;
 const DAILY_REVIEW_TARGET_MAX = 50;
-
-const LANGUAGE_OPTIONS: ReadonlyArray<{
-  label: string;
-  value: LanguageCode;
-}> = [
-  { label: "English", value: "en" },
-  { label: "Polish", value: "pl" },
-  { label: "Russian", value: "ru" },
-  { label: "Ukrainian", value: "uk" },
-  { label: "German", value: "de" },
-  { label: "Spanish", value: "es" },
-  { label: "Portuguese", value: "pt" },
-];
 
 const TRANSLATION_LANGUAGE_OPTIONS: ReadonlyArray<{
   label: string;
@@ -70,10 +57,6 @@ const REVIEW_TIMEZONE_OPTIONS: ReadonlyArray<{
   { label: "Asia/Seoul", value: "Asia/Seoul" },
   { label: "Australia/Sydney", value: "Australia/Sydney" },
 ];
-
-function isLanguageCode(value: string): value is LanguageCode {
-  return LANGUAGE_OPTIONS.some((option) => option.value === value);
-}
 
 function toSelectValue(value: string | null): TranslationLanguageSelectValue {
   if (value === null) {

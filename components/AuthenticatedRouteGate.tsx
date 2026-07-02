@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import { LanguagePreferencesOnboardingGate } from "@/components/LanguagePreferencesOnboardingGate";
 
 function GatePanel({
   title,
@@ -37,7 +38,15 @@ export function AuthenticatedRouteGate({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { authStatus, bootstrapError, bootstrapStatus, hasBootstrapConfig, refreshBootstrap } = useAuth();
+  const {
+    authStatus,
+    bootstrapError,
+    bootstrapStatus,
+    hasBootstrapConfig,
+    languageSetupError,
+    languageSetupStatus,
+    refreshBootstrap,
+  } = useAuth();
   const configDescription = resourceLabel
     ? `Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and NEXT_PUBLIC_API_BASE_URL before opening your ${resourceLabel}.`
     : "Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and NEXT_PUBLIC_API_BASE_URL before opening the dictionary.";
@@ -63,7 +72,11 @@ export function AuthenticatedRouteGate({
     );
   }
 
-  if (authStatus === "loading" || (authStatus === "authenticated" && bootstrapStatus === "checking")) {
+  if (
+    authStatus === "loading" ||
+    (authStatus === "authenticated" &&
+      (bootstrapStatus === "checking" || languageSetupStatus === "checking"))
+  ) {
     return (
       <GatePanel
         title={loadingTitle}
@@ -93,6 +106,24 @@ export function AuthenticatedRouteGate({
         }
       />
     );
+  }
+
+  if (languageSetupStatus === "error") {
+    return (
+      <GatePanel
+        title="We couldn't load your language settings"
+        description={languageSetupError ?? "The current language settings couldn't be confirmed."}
+        action={
+          <button className="secondary-button" type="button" onClick={() => void refreshBootstrap()}>
+            Try again
+          </button>
+        }
+      />
+    );
+  }
+
+  if (languageSetupStatus === "required") {
+    return <LanguagePreferencesOnboardingGate />;
   }
 
   return <>{children}</>;

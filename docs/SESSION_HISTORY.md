@@ -36,6 +36,26 @@ Short description of the next smallest recommended step.
 
 ---
 
+## 2026-07-02 — Web client onboarding language gate added
+
+#### Context
+New authenticated users need to choose both language preferences earlier while keeping Settings and the existing preferences endpoint as the source of truth.
+
+#### Work completed
+- Added a narrow protected-entry language gate shown only when `learning_language` or `preferred_translation_language` is missing.
+- Reused the existing `/preferences/learning` fetch/update flow and shared Settings language options for both fields.
+- Preserved normal app entry after successful save and kept Settings as the later editing surface.
+
+#### Deferred / not now
+- backend changes
+- new onboarding framework or progress system
+- capture, enrichment, review, Telegram, billing, or Settings redesign changes
+
+#### Next step
+Smoke test new-account entry with missing language preferences and verify Settings shows the saved values afterward.
+
+---
+
 ## 2026-06-29 — Web client root and shared row overflow trace fixed
 
 #### Context
