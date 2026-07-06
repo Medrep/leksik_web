@@ -36,6 +36,26 @@ Short description of the next smallest recommended step.
 
 ---
 
+## 2026-07-06 — Web client Settings account deletion added
+
+#### Context
+Backend account deletion is deployed, and the narrow web Settings screen needed self-service deletion through the fixed frontend-only contract.
+
+#### Work completed
+- Added a bottom-of-Settings Danger zone with a destructive account deletion button and confirmation modal requiring exact `DELETE`.
+- Wired the modal to `POST /account/delete` with only `{ "confirmation": "DELETE" }`, then reused sign-out/local cleanup and redirected to the public entry route after success or deletion-boundary 401.
+- Kept existing Settings preference load/save, Telegram panel behavior, backend contract, and Supabase Auth deletion out of scope.
+
+#### Deferred / not now
+- backend changes
+- Supabase Auth deletion
+- admin deletion, Telegram deletion command, restore, data export, billing, or broader account-management UI
+
+#### Next step
+Smoke test the Settings deletion modal and successful redirect against the deployed backend.
+
+---
+
 ## 2026-07-02 — Web client onboarding language gate added
 
 #### Context

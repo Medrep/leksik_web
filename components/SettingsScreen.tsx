@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { TelegramLinkPanel } from "@/components/TelegramLinkPanel";
+import { deleteAccount } from "@/lib/account";
 import { BackendRequestError } from "@/lib/backend-client";
 import {
   fetchLearningPreferences,
@@ -20,6 +22,8 @@ type LearningLanguageSelectValue = "" | LanguageCode;
 const DAILY_REVIEW_TARGET_STEP = 5;
 const DAILY_REVIEW_TARGET_MIN = 5;
 const DAILY_REVIEW_TARGET_MAX = 50;
+const ACCOUNT_DELETE_CONFIRMATION = "DELETE";
+const ACCOUNT_DELETE_ERROR_MESSAGE = "Could not delete your account. Please try again.";
 
 const TRANSLATION_LANGUAGE_OPTIONS: ReadonlyArray<{
   label: string;
@@ -184,7 +188,8 @@ function SettingsStateMessage({
 }
 
 export function SettingsScreen() {
-  const { refreshBootstrap, session, user } = useAuth();
+  const router = useRouter();
+  const { clearAuthenticatedState, refreshBootstrap, session, signOut, user } = useAuth();
   const [draftDailyReviewEnabled, setDraftDailyReviewEnabled] = useState(false);
   const [draftDailyReviewTargetCount, setDraftDailyReviewTargetCount] = useState(10);
   const [draftPreferredTranslationLanguage, setDraftPreferredTranslationLanguage] =
@@ -208,6 +213,10 @@ export function SettingsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   useEffect(() => {
     if (!session?.access_token) {
@@ -378,6 +387,62 @@ export function SettingsScreen() {
     setDraftDailyReviewTargetCount(normalizeDailyReviewTargetCount(nextValue));
     setErrorMessage(null);
     setSuccessMessage(null);
+  }
+
+  async function finishDeletedAccountSession() {
+    const result = await signOut();
+
+    if (result.error) {
+      clearAuthenticatedState();
+    }
+
+    router.replace("/");
+  }
+
+  function openDeleteDialog() {
+    setDeleteConfirmation("");
+    setDeleteErrorMessage(null);
+    setIsDeleteDialogOpen(true);
+  }
+
+  function closeDeleteDialog() {
+    if (isDeletingAccount) {
+      return;
+    }
+
+    setIsDeleteDialogOpen(false);
+    setDeleteConfirmation("");
+    setDeleteErrorMessage(null);
+  }
+
+  async function handleDeleteAccountSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (isDeletingAccount || deleteConfirmation !== ACCOUNT_DELETE_CONFIRMATION) {
+      return;
+    }
+
+    if (!session?.access_token) {
+      await finishDeletedAccountSession();
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    setDeleteErrorMessage(null);
+
+    try {
+      await deleteAccount({ accessToken: session.access_token });
+      await finishDeletedAccountSession();
+    } catch (error) {
+      if (error instanceof BackendRequestError && error.status === 401) {
+        await finishDeletedAccountSession();
+        return;
+      }
+
+      setDeleteErrorMessage(ACCOUNT_DELETE_ERROR_MESSAGE);
+    } finally {
+      setIsDeletingAccount(false);
+    }
   }
 
   return (
@@ -600,6 +665,104 @@ export function SettingsScreen() {
       </article>
 
       <TelegramLinkPanel />
+
+      <section className="w-full min-w-0 max-w-full border-t border-[#E8B7AF] pt-5">
+        <div className="grid w-full min-w-0 max-w-full gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+          <div className="w-full min-w-0 max-w-full">
+            <h2 className="text-[0.6875rem] uppercase tracking-[0.16em] text-[#9A3C32]">
+              Danger zone
+            </h2>
+            <p className="mt-1 break-words text-[0.8125rem] leading-5 text-token-muted">
+              Delete your account and permanently remove your saved vocabulary, review history,
+              learning progress, and Telegram connection.
+            </p>
+          </div>
+          <button
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#C94234] bg-[#FFF4F1] px-5 text-sm font-semibold text-[#9A2F25] transition hover:bg-[#FFE7E1] disabled:cursor-not-allowed disabled:opacity-60"
+            type="button"
+            onClick={openDeleteDialog}
+            disabled={isDeletingAccount}
+          >
+            Delete account
+          </button>
+        </div>
+      </section>
+
+      {isDeleteDialogOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex min-w-0 items-center justify-center bg-black/35 px-4 py-6"
+          role="presentation"
+        >
+          <div
+            aria-labelledby="delete-account-dialog-title"
+            aria-modal="true"
+            className="w-full max-w-lg rounded-xl border border-[#E8B7AF] bg-token-surfaceStrong p-5 shadow-shell sm:p-6"
+            role="dialog"
+          >
+            <form className="grid gap-4" onSubmit={(event) => void handleDeleteAccountSubmit(event)}>
+              <div className="grid gap-2">
+                <h2
+                  className="break-words text-lg font-semibold leading-tight text-token-text"
+                  id="delete-account-dialog-title"
+                >
+                  Delete your Leksik account?
+                </h2>
+                <p className="break-words text-[0.875rem] leading-6 text-token-muted">
+                  This will permanently delete your Leksik account and remove your saved
+                  vocabulary, submitted words and phrases, generated cards, review history,
+                  learning progress, and Telegram connection from active systems.
+                </p>
+                <p className="break-words text-[0.875rem] leading-6 text-token-muted">
+                  This action cannot be undone.
+                </p>
+                <p className="break-words text-[0.8125rem] leading-5 text-token-muted">
+                  Some limited technical records may be retained where necessary for security,
+                  legal compliance, abuse prevention, audit integrity, or backup retention, as
+                  described in our Privacy Policy.
+                </p>
+              </div>
+
+              <label className="grid gap-2 text-[0.8125rem] font-medium text-token-text">
+                Type DELETE to confirm
+                <input
+                  autoComplete="off"
+                  className="w-full rounded-lg border border-token-border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 focus:border-[#C94234] disabled:cursor-not-allowed disabled:opacity-60"
+                  value={deleteConfirmation}
+                  onChange={(event) => {
+                    setDeleteConfirmation(event.currentTarget.value);
+                    setDeleteErrorMessage(null);
+                  }}
+                  disabled={isDeletingAccount}
+                />
+              </label>
+
+              {deleteErrorMessage ? (
+                <SettingsStateMessage tone="error" message={deleteErrorMessage} />
+              ) : null}
+
+              <div className="flex flex-wrap justify-end gap-3 border-t border-token-border pt-4">
+                <button
+                  className="inline-flex min-h-10 items-center justify-center rounded-lg border border-token-border bg-transparent px-5 text-sm font-medium text-token-muted transition hover:bg-token-brandSoft disabled:cursor-not-allowed disabled:opacity-60"
+                  type="button"
+                  onClick={closeDeleteDialog}
+                  disabled={isDeletingAccount}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#C94234] px-5 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+                  type="submit"
+                  disabled={
+                    isDeletingAccount || deleteConfirmation !== ACCOUNT_DELETE_CONFIRMATION
+                  }
+                >
+                  {isDeletingAccount ? "Deleting..." : "Delete account permanently"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

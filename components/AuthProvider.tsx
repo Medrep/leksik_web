@@ -22,6 +22,7 @@ type AuthContextValue = {
   authStatus: AuthStatus;
   bootstrapError: string | null;
   bootstrapStatus: BootstrapStatus;
+  clearAuthenticatedState: () => void;
   completeLanguageSetup: (preferences: LearningPreferences) => void;
   hasBrowserAuthConfig: boolean;
   hasBootstrapConfig: boolean;
@@ -53,6 +54,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [me, setMe] = useState<unknown>(null);
   const [access, setAccess] = useState<unknown>(null);
+
+  function clearAuthenticatedState() {
+    clearAllCachedDictionaryReadData();
+    setSession(null);
+    setUser(null);
+    setMe(null);
+    setAccess(null);
+    setAuthStatus("unauthenticated");
+    setBootstrapStatus("idle");
+    setBootstrapError(null);
+    setLanguageSetupStatus("idle");
+    setLanguageSetupError(null);
+    setLanguagePreferences(null);
+  }
 
   useEffect(() => {
     if (!appConfig.hasSupabaseBrowserAuth) {
@@ -290,17 +305,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: error.message };
     }
 
-    clearAllCachedDictionaryReadData();
-    setSession(null);
-    setUser(null);
-    setMe(null);
-    setAccess(null);
-    setAuthStatus("unauthenticated");
-    setBootstrapStatus("idle");
-    setBootstrapError(null);
-    setLanguageSetupStatus("idle");
-    setLanguageSetupError(null);
-    setLanguagePreferences(null);
+    clearAuthenticatedState();
 
     return { error: null };
   }
@@ -318,6 +323,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authStatus,
         bootstrapError,
         bootstrapStatus,
+        clearAuthenticatedState,
         completeLanguageSetup,
         hasBrowserAuthConfig: appConfig.hasSupabaseBrowserAuth,
         hasBootstrapConfig: appConfig.hasAuthBootstrapConfig,
