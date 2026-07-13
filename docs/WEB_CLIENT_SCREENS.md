@@ -382,7 +382,9 @@ Provide one narrow authenticated settings/preferences screen for accepted backen
 - sign-out action when presented in the shared authenticated layout
 - refreshed narrower centered settings presentation with updated spacing, typography, and section structure
 - accepted backend-backed settings fields:
+  - `learning_language`
   - `preferred_translation_language`
+  - `ui_locale`
   - `daily_review_enabled`
   - `daily_review_target_count`
   - `preferred_review_time`
@@ -396,6 +398,8 @@ Provide one narrow authenticated settings/preferences screen for accepted backen
 - relocated existing Telegram link-status/completion panel, visually integrated into the settings layout
 - existing Telegram status loading, link completion, and conflict presentation without behavior expansion; code input and `Complete link` are hidden when status is `linked`
 - submit/apply action only when required by the accepted backend contract
+- complete Settings-owned message coverage in `en`, `pl`, `ru`, and `uk`, including preference controls, Telegram states/actions, generic errors, loading/success states, accessibility labels, and account deletion
+- immediate Settings-language switching only after the backend-confirmed preferences response is received
 
 ### Entry paths
 - from Dictionary List when settings navigation is present in the minimal authenticated layout
@@ -418,6 +422,8 @@ Provide one narrow authenticated settings/preferences screen for accepted backen
 - capture or review actions
 - support/operations tooling
 - arbitrary web-only preferences outside the backend settings/preferences contract
+- localization of public/auth, dictionary, onboarding, Telegram completion, or shared authenticated-shell content
+- dynamic `<html lang>`, locale-prefixed routes, server locale cookies, or request-based locale propagation
 
 ## Shared layout behavior
 

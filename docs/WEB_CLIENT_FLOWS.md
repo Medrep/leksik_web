@@ -389,13 +389,16 @@ Allow the authenticated user to view and update accepted settings through backen
 3. Backend returns backend-owned settings for the current user.
 4. Web client renders the accepted settings controls and the relocated existing Telegram link panel.
 5. User updates accepted learning-preference fields:
+   - `learning_language`
    - `preferred_translation_language`
+   - `ui_locale`
    - `daily_review_enabled`
    - `daily_review_target_count`
    - `preferred_review_time`
    - `preferred_review_timezone`
 6. Web client sends the update through the accepted backend preferences endpoint.
 7. Backend persists and returns the updated preference state.
+8. After authoritative save success, the authenticated locale runtime immediately applies the returned `ui_locale`; an unsaved locale draft does not change the active language.
 
 ### Success result
 - user can view and update `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`
@@ -403,11 +406,15 @@ Allow the authenticated user to view and update accepted settings through backen
 - nullable or unset `preferred_review_timezone` is handled safely and can be saved back as `null`
 - user can use the same Telegram status/loading/link-completion/conflict behavior that previously lived on Dictionary List
 - resulting settings state is confirmed by backend-owned behavior
+- Settings-owned UI, including its Telegram panel and account-deletion flow, is localized in `en`, `pl`, `ru`, and `uk`
+- effective authenticated locale precedence is saved `ui_locale`, then supported browser locale, then English
+- saving `ui_locale: null` recomputes the transient browser fallback without persisting that derived locale
 
 ### Failure result
 - loading or update failure is shown within the settings flow
 - Telegram status or completion failure is shown within the relocated Telegram panel
 - no client-owned settings logic replaces backend validation or persistence
+- failed locale saves preserve the active locale, unsaved draft, and saved baseline
 
 ### Exit paths
 - back to dictionary list
@@ -416,7 +423,10 @@ Allow the authenticated user to view and update accepted settings through backen
 
 ### Boundaries
 - This is a narrow settings flow only.
-- Settings preferences remain limited to `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`.
+- Settings preferences remain limited to `learning_language`, `preferred_translation_language`, `ui_locale`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`.
+- browser locale is resolved only by the authenticated web runtime and is never silently persisted
+- public/auth, dictionary, onboarding, Telegram completion, and shared-shell copy remain English in this slice
+- root `<html lang="en">` remains static; locale routes and server locale propagation remain out of scope
 - The Telegram panel move is a placement change for existing behavior, not Telegram feature expansion.
 - It does not include profile/account-management expansion.
 - It does not include billing, admin, or security-center flows.

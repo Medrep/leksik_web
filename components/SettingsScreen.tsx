@@ -4,16 +4,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { useLocale } from "@/components/LocaleProvider";
 import { TelegramLinkPanel } from "@/components/TelegramLinkPanel";
 import { deleteAccount } from "@/lib/account";
 import { BackendRequestError } from "@/lib/backend-client";
 import {
   fetchLearningPreferences,
-  getPreferencesRequestMessage,
   type LearningPreferences,
   type LearningPreferencesUpdate,
   updateLearningPreferences,
 } from "@/lib/preferences";
+import type { SettingsMessages } from "@/lib/i18n/messages";
 import { isLanguageCode, LANGUAGE_OPTIONS, type LanguageCode } from "@/lib/language-options";
 import { UI_LOCALE_OPTIONS, type UiLocale } from "@/lib/ui-locale-options";
 import { invalidateCachedDictionaryReadDataForUser } from "@/lib/vocab-cache";
@@ -26,49 +27,50 @@ const DAILY_REVIEW_TARGET_STEP = 5;
 const DAILY_REVIEW_TARGET_MIN = 5;
 const DAILY_REVIEW_TARGET_MAX = 50;
 const ACCOUNT_DELETE_CONFIRMATION = "DELETE";
-const ACCOUNT_DELETE_ERROR_MESSAGE = "Could not delete your account. Please try again.";
 
-const TRANSLATION_LANGUAGE_OPTIONS: ReadonlyArray<{
-  label: string;
-  value: TranslationLanguageSelectValue;
-}> = [{ label: "No translation", value: "" }, ...LANGUAGE_OPTIONS];
-
-const LEARNING_LANGUAGE_OPTIONS: ReadonlyArray<{
-  label: string;
-  value: LearningLanguageSelectValue;
-}> = [{ label: "Not selected", value: "" }, ...LANGUAGE_OPTIONS];
-
-const INTERFACE_LANGUAGE_OPTIONS: ReadonlyArray<{
-  label: string;
-  value: UiLocaleSelectValue;
-}> = [{ label: "System/browser default", value: "" }, ...UI_LOCALE_OPTIONS];
-
-const REVIEW_TIMEZONE_OPTIONS: ReadonlyArray<{
-  label: string;
-  value: string;
-}> = [
-  { label: "No timezone", value: "" },
-  { label: "UTC", value: "UTC" },
-  { label: "Europe/Warsaw", value: "Europe/Warsaw" },
-  { label: "Europe/Berlin", value: "Europe/Berlin" },
-  { label: "Europe/London", value: "Europe/London" },
-  { label: "Europe/Paris", value: "Europe/Paris" },
-  { label: "Europe/Rome", value: "Europe/Rome" },
-  { label: "Europe/Madrid", value: "Europe/Madrid" },
-  { label: "Europe/Kyiv", value: "Europe/Kyiv" },
-  { label: "America/New_York", value: "America/New_York" },
-  { label: "America/Chicago", value: "America/Chicago" },
-  { label: "America/Denver", value: "America/Denver" },
-  { label: "America/Los_Angeles", value: "America/Los_Angeles" },
-  { label: "America/Toronto", value: "America/Toronto" },
-  { label: "America/Sao_Paulo", value: "America/Sao_Paulo" },
-  { label: "Asia/Dubai", value: "Asia/Dubai" },
-  { label: "Asia/Kolkata", value: "Asia/Kolkata" },
-  { label: "Asia/Singapore", value: "Asia/Singapore" },
-  { label: "Asia/Tokyo", value: "Asia/Tokyo" },
-  { label: "Asia/Seoul", value: "Asia/Seoul" },
-  { label: "Australia/Sydney", value: "Australia/Sydney" },
+const REVIEW_TIMEZONE_VALUES = [
+  "UTC",
+  "Europe/Warsaw",
+  "Europe/Berlin",
+  "Europe/London",
+  "Europe/Paris",
+  "Europe/Rome",
+  "Europe/Madrid",
+  "Europe/Kyiv",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Toronto",
+  "America/Sao_Paulo",
+  "Asia/Dubai",
+  "Asia/Kolkata",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Asia/Seoul",
+  "Australia/Sydney",
 ];
+
+type SettingsError =
+  | { kind: "backend"; message: string }
+  | { kind: "localized"; key: keyof SettingsMessages["errors"] };
+
+function toSettingsError(
+  error: unknown,
+  fallbackKey: keyof SettingsMessages["errors"],
+): SettingsError {
+  if (error instanceof BackendRequestError) {
+    if (error.status === 422) {
+      return { kind: "localized", key: "validation" };
+    }
+
+    if (error.message.trim()) {
+      return { kind: "backend", message: error.message };
+    }
+  }
+
+  return { kind: "localized", key: fallbackKey };
+}
 
 function toSelectValue(value: string | null): TranslationLanguageSelectValue {
   if (value === null) {
@@ -130,20 +132,24 @@ function toReviewTimezoneBackendValue(value: string) {
   return trimmedValue ? trimmedValue : null;
 }
 
-function getReviewTimezoneOptions(selectedValue: string) {
+function getReviewTimezoneOptions(selectedValue: string, messages: SettingsMessages) {
   const normalizedSelectedValue = toReviewTimezoneBackendValue(selectedValue);
+  const options = [
+    { label: messages.reviewTimezone.none, value: "" },
+    ...REVIEW_TIMEZONE_VALUES.map((value) => ({ label: value, value })),
+  ];
 
   if (
     normalizedSelectedValue === null ||
-    REVIEW_TIMEZONE_OPTIONS.some((option) => option.value === normalizedSelectedValue)
+    options.some((option) => option.value === normalizedSelectedValue)
   ) {
-    return REVIEW_TIMEZONE_OPTIONS;
+    return options;
   }
 
   return [
-    ...REVIEW_TIMEZONE_OPTIONS,
+    ...options,
     {
-      label: `${normalizedSelectedValue} (current)`,
+      label: `${normalizedSelectedValue} (${messages.reviewTimezone.currentSuffix})`,
       value: normalizedSelectedValue,
     },
   ];
@@ -206,6 +212,7 @@ function SettingsStateMessage({
 export function SettingsScreen() {
   const router = useRouter();
   const { clearAuthenticatedState, refreshBootstrap, session, signOut, user } = useAuth();
+  const { acceptAuthoritativeUiLocale, settingsMessages } = useLocale();
   const [draftDailyReviewEnabled, setDraftDailyReviewEnabled] = useState(false);
   const [draftDailyReviewTargetCount, setDraftDailyReviewTargetCount] = useState(10);
   const [draftPreferredTranslationLanguage, setDraftPreferredTranslationLanguage] =
@@ -226,14 +233,14 @@ export function SettingsScreen() {
   const [savedPreferredReviewTimezone, setSavedPreferredReviewTimezone] = useState<string | null>(
     null,
   );
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [settingsError, setSettingsError] = useState<SettingsError | null>(null);
+  const [hasSaveSuccess, setHasSaveSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
-  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
+  const [hasDeleteError, setHasDeleteError] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   useEffect(() => {
@@ -246,8 +253,8 @@ export function SettingsScreen() {
 
     async function loadPreferences() {
       setIsLoading(true);
-      setErrorMessage(null);
-      setSuccessMessage(null);
+      setSettingsError(null);
+      setHasSaveSuccess(false);
 
       try {
         const preferences = await fetchLearningPreferences({
@@ -292,9 +299,7 @@ export function SettingsScreen() {
           return;
         }
 
-        setErrorMessage(
-          getPreferencesRequestMessage(error, "The settings could not be loaded from the backend."),
-        );
+        setSettingsError(toSettingsError(error, "load"));
       } finally {
         if (!controller.signal.aborted) {
           setIsLoading(false);
@@ -315,7 +320,7 @@ export function SettingsScreen() {
     }
 
     if (!loadedPreferences) {
-      setErrorMessage("The current settings must be loaded before saving.");
+      setSettingsError({ kind: "localized", key: "mustLoadBeforeSave" });
       return;
     }
 
@@ -328,8 +333,8 @@ export function SettingsScreen() {
     const nextUiLocale = toUiLocaleBackendValue(draftUiLocale);
 
     if (draftDailyReviewEnabled && (!nextPreferredReviewTime || !nextPreferredReviewTimezone)) {
-      setErrorMessage("Daily review requires both a review time and timezone.");
-      setSuccessMessage(null);
+      setSettingsError({ kind: "localized", key: "dailyReviewRequiresSchedule" });
+      setHasSaveSuccess(false);
       return;
     }
 
@@ -368,8 +373,8 @@ export function SettingsScreen() {
     }
 
     setIsSaving(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
+    setSettingsError(null);
+    setHasSaveSuccess(false);
 
     try {
       const updatedPreferences = await updateLearningPreferences({
@@ -406,17 +411,18 @@ export function SettingsScreen() {
       setDraftUiLocale(nextUiLocale);
       setDraftPreferredReviewTime(savedPreferredReviewTime);
       setDraftPreferredReviewTimezone(savedPreferredReviewTimezone);
+      acceptAuthoritativeUiLocale(updatedPreferences.uiLocale);
       if (user?.id) {
         invalidateCachedDictionaryReadDataForUser(user.id);
       }
-      setSuccessMessage("Settings saved.");
+      setHasSaveSuccess(true);
     } catch (error) {
       if (error instanceof BackendRequestError && error.status === 401) {
         void refreshBootstrap();
         return;
       }
 
-      setErrorMessage(getPreferencesRequestMessage(error, "The settings could not be saved."));
+      setSettingsError(toSettingsError(error, "save"));
     } finally {
       setIsSaving(false);
     }
@@ -427,7 +433,45 @@ export function SettingsScreen() {
   const normalizedDraftUiLocale = toUiLocaleBackendValue(draftUiLocale);
   const normalizedDraftReviewTime = toReviewTimeBackendValue(draftPreferredReviewTime);
   const normalizedDraftReviewTimezone = toReviewTimezoneBackendValue(draftPreferredReviewTimezone);
-  const reviewTimezoneOptions = getReviewTimezoneOptions(draftPreferredReviewTimezone);
+  const translationLanguageOptions: ReadonlyArray<{
+    label: string;
+    value: TranslationLanguageSelectValue;
+  }> = [
+    { label: settingsMessages.translationLanguage.noTranslation, value: "" },
+    ...LANGUAGE_OPTIONS.map((option) => ({
+      label: settingsMessages.languageNames[option.value],
+      value: option.value,
+    })),
+  ];
+  const learningLanguageOptions: ReadonlyArray<{
+    label: string;
+    value: LearningLanguageSelectValue;
+  }> = [
+    { label: settingsMessages.learningLanguage.notSelected, value: "" },
+    ...LANGUAGE_OPTIONS.map((option) => ({
+      label: settingsMessages.languageNames[option.value],
+      value: option.value,
+    })),
+  ];
+  const interfaceLanguageOptions: ReadonlyArray<{
+    label: string;
+    value: UiLocaleSelectValue;
+  }> = [
+    { label: settingsMessages.interfaceLanguage.systemDefault, value: "" },
+    ...UI_LOCALE_OPTIONS.map((option) => ({
+      label: settingsMessages.interfaceLanguage.localeNames[option.value],
+      value: option.value,
+    })),
+  ];
+  const reviewTimezoneOptions = getReviewTimezoneOptions(
+    draftPreferredReviewTimezone,
+    settingsMessages,
+  );
+  const errorMessage = settingsError
+    ? settingsError.kind === "backend"
+      ? settingsError.message
+      : settingsMessages.errors[settingsError.key]
+    : null;
   const hasUnsavedChanges =
     loadedPreferences !== null &&
     (normalizedDraftValue !== savedPreferredTranslationLanguage ||
@@ -440,8 +484,8 @@ export function SettingsScreen() {
 
   function updateDailyReviewTargetCount(nextValue: number) {
     setDraftDailyReviewTargetCount(normalizeDailyReviewTargetCount(nextValue));
-    setErrorMessage(null);
-    setSuccessMessage(null);
+    setSettingsError(null);
+    setHasSaveSuccess(false);
   }
 
   async function finishDeletedAccountSession() {
@@ -456,7 +500,7 @@ export function SettingsScreen() {
 
   function openDeleteDialog() {
     setDeleteConfirmation("");
-    setDeleteErrorMessage(null);
+    setHasDeleteError(false);
     setIsDeleteDialogOpen(true);
   }
 
@@ -467,7 +511,7 @@ export function SettingsScreen() {
 
     setIsDeleteDialogOpen(false);
     setDeleteConfirmation("");
-    setDeleteErrorMessage(null);
+    setHasDeleteError(false);
   }
 
   async function handleDeleteAccountSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -483,7 +527,7 @@ export function SettingsScreen() {
     }
 
     setIsDeletingAccount(true);
-    setDeleteErrorMessage(null);
+    setHasDeleteError(false);
 
     try {
       await deleteAccount({ accessToken: session.access_token });
@@ -494,7 +538,7 @@ export function SettingsScreen() {
         return;
       }
 
-      setDeleteErrorMessage(ACCOUNT_DELETE_ERROR_MESSAGE);
+      setHasDeleteError(true);
     } finally {
       setIsDeletingAccount(false);
     }
@@ -505,20 +549,22 @@ export function SettingsScreen() {
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-token-border pb-4">
         <Link className="inline-flex items-center gap-2 text-[0.8125rem] text-token-muted transition hover:text-token-brand" href="/dictionary">
           <span aria-hidden="true">←</span>
-          Dictionary
+          {settingsMessages.navigation.dictionary}
         </Link>
       </div>
 
       <article className="w-full min-w-0 max-w-full">
-        <h1 className="break-words text-[1.3125rem] font-medium leading-tight text-token-text">Settings</h1>
+        <h1 className="break-words text-[1.3125rem] font-medium leading-tight text-token-text">
+          {settingsMessages.page.title}
+        </h1>
         <p className="mt-1 break-words text-[0.8125rem] leading-6 text-token-muted">
-          Translation, review, and Telegram connection.
+          {settingsMessages.page.subtitle}
         </p>
 
         <form className="mt-5 grid w-full min-w-0 max-w-full gap-4" onSubmit={(event) => void handleSubmit(event)} noValidate>
           <SettingsControlRow
-            label="I’m learning"
-            copy="Used as a hint when interpreting new words. You can still save words from other languages."
+            label={settingsMessages.learningLanguage.label}
+            copy={settingsMessages.learningLanguage.description}
           >
             <select
               className="w-full rounded-lg border border-token-border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 focus:border-token-brand disabled:cursor-not-allowed disabled:opacity-60"
@@ -526,12 +572,12 @@ export function SettingsScreen() {
               value={draftLearningLanguage}
               onChange={(event) => {
                 setDraftLearningLanguage(event.target.value as LearningLanguageSelectValue);
-                setErrorMessage(null);
-                setSuccessMessage(null);
+                setSettingsError(null);
+                setHasSaveSuccess(false);
               }}
               disabled={isLoading || isSaving}
             >
-              {LEARNING_LANGUAGE_OPTIONS.map((option) => (
+              {learningLanguageOptions.map((option) => (
                 <option key={option.label} value={option.value}>
                   {option.label}
                 </option>
@@ -540,8 +586,8 @@ export function SettingsScreen() {
           </SettingsControlRow>
 
           <SettingsControlRow
-            label="Preferred translation language"
-            copy="Used on dictionary cards."
+            label={settingsMessages.translationLanguage.label}
+            copy={settingsMessages.translationLanguage.description}
           >
             <select
               className="w-full rounded-lg border border-token-border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 focus:border-token-brand disabled:cursor-not-allowed disabled:opacity-60"
@@ -551,12 +597,12 @@ export function SettingsScreen() {
                 setDraftPreferredTranslationLanguage(
                   event.target.value as TranslationLanguageSelectValue,
                 );
-                setErrorMessage(null);
-                setSuccessMessage(null);
+                setSettingsError(null);
+                setHasSaveSuccess(false);
               }}
               disabled={isLoading || isSaving}
             >
-              {TRANSLATION_LANGUAGE_OPTIONS.map((option) => (
+              {translationLanguageOptions.map((option) => (
                 <option key={option.label} value={option.value}>
                   {option.label}
                 </option>
@@ -565,8 +611,8 @@ export function SettingsScreen() {
           </SettingsControlRow>
 
           <SettingsControlRow
-            label="Interface language"
-            copy="Save your preferred interface language for supported Leksik surfaces. The web app remains in English for now; broader web translation will be added separately."
+            label={settingsMessages.interfaceLanguage.label}
+            copy={settingsMessages.interfaceLanguage.description}
           >
             <select
               className="w-full rounded-lg border border-token-border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 focus:border-token-brand disabled:cursor-not-allowed disabled:opacity-60"
@@ -574,12 +620,12 @@ export function SettingsScreen() {
               value={draftUiLocale}
               onChange={(event) => {
                 setDraftUiLocale(event.target.value as UiLocaleSelectValue);
-                setErrorMessage(null);
-                setSuccessMessage(null);
+                setSettingsError(null);
+                setHasSaveSuccess(false);
               }}
               disabled={isLoading || isSaving}
             >
-              {INTERFACE_LANGUAGE_OPTIONS.map((option) => (
+              {interfaceLanguageOptions.map((option) => (
                 <option key={option.value || "default"} value={option.value}>
                   {option.label}
                 </option>
@@ -588,8 +634,8 @@ export function SettingsScreen() {
           </SettingsControlRow>
 
           <SettingsControlRow
-            label="Daily review enabled"
-            copy="Use Telegram for daily review reminders."
+            label={settingsMessages.dailyReview.enabledLabel}
+            copy={settingsMessages.dailyReview.enabledDescription}
           >
             <div className="grid grid-cols-2 rounded-lg border border-token-border bg-token-surfaceStrong p-1">
               <button
@@ -601,13 +647,13 @@ export function SettingsScreen() {
                 type="button"
                 onClick={() => {
                   setDraftDailyReviewEnabled(true);
-                  setErrorMessage(null);
-                  setSuccessMessage(null);
+                  setSettingsError(null);
+                  setHasSaveSuccess(false);
                 }}
                 disabled={isLoading || isSaving}
                 aria-pressed={draftDailyReviewEnabled}
               >
-                On
+                {settingsMessages.dailyReview.on}
               </button>
               <button
                 className={`min-h-9 rounded-md px-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
@@ -618,20 +664,20 @@ export function SettingsScreen() {
                 type="button"
                 onClick={() => {
                   setDraftDailyReviewEnabled(false);
-                  setErrorMessage(null);
-                  setSuccessMessage(null);
+                  setSettingsError(null);
+                  setHasSaveSuccess(false);
                 }}
                 disabled={isLoading || isSaving}
                 aria-pressed={!draftDailyReviewEnabled}
               >
-                Off
+                {settingsMessages.dailyReview.off}
               </button>
             </div>
           </SettingsControlRow>
 
           <SettingsControlRow
-            label="Daily review target count"
-            copy="Cards per day, step 5 and max 50."
+            label={settingsMessages.dailyReview.targetLabel}
+            copy={settingsMessages.dailyReview.targetDescription}
           >
             <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] overflow-hidden rounded-lg border border-token-border bg-token-surfaceStrong">
               <button
@@ -639,7 +685,7 @@ export function SettingsScreen() {
                 type="button"
                 onClick={() => updateDailyReviewTargetCount(draftDailyReviewTargetCount - DAILY_REVIEW_TARGET_STEP)}
                 disabled={isLoading || isSaving || draftDailyReviewTargetCount <= DAILY_REVIEW_TARGET_MIN}
-                aria-label="Decrease daily review target count"
+                aria-label={settingsMessages.dailyReview.decreaseTarget}
               >
                 −
               </button>
@@ -658,7 +704,7 @@ export function SettingsScreen() {
                 type="button"
                 onClick={() => updateDailyReviewTargetCount(draftDailyReviewTargetCount + DAILY_REVIEW_TARGET_STEP)}
                 disabled={isLoading || isSaving || draftDailyReviewTargetCount >= DAILY_REVIEW_TARGET_MAX}
-                aria-label="Increase daily review target count"
+                aria-label={settingsMessages.dailyReview.increaseTarget}
               >
                 +
               </button>
@@ -666,8 +712,8 @@ export function SettingsScreen() {
           </SettingsControlRow>
 
           <SettingsControlRow
-            label="Preferred review time"
-            copy="Local time for the daily review reminder."
+            label={settingsMessages.reviewTime.label}
+            copy={settingsMessages.reviewTime.description}
           >
             <input
               className="w-full rounded-lg border border-token-border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 focus:border-token-brand disabled:cursor-not-allowed disabled:opacity-60"
@@ -677,16 +723,16 @@ export function SettingsScreen() {
               aria-invalid={draftDailyReviewEnabled && !normalizedDraftReviewTime}
               onChange={(event) => {
                 setDraftPreferredReviewTime(event.currentTarget.value);
-                setErrorMessage(null);
-                setSuccessMessage(null);
+                setSettingsError(null);
+                setHasSaveSuccess(false);
               }}
               disabled={isLoading || isSaving}
             />
           </SettingsControlRow>
 
           <SettingsControlRow
-            label="Preferred review timezone"
-            copy="IANA timezone for the daily review reminder."
+            label={settingsMessages.reviewTimezone.label}
+            copy={settingsMessages.reviewTimezone.description}
           >
             <select
               className="w-full rounded-lg border border-token-border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 focus:border-token-brand disabled:cursor-not-allowed disabled:opacity-60"
@@ -696,8 +742,8 @@ export function SettingsScreen() {
               aria-invalid={draftDailyReviewEnabled && !normalizedDraftReviewTimezone}
               onChange={(event) => {
                 setDraftPreferredReviewTimezone(event.target.value);
-                setErrorMessage(null);
-                setSuccessMessage(null);
+                setSettingsError(null);
+                setHasSaveSuccess(false);
               }}
               disabled={isLoading || isSaving}
             >
@@ -710,13 +756,17 @@ export function SettingsScreen() {
           </SettingsControlRow>
 
           <div className="grid gap-3">
-            {isLoading ? <SettingsStateMessage tone="neutral" message="Loading current settings…" /> : null}
+            {isLoading ? (
+              <SettingsStateMessage tone="neutral" message={settingsMessages.feedback.loading} />
+            ) : null}
 
             {errorMessage ? (
               <SettingsStateMessage tone="error" message={errorMessage} />
             ) : null}
 
-            {successMessage ? <SettingsStateMessage tone="success" message={successMessage} /> : null}
+            {hasSaveSuccess ? (
+              <SettingsStateMessage tone="success" message={settingsMessages.feedback.saved} />
+            ) : null}
           </div>
 
           <div className="flex flex-wrap items-center gap-3 border-t border-token-border pt-5">
@@ -725,7 +775,7 @@ export function SettingsScreen() {
               type="submit"
               disabled={isLoading || isSaving || loadedPreferences === null || !hasUnsavedChanges}
             >
-              {isSaving ? "Saving..." : "Save settings"}
+              {isSaving ? settingsMessages.feedback.saving : settingsMessages.feedback.save}
             </button>
 
             {errorMessage ? (
@@ -735,7 +785,7 @@ export function SettingsScreen() {
                 onClick={() => setReloadToken((currentValue) => currentValue + 1)}
                 disabled={isSaving}
               >
-                Try again
+                {settingsMessages.feedback.retry}
               </button>
             ) : null}
           </div>
@@ -748,11 +798,10 @@ export function SettingsScreen() {
         <div className="grid w-full min-w-0 max-w-full gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
           <div className="w-full min-w-0 max-w-full">
             <h2 className="text-[0.6875rem] uppercase tracking-[0.16em] text-[#9A3C32]">
-              Danger zone
+              {settingsMessages.accountDeletion.sectionTitle}
             </h2>
             <p className="mt-1 break-words text-[0.8125rem] leading-5 text-token-muted">
-              Delete your account and permanently remove your saved vocabulary, review history,
-              learning progress, and Telegram connection.
+              {settingsMessages.accountDeletion.sectionDescription}
             </p>
           </div>
           <button
@@ -761,7 +810,7 @@ export function SettingsScreen() {
             onClick={openDeleteDialog}
             disabled={isDeletingAccount}
           >
-            Delete account
+            {settingsMessages.accountDeletion.openButton}
           </button>
         </div>
       </section>
@@ -783,39 +832,35 @@ export function SettingsScreen() {
                   className="break-words text-lg font-semibold leading-tight text-token-text"
                   id="delete-account-dialog-title"
                 >
-                  Delete your Leksik account?
+                  {settingsMessages.accountDeletion.modalTitle}
                 </h2>
                 <p className="break-words text-[0.875rem] leading-6 text-token-muted">
-                  This will permanently delete your Leksik account and remove your saved
-                  vocabulary, submitted words and phrases, generated cards, review history,
-                  learning progress, and Telegram connection from active systems.
+                  {settingsMessages.accountDeletion.modalDescription}
                 </p>
                 <p className="break-words text-[0.875rem] leading-6 text-token-muted">
-                  This action cannot be undone.
+                  {settingsMessages.accountDeletion.irreversible}
                 </p>
                 <p className="break-words text-[0.8125rem] leading-5 text-token-muted">
-                  Some limited technical records may be retained where necessary for security,
-                  legal compliance, abuse prevention, audit integrity, or backup retention, as
-                  described in our Privacy Policy.
+                  {settingsMessages.accountDeletion.retention}
                 </p>
               </div>
 
               <label className="grid gap-2 text-[0.8125rem] font-medium text-token-text">
-                Type DELETE to confirm
+                {settingsMessages.accountDeletion.confirmationLabel}
                 <input
                   autoComplete="off"
                   className="w-full rounded-lg border border-token-border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 focus:border-[#C94234] disabled:cursor-not-allowed disabled:opacity-60"
                   value={deleteConfirmation}
                   onChange={(event) => {
                     setDeleteConfirmation(event.currentTarget.value);
-                    setDeleteErrorMessage(null);
+                    setHasDeleteError(false);
                   }}
                   disabled={isDeletingAccount}
                 />
               </label>
 
-              {deleteErrorMessage ? (
-                <SettingsStateMessage tone="error" message={deleteErrorMessage} />
+              {hasDeleteError ? (
+                <SettingsStateMessage tone="error" message={settingsMessages.errors.deleteAccount} />
               ) : null}
 
               <div className="flex flex-wrap justify-end gap-3 border-t border-token-border pt-4">
@@ -825,7 +870,7 @@ export function SettingsScreen() {
                   onClick={closeDeleteDialog}
                   disabled={isDeletingAccount}
                 >
-                  Cancel
+                  {settingsMessages.accountDeletion.cancel}
                 </button>
                 <button
                   className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#C94234] px-5 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
@@ -834,7 +879,9 @@ export function SettingsScreen() {
                     isDeletingAccount || deleteConfirmation !== ACCOUNT_DELETE_CONFIRMATION
                   }
                 >
-                  {isDeletingAccount ? "Deleting..." : "Delete account permanently"}
+                  {isDeletingAccount
+                    ? settingsMessages.accountDeletion.deleting
+                    : settingsMessages.accountDeletion.confirmButton}
                 </button>
               </div>
             </form>

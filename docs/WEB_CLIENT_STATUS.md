@@ -95,7 +95,13 @@ Current implementation status
 - `learning_language` and `preferred_translation_language` share the same controlled non-null language options: `en`, `pl`, `ru`, `uk`, `de`, `es`, and `pt`.
 - `preferred_translation_language` behavior remains unchanged: the existing label/value mapping and null-cleared backend behavior remain intact.
 - `ui_locale` is wired as the nullable Interface language preference with controlled values `en`, `pl`, `ru`, and `uk`; `null` is shown as `System/browser default` and clears the explicit saved override.
-- The current web interface remains English; localization runtime, browser-locale resolution, translated labels, locale-aware routes, and runtime locale switching remain out of scope.
+- One authenticated web-owned locale runtime now resolves effective locale in the order saved `ui_locale`, supported browser locale, then English.
+- Browser locale resolution is transient, supports regional `en`, `pl`, `ru`, and `uk` tags, and is never silently persisted.
+- Settings is the first complete localized web namespace in `en`, `pl`, `ru`, and `uk`, including preference controls, Telegram connection states/actions, generic Settings errors, loading/success UI, accessibility labels, and account deletion.
+- An unsaved Interface language draft does not change the active locale; the locale changes immediately only from the authoritative successful PUT response, while failed saves preserve the previous locale and draft.
+- The web client owns typed message bundles; backend and web share locale identifiers, not translation bundles, and no third-party i18n dependency was introduced.
+- Public/auth, dictionary, onboarding, Telegram completion, and shared authenticated-shell surfaces remain English; root `<html lang="en">` remains intentionally static.
+- Locale-aware routes, server locale cookies, request-based locale propagation, dynamic metadata localization, and broader web localization remain out of scope.
 - Settings preference updates now send only fields changed from the backend-confirmed saved baseline; omitted fields remain untouched, while explicit nullable changes continue to serialize as `null`.
 - `preferred_review_timezone` is loaded and saved through the existing shared preferences flow; nullable or unset timezone values are handled safely and can be saved back as `null`.
 - `daily_review_target_count` uses step `5`, minimum `5`, and maximum `50`; temporarily null daily-review preference values are handled with narrow defensive defaults.

@@ -36,6 +36,32 @@ Short description of the next smallest recommended step.
 
 ---
 
+## 2026-07-13 — Authenticated locale runtime and Settings localization added
+
+#### Context
+The saved `ui_locale` preference was already wired, and the next approved web slice needed one authenticated locale owner plus complete localization of Settings without expanding into full-app localization.
+
+#### Work completed
+- Added one client-only authenticated locale runtime with precedence saved `ui_locale` → supported browser locale → English; browser-derived locale remains transient and is never persisted automatically.
+- Added complete typed web-owned Settings message bundles for `en`, `pl`, `ru`, and `uk` with safe English bundle fallback and no third-party i18n dependency.
+- Localized the complete Settings-owned surface, including preferences, Telegram status/linking, generic errors and validation, loading/success states, accessibility labels, and account deletion.
+- Applied locale changes only after the backend-confirmed PUT response; failed saves retain the active locale, saved baseline, and unsaved draft.
+
+#### Accepted outputs
+- Authenticated users receive a single effective locale without duplicate preference loading, per-component resolvers, route prefixes, or server locale propagation.
+- Public/auth, dictionary, onboarding, Telegram completion, and shared authenticated-shell surfaces remain English.
+- Root `<html lang="en">` remains intentionally static, and backend/web share locale identifiers rather than translation bundles.
+
+#### Deferred / not now
+- localization outside the Settings namespace
+- dynamic `<html lang>`, localized metadata, locale-aware routing, and server locale cookies
+- shared backend, Telegram, mobile, or web translation bundles
+
+#### Next step
+Localize another web namespace only through a separately approved slice.
+
+---
+
 ## 2026-07-13 — Web Settings interface-language preference wiring added
 
 #### Context

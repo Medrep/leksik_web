@@ -56,6 +56,14 @@ Responsibilities:
 - settings screen
 - shared use of backend settings/preferences endpoints where applicable
 
+Authenticated localization boundary:
+- the web client owns its typed message bundles; backend and web share locale identifiers only
+- one authenticated locale runtime resolves locale in this order: saved `ui_locale`, supported browser locale, then English
+- browser-derived locale is transient and is never persisted automatically
+- Settings is the first complete localized web namespace; public/auth, dictionary, onboarding, Telegram completion, and the shared authenticated shell remain English
+- root `<html lang="en">` remains static in this slice; route locale prefixes, server locale cookies, and request-based locale propagation are not used
+- no third-party internationalization dependency is used
+
 ### Bot client
 Responsibilities:
 - receive user text

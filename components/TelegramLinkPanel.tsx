@@ -2,53 +2,67 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { useLocale } from "@/components/LocaleProvider";
 import { BackendRequestError } from "@/lib/backend-client";
+import type { SettingsMessages } from "@/lib/i18n/messages";
 import {
   completeTelegramLink,
   fetchTelegramLinkStatus,
-  getTelegramLinkRequestMessage,
   type TelegramLinkStatus,
 } from "@/lib/telegram-link";
 
-function statusCopy(status: TelegramLinkStatus | null) {
+type TelegramPanelError =
+  | { kind: "backend"; message: string }
+  | { kind: "localized"; key: keyof SettingsMessages["telegram"]["errors"] };
+
+function toTelegramPanelError(
+  error: unknown,
+  fallbackKey: keyof SettingsMessages["telegram"]["errors"],
+): TelegramPanelError {
+  if (error instanceof BackendRequestError && error.message.trim()) {
+    return { kind: "backend", message: error.message };
+  }
+
+  return { kind: "localized", key: fallbackKey };
+}
+
+function statusCopy(status: TelegramLinkStatus | null, messages: SettingsMessages) {
   if (!status) {
     return {
       accentClassName: "text-token-muted",
-      description: "Checking whether Telegram is linked for this account.",
-      headline: "Telegram",
+      description: messages.telegram.checkingDescription,
+      headline: messages.telegram.checkingHeadline,
     };
   }
 
   if (status.state === "linked") {
     return {
       accentClassName: "text-token-brand",
-      description: "Telegram is linked for capture and daily review. Your web dictionary stays available here either way.",
-      headline: "Telegram linked",
+      description: messages.telegram.linkedDescription,
+      headline: messages.telegram.linkedHeadline,
     };
   }
 
   if (status.state === "pending") {
     return {
       accentClassName: "text-token-brand",
-      description: "Telegram has been observed, but linking still needs the one-time completion code from Telegram.",
-      headline: "Telegram link pending",
+      description: messages.telegram.pendingDescription,
+      headline: messages.telegram.pendingHeadline,
     };
   }
 
   if (status.state === "conflict") {
     return {
       accentClassName: "text-red-700",
-      description:
-        "Telegram linking is blocked by an existing link conflict. This web client does not support reassignment or unlinking.",
-      headline: "Telegram link conflict",
+      description: messages.telegram.conflictDescription,
+      headline: messages.telegram.conflictHeadline,
     };
   }
 
   return {
     accentClassName: "text-token-text",
-    description:
-      "Telegram is not linked yet. If Telegram gave you a one-time completion code, enter it here to finish linking.",
-    headline: "Telegram not linked",
+    description: messages.telegram.unlinkedDescription,
+    headline: messages.telegram.unlinkedHeadline,
   };
 }
 
@@ -78,19 +92,20 @@ function observedAccountLabel(status: TelegramLinkStatus) {
 
 export function TelegramLinkPanel() {
   const { refreshBootstrap, session } = useAuth();
+  const { settingsMessages } = useLocale();
   const [code, setCode] = useState("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [panelError, setPanelError] = useState<TelegramPanelError | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<TelegramLinkStatus | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [hasSuccess, setHasSuccess] = useState(false);
 
   async function loadStatus(signal?: AbortSignal) {
     if (!session?.access_token) {
       return;
     }
 
-    setErrorMessage(null);
+    setPanelError(null);
 
     try {
       const nextStatus = await fetchTelegramLinkStatus({
@@ -109,9 +124,7 @@ export function TelegramLinkPanel() {
         return;
       }
 
-      setErrorMessage(
-        getTelegramLinkRequestMessage(error, "Telegram link status could not be loaded from the backend."),
-      );
+      setPanelError(toTelegramPanelError(error, "load"));
     } finally {
       if (!signal?.aborted) {
         setIsLoading(false);
@@ -125,7 +138,7 @@ export function TelegramLinkPanel() {
     }
 
     setIsLoading(true);
-    setSuccessMessage(null);
+    setHasSuccess(false);
 
     const controller = new AbortController();
 
@@ -134,10 +147,15 @@ export function TelegramLinkPanel() {
     return () => controller.abort();
   }, [refreshBootstrap, session?.access_token]);
 
-  const currentCopy = statusCopy(status);
+  const currentCopy = statusCopy(status, settingsMessages);
   const observedAccount =
     status && status.state !== "conflict" ? observedAccountLabel(status) : null;
   const shouldShowForm = status?.state === "unlinked" || status?.state === "pending";
+  const errorMessage = panelError
+    ? panelError.kind === "backend"
+      ? panelError.message
+      : settingsMessages.telegram.errors[panelError.key]
+    : null;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -149,13 +167,13 @@ export function TelegramLinkPanel() {
     const trimmedCode = code.trim();
 
     if (!trimmedCode) {
-      setErrorMessage("Enter the one-time code from Telegram.");
+      setPanelError({ kind: "localized", key: "codeRequired" });
       return;
     }
 
     setIsSubmitting(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
+    setPanelError(null);
+    setHasSuccess(false);
 
     try {
       const nextStatus = await completeTelegramLink({
@@ -165,7 +183,7 @@ export function TelegramLinkPanel() {
 
       setStatus(nextStatus);
       setCode("");
-      setSuccessMessage("Telegram is now linked.");
+      setHasSuccess(true);
     } catch (error) {
       if (error instanceof BackendRequestError && error.status === 401) {
         void refreshBootstrap();
@@ -197,9 +215,7 @@ export function TelegramLinkPanel() {
         }
       }
 
-      setErrorMessage(
-        getTelegramLinkRequestMessage(error, "Telegram linking could not be completed right now."),
-      );
+      setPanelError(toTelegramPanelError(error, "complete"));
     } finally {
       setIsSubmitting(false);
     }
@@ -209,33 +225,43 @@ export function TelegramLinkPanel() {
     <section className="w-full min-w-0 max-w-full border-t border-token-border pt-5">
       <div className="flex w-full min-w-0 flex-wrap items-start justify-between gap-3">
         <div className="w-full min-w-0 max-w-xl">
-          <p className="text-[0.6875rem] uppercase tracking-[0.16em] text-token-muted/65">Telegram</p>
+          <p className="text-[0.6875rem] uppercase tracking-[0.16em] text-token-muted/65">
+            {settingsMessages.telegram.sectionLabel}
+          </p>
           <h2 className={`mt-2 text-[0.9375rem] font-medium leading-6 ${currentCopy.accentClassName}`}>{currentCopy.headline}</h2>
           <p className="mt-1 break-words text-[0.8125rem] leading-5 text-token-muted">{currentCopy.description}</p>
           {observedAccount ? (
-            <p className="mt-3 break-words text-[0.8125rem] text-token-muted">Observed account: {observedAccount}</p>
+            <p className="mt-3 break-words text-[0.8125rem] text-token-muted">
+              {settingsMessages.telegram.observedAccount}: {observedAccount}
+            </p>
           ) : null}
         </div>
 
-        {status ? <span className={`${statusBadgeClassName(status.state)} max-w-full truncate`}>{status.state}</span> : null}
+        {status ? (
+          <span className={`${statusBadgeClassName(status.state)} max-w-full truncate`}>
+            {settingsMessages.telegram.stateLabels[status.state]}
+          </span>
+        ) : null}
       </div>
 
       {isLoading ? (
         <div className="mt-4 rounded-xl border border-[#FEEDCE] bg-[#FEFAF2] px-4 py-3 text-token-muted">
-          <p className="text-[0.8125rem] leading-5">Loading Telegram link status…</p>
+          <p className="text-[0.8125rem] leading-5">{settingsMessages.telegram.loading}</p>
         </div>
       ) : null}
 
       {!isLoading && shouldShowForm ? (
         <form className="mt-5 grid w-full min-w-0 max-w-full gap-3 sm:grid-cols-[minmax(0,1fr)_auto]" onSubmit={handleSubmit}>
           <label className="grid min-w-0 gap-2">
-            <span className="text-[0.8125rem] font-medium text-token-text">One-time Telegram code</span>
+            <span className="text-[0.8125rem] font-medium text-token-text">
+              {settingsMessages.telegram.codeLabel}
+            </span>
             <input
               className="w-full rounded-lg border border-token-border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 focus:border-token-brand disabled:cursor-not-allowed disabled:opacity-60"
               type="text"
               inputMode="text"
               autoComplete="one-time-code"
-              placeholder="Enter code"
+              placeholder={settingsMessages.telegram.codePlaceholder}
               value={code}
               onChange={(event) => setCode(event.target.value)}
               disabled={isSubmitting}
@@ -247,15 +273,19 @@ export function TelegramLinkPanel() {
               type="submit"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Linking…" : "Complete link"}
+              {isSubmitting
+                ? settingsMessages.telegram.linking
+                : settingsMessages.telegram.completeLink}
             </button>
           </div>
         </form>
       ) : null}
 
-      {!isLoading && successMessage ? (
+      {!isLoading && hasSuccess ? (
         <div className="mt-4 rounded-xl border border-token-border bg-token-brandSoft/40 px-4 py-3 text-token-brand">
-          <p className="text-[0.8125rem] leading-5">{successMessage}</p>
+          <p className="text-[0.8125rem] leading-5">
+            {settingsMessages.telegram.linkedSuccess}
+          </p>
         </div>
       ) : null}
 

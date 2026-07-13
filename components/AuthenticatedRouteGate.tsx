@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { LanguagePreferencesOnboardingGate } from "@/components/LanguagePreferencesOnboardingGate";
+import { useLocale } from "@/components/LocaleProvider";
 
 function GatePanel({
   title,
@@ -47,6 +48,7 @@ export function AuthenticatedRouteGate({
     languageSetupStatus,
     refreshBootstrap,
   } = useAuth();
+  const { isLocaleReady } = useLocale();
   const configDescription = resourceLabel
     ? `Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and NEXT_PUBLIC_API_BASE_URL before opening your ${resourceLabel}.`
     : "Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and NEXT_PUBLIC_API_BASE_URL before opening the dictionary.";
@@ -75,7 +77,9 @@ export function AuthenticatedRouteGate({
   if (
     authStatus === "loading" ||
     (authStatus === "authenticated" &&
-      (bootstrapStatus === "checking" || languageSetupStatus === "checking"))
+      (bootstrapStatus === "checking" ||
+        languageSetupStatus === "checking" ||
+        (languageSetupStatus === "complete" && !isLocaleReady)))
   ) {
     return (
       <GatePanel
