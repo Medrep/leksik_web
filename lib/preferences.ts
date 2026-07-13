@@ -1,4 +1,5 @@
 import { BackendRequestError, fetchBackendJson } from "@/lib/backend-client";
+import { isUiLocale, type UiLocale } from "@/lib/ui-locale-options";
 
 const DAILY_REVIEW_ENABLED_KEY = "daily_review_enabled";
 const DAILY_REVIEW_TARGET_COUNT_KEY = "daily_review_target_count";
@@ -6,6 +7,7 @@ const PREFERRED_REVIEW_TIME_KEY = "preferred_review_time";
 const PREFERRED_REVIEW_TIMEZONE_KEY = "preferred_review_timezone";
 const PREFERRED_TRANSLATION_LANGUAGE_KEY = "preferred_translation_language";
 const LEARNING_LANGUAGE_KEY = "learning_language";
+const UI_LOCALE_KEY = "ui_locale";
 const DEFAULT_DAILY_REVIEW_ENABLED = false;
 const DEFAULT_DAILY_REVIEW_TARGET_COUNT = 10;
 
@@ -16,6 +18,17 @@ export type LearningPreferences = {
   preferredReviewTimezone: string | null;
   preferredTranslationLanguage: string | null;
   learningLanguage: string | null;
+  uiLocale: UiLocale | null;
+};
+
+export type LearningPreferencesUpdate = {
+  dailyReviewEnabled?: boolean;
+  dailyReviewTargetCount?: number;
+  preferredReviewTime?: string | null;
+  preferredReviewTimezone?: string | null;
+  preferredTranslationLanguage?: string | null;
+  learningLanguage?: string | null;
+  uiLocale?: UiLocale | null;
 };
 
 function normalizeBooleanPreference(value: unknown, key: string) {
@@ -55,6 +68,18 @@ function normalizeNullableStringPreference(value: unknown, key: string) {
   return trimmedValue ? trimmedValue : null;
 }
 
+function normalizeUiLocalePreference(value: unknown) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value !== "string" || !isUiLocale(value)) {
+    throw new Error(`Backend returned an invalid ${UI_LOCALE_KEY} value.`);
+  }
+
+  return value;
+}
+
 function normalizeLearningPreferences(payload: unknown): LearningPreferences {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw new Error("Backend returned an invalid learning preferences response.");
@@ -87,18 +112,63 @@ function normalizeLearningPreferences(payload: unknown): LearningPreferences {
       record[LEARNING_LANGUAGE_KEY],
       LEARNING_LANGUAGE_KEY,
     ),
+    uiLocale: normalizeUiLocalePreference(record[UI_LOCALE_KEY]),
   };
 }
 
-function toLearningPreferencesPayload(preferences: LearningPreferences) {
-  return {
-    [DAILY_REVIEW_ENABLED_KEY]: preferences.dailyReviewEnabled,
-    [DAILY_REVIEW_TARGET_COUNT_KEY]: preferences.dailyReviewTargetCount,
-    [PREFERRED_REVIEW_TIME_KEY]: preferences.preferredReviewTime,
-    [PREFERRED_REVIEW_TIMEZONE_KEY]: preferences.preferredReviewTimezone,
-    [PREFERRED_TRANSLATION_LANGUAGE_KEY]: preferences.preferredTranslationLanguage,
-    [LEARNING_LANGUAGE_KEY]: preferences.learningLanguage,
-  };
+function toLearningPreferencesPayload(update: LearningPreferencesUpdate) {
+  const payload: Record<string, boolean | number | string | null> = {};
+
+  if (
+    Object.prototype.hasOwnProperty.call(update, "dailyReviewEnabled") &&
+    update.dailyReviewEnabled !== undefined
+  ) {
+    payload[DAILY_REVIEW_ENABLED_KEY] = update.dailyReviewEnabled;
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(update, "dailyReviewTargetCount") &&
+    update.dailyReviewTargetCount !== undefined
+  ) {
+    payload[DAILY_REVIEW_TARGET_COUNT_KEY] = update.dailyReviewTargetCount;
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(update, "preferredReviewTime") &&
+    update.preferredReviewTime !== undefined
+  ) {
+    payload[PREFERRED_REVIEW_TIME_KEY] = update.preferredReviewTime;
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(update, "preferredReviewTimezone") &&
+    update.preferredReviewTimezone !== undefined
+  ) {
+    payload[PREFERRED_REVIEW_TIMEZONE_KEY] = update.preferredReviewTimezone;
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(update, "preferredTranslationLanguage") &&
+    update.preferredTranslationLanguage !== undefined
+  ) {
+    payload[PREFERRED_TRANSLATION_LANGUAGE_KEY] = update.preferredTranslationLanguage;
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(update, "learningLanguage") &&
+    update.learningLanguage !== undefined
+  ) {
+    payload[LEARNING_LANGUAGE_KEY] = update.learningLanguage;
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(update, "uiLocale") &&
+    update.uiLocale !== undefined
+  ) {
+    payload[UI_LOCALE_KEY] = update.uiLocale;
+  }
+
+  return payload;
 }
 
 export async function fetchLearningPreferences({
@@ -119,16 +189,16 @@ export async function fetchLearningPreferences({
 
 export async function updateLearningPreferences({
   accessToken,
-  preferences,
+  update,
   signal,
 }: {
   accessToken: string;
-  preferences: LearningPreferences;
+  update: LearningPreferencesUpdate;
   signal?: AbortSignal;
 }) {
   const payload = await fetchBackendJson<unknown>({
     accessToken,
-    body: toLearningPreferencesPayload(preferences),
+    body: toLearningPreferencesPayload(update),
     method: "PUT",
     path: "/preferences/learning",
     signal,

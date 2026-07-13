@@ -36,6 +36,30 @@ Short description of the next smallest recommended step.
 
 ---
 
+## 2026-07-13 — Web Settings interface-language preference wiring added
+
+#### Context
+The deployed learning-preferences contract added nullable `ui_locale`, and the web Settings screen needed to persist it without introducing a web localization runtime or resending unchanged preferences.
+
+#### Work completed
+- Added a separate controlled interface-locale registry for `en`, `pl`, `ru`, and `uk` and a nullable Interface language selector where `System/browser default` maps to explicit `null`.
+- Added `ui_locale` to the full normalized learning-preferences response model while separating updates into a partial changed-fields-only input model.
+- Updated Settings and the existing onboarding helper call site so omitted fields remain untouched, explicit nullable changes remain distinct, and onboarding completion still depends only on `learning_language` and `preferred_translation_language`.
+
+#### Accepted outputs
+- The current web interface remains English; no localization provider, translation bundles, browser-locale resolution, locale-aware routes, or runtime locale switching were added.
+- Successful Settings saves still replace drafts and saved baselines from the full backend-confirmed response, while failed saves preserve the unsaved draft and previous baseline.
+
+#### Deferred / not now
+- web localization runtime and translated labels
+- browser-locale resolution and `<html lang>` switching
+- localization of public, dictionary, Telegram, or account-management surfaces
+
+#### Next step
+Use the stored interface-language preference in a separately accepted future localization slice.
+
+---
+
 ## 2026-07-06 — Web client Settings account deletion added
 
 #### Context

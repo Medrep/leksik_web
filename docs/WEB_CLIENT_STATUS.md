@@ -89,11 +89,14 @@ Current implementation status
 - Card Details field coverage and behavior remain unchanged: translation, explanation, examples, canonical form, language, and learning status render when returned and allowed by existing data/preferences logic, and the back path to `/dictionary` remains in place.
 - protected settings route and screen are implemented
 - `/settings` uses the refreshed settings presentation with a narrower centered layout, updated typography/spacing, section structure, select styling, save/retry actions, and loading/success/error presentation.
-- `/settings` now includes `learning_language`, `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`.
+- `/settings` now includes `learning_language`, `preferred_translation_language`, `ui_locale`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`.
 - Settings use the existing `GET /preferences/learning` load flow and `PUT /preferences/learning` save flow for all accepted learning-preference fields.
 - `learning_language` is nullable, uses the existing shared learning-preferences endpoints, and is presented only as a hint for interpreting newly captured words or phrases.
 - `learning_language` and `preferred_translation_language` share the same controlled non-null language options: `en`, `pl`, `ru`, `uk`, `de`, `es`, and `pt`.
 - `preferred_translation_language` behavior remains unchanged: the existing label/value mapping and null-cleared backend behavior remain intact.
+- `ui_locale` is wired as the nullable Interface language preference with controlled values `en`, `pl`, `ru`, and `uk`; `null` is shown as `System/browser default` and clears the explicit saved override.
+- The current web interface remains English; localization runtime, browser-locale resolution, translated labels, locale-aware routes, and runtime locale switching remain out of scope.
+- Settings preference updates now send only fields changed from the backend-confirmed saved baseline; omitted fields remain untouched, while explicit nullable changes continue to serialize as `null`.
 - `preferred_review_timezone` is loaded and saved through the existing shared preferences flow; nullable or unset timezone values are handled safely and can be saved back as `null`.
 - `daily_review_target_count` uses step `5`, minimum `5`, and maximum `50`; temporarily null daily-review preference values are handled with narrow defensive defaults.
 - the existing Telegram link panel/functionality now lives on `/settings` and is visually integrated into the settings layout.
@@ -144,6 +147,7 @@ Known confirmed contract points
   - learning_status
   - preferred_translation_language
   - learning_language
+  - ui_locale
 
 Known explicitly provisional contract points
 - exact GET /vocab response envelope and item schema beyond the current accepted narrow field family

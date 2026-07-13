@@ -517,7 +517,9 @@ Return learning preferences.
   "daily_review_target_count": 10,
   "preferred_review_time": "18:30:00",
   "preferred_review_timezone": "Europe/Warsaw",
-  "preferred_translation_language": "en"
+  "preferred_translation_language": "en",
+  "learning_language": "pl",
+  "ui_locale": "en"
 }
 ```
 
@@ -530,6 +532,15 @@ Update learning preferences.
 - `preferred_review_time` nullable
 - `preferred_review_timezone` nullable
 - `preferred_translation_language` nullable
+- `learning_language` nullable
+- `ui_locale` nullable; supported canonical values are `en`, `pl`, `ru`, and `uk`
+
+**Partial update behavior**
+- omitted fields preserve their current stored values
+- explicit `"ui_locale": null` clears the saved interface-locale override
+- omitted `ui_locale` preserves the current value
+- supported regional `ui_locale` values canonicalize to the supported base locale
+- malformed or unsupported explicit `ui_locale` values return `422` and do not mutate preferences
 
 **Success response**
 - same shape as `GET /preferences/learning`
@@ -539,6 +550,7 @@ Current shared settings/preferences note:
 - current preference field name for translation behavior is `preferred_translation_language`
 - changing `preferred_translation_language` does not immediately regenerate old cards
 - older cards refresh lazily later
+- `ui_locale` stores a cross-surface interface-language preference only; the current web interface remains English
 
 Supported MVP fields:
 - daily review enabled
@@ -546,6 +558,8 @@ Supported MVP fields:
 - preferred review time
 - preferred review timezone nullable
 - preferred_translation_language nullable
+- learning_language nullable
+- ui_locale nullable
 
 Daily review settings semantics:
 - `daily_review_enabled` gates scheduled daily review / reminder behavior only

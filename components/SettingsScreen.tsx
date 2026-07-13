@@ -11,13 +11,16 @@ import {
   fetchLearningPreferences,
   getPreferencesRequestMessage,
   type LearningPreferences,
+  type LearningPreferencesUpdate,
   updateLearningPreferences,
 } from "@/lib/preferences";
 import { isLanguageCode, LANGUAGE_OPTIONS, type LanguageCode } from "@/lib/language-options";
+import { UI_LOCALE_OPTIONS, type UiLocale } from "@/lib/ui-locale-options";
 import { invalidateCachedDictionaryReadDataForUser } from "@/lib/vocab-cache";
 
 type TranslationLanguageSelectValue = "" | LanguageCode;
 type LearningLanguageSelectValue = "" | LanguageCode;
+type UiLocaleSelectValue = "" | UiLocale;
 
 const DAILY_REVIEW_TARGET_STEP = 5;
 const DAILY_REVIEW_TARGET_MIN = 5;
@@ -34,6 +37,11 @@ const LEARNING_LANGUAGE_OPTIONS: ReadonlyArray<{
   label: string;
   value: LearningLanguageSelectValue;
 }> = [{ label: "Not selected", value: "" }, ...LANGUAGE_OPTIONS];
+
+const INTERFACE_LANGUAGE_OPTIONS: ReadonlyArray<{
+  label: string;
+  value: UiLocaleSelectValue;
+}> = [{ label: "System/browser default", value: "" }, ...UI_LOCALE_OPTIONS];
 
 const REVIEW_TIMEZONE_OPTIONS: ReadonlyArray<{
   label: string;
@@ -91,6 +99,14 @@ function toLearningLanguageSelectValue(value: string | null): LearningLanguageSe
 }
 
 function toLearningLanguageBackendValue(value: LearningLanguageSelectValue): string | null {
+  return value === "" ? null : value;
+}
+
+function toUiLocaleSelectValue(value: UiLocale | null): UiLocaleSelectValue {
+  return value ?? "";
+}
+
+function toUiLocaleBackendValue(value: UiLocaleSelectValue): UiLocale | null {
   return value === "" ? null : value;
 }
 
@@ -196,6 +212,7 @@ export function SettingsScreen() {
     useState<TranslationLanguageSelectValue>("");
   const [draftLearningLanguage, setDraftLearningLanguage] =
     useState<LearningLanguageSelectValue>("");
+  const [draftUiLocale, setDraftUiLocale] = useState<UiLocaleSelectValue>("");
   const [draftPreferredReviewTime, setDraftPreferredReviewTime] = useState("");
   const [draftPreferredReviewTimezone, setDraftPreferredReviewTimezone] = useState("");
   const [loadedPreferences, setLoadedPreferences] = useState<LearningPreferences | null>(null);
@@ -204,6 +221,7 @@ export function SettingsScreen() {
   const [savedPreferredTranslationLanguage, setSavedPreferredTranslationLanguage] =
     useState<LanguageCode | null>(null);
   const [savedLearningLanguage, setSavedLearningLanguage] = useState<string | null>(null);
+  const [savedUiLocale, setSavedUiLocale] = useState<UiLocale | null>(null);
   const [savedPreferredReviewTime, setSavedPreferredReviewTime] = useState<string | null>(null);
   const [savedPreferredReviewTimezone, setSavedPreferredReviewTimezone] = useState<string | null>(
     null,
@@ -239,6 +257,7 @@ export function SettingsScreen() {
 
         const nextValue = toSelectValue(preferences.preferredTranslationLanguage);
         const nextLearningLanguage = toLearningLanguageSelectValue(preferences.learningLanguage);
+        const nextUiLocale = toUiLocaleSelectValue(preferences.uiLocale);
         const nextDailyReviewTargetCount = normalizeDailyReviewTargetCount(
           preferences.dailyReviewTargetCount,
         );
@@ -251,6 +270,7 @@ export function SettingsScreen() {
         setSavedDailyReviewTargetCount(nextDailyReviewTargetCount);
         setSavedPreferredTranslationLanguage(toBackendValue(nextValue));
         setSavedLearningLanguage(toLearningLanguageBackendValue(nextLearningLanguage));
+        setSavedUiLocale(toUiLocaleBackendValue(nextUiLocale));
         setSavedPreferredReviewTime(toReviewTimeBackendValue(nextPreferredReviewTime));
         setSavedPreferredReviewTimezone(
           toReviewTimezoneBackendValue(nextPreferredReviewTimezone),
@@ -259,6 +279,7 @@ export function SettingsScreen() {
         setDraftDailyReviewTargetCount(nextDailyReviewTargetCount);
         setDraftPreferredTranslationLanguage(nextValue);
         setDraftLearningLanguage(nextLearningLanguage);
+        setDraftUiLocale(nextUiLocale);
         setDraftPreferredReviewTime(nextPreferredReviewTime);
         setDraftPreferredReviewTimezone(nextPreferredReviewTimezone);
       } catch (error) {
@@ -302,10 +323,47 @@ export function SettingsScreen() {
     const nextPreferredReviewTimezone = toReviewTimezoneBackendValue(
       draftPreferredReviewTimezone,
     );
+    const nextPreferredTranslationLanguage = toBackendValue(draftPreferredTranslationLanguage);
+    const nextLearningLanguage = toLearningLanguageBackendValue(draftLearningLanguage);
+    const nextUiLocale = toUiLocaleBackendValue(draftUiLocale);
 
     if (draftDailyReviewEnabled && (!nextPreferredReviewTime || !nextPreferredReviewTimezone)) {
       setErrorMessage("Daily review requires both a review time and timezone.");
       setSuccessMessage(null);
+      return;
+    }
+
+    const update: LearningPreferencesUpdate = {};
+
+    if (draftDailyReviewEnabled !== savedDailyReviewEnabled) {
+      update.dailyReviewEnabled = draftDailyReviewEnabled;
+    }
+
+    if (draftDailyReviewTargetCount !== savedDailyReviewTargetCount) {
+      update.dailyReviewTargetCount = draftDailyReviewTargetCount;
+    }
+
+    if (nextPreferredReviewTime !== savedPreferredReviewTime) {
+      update.preferredReviewTime = nextPreferredReviewTime;
+    }
+
+    if (nextPreferredReviewTimezone !== savedPreferredReviewTimezone) {
+      update.preferredReviewTimezone = nextPreferredReviewTimezone;
+    }
+
+    if (nextPreferredTranslationLanguage !== savedPreferredTranslationLanguage) {
+      update.preferredTranslationLanguage = nextPreferredTranslationLanguage;
+    }
+
+    if (nextLearningLanguage !== savedLearningLanguage) {
+      update.learningLanguage = nextLearningLanguage;
+    }
+
+    if (nextUiLocale !== savedUiLocale) {
+      update.uiLocale = nextUiLocale;
+    }
+
+    if (Object.keys(update).length === 0) {
       return;
     }
 
@@ -316,21 +374,14 @@ export function SettingsScreen() {
     try {
       const updatedPreferences = await updateLearningPreferences({
         accessToken: session.access_token,
-        preferences: {
-          ...loadedPreferences,
-          dailyReviewEnabled: draftDailyReviewEnabled,
-          dailyReviewTargetCount: draftDailyReviewTargetCount,
-          preferredReviewTime: nextPreferredReviewTime,
-          preferredReviewTimezone: nextPreferredReviewTimezone,
-          preferredTranslationLanguage: toBackendValue(draftPreferredTranslationLanguage),
-          learningLanguage: toLearningLanguageBackendValue(draftLearningLanguage),
-        },
+        update,
       });
 
       const nextValue = toSelectValue(updatedPreferences.preferredTranslationLanguage);
       const nextLearningLanguage = toLearningLanguageSelectValue(
         updatedPreferences.learningLanguage,
       );
+      const nextUiLocale = toUiLocaleSelectValue(updatedPreferences.uiLocale);
       const nextDailyReviewTargetCount = normalizeDailyReviewTargetCount(
         updatedPreferences.dailyReviewTargetCount,
       );
@@ -345,12 +396,14 @@ export function SettingsScreen() {
       setSavedDailyReviewTargetCount(nextDailyReviewTargetCount);
       setSavedPreferredTranslationLanguage(toBackendValue(nextValue));
       setSavedLearningLanguage(toLearningLanguageBackendValue(nextLearningLanguage));
+      setSavedUiLocale(toUiLocaleBackendValue(nextUiLocale));
       setSavedPreferredReviewTime(toReviewTimeBackendValue(savedPreferredReviewTime));
       setSavedPreferredReviewTimezone(toReviewTimezoneBackendValue(savedPreferredReviewTimezone));
       setDraftDailyReviewEnabled(updatedPreferences.dailyReviewEnabled);
       setDraftDailyReviewTargetCount(nextDailyReviewTargetCount);
       setDraftPreferredTranslationLanguage(nextValue);
       setDraftLearningLanguage(nextLearningLanguage);
+      setDraftUiLocale(nextUiLocale);
       setDraftPreferredReviewTime(savedPreferredReviewTime);
       setDraftPreferredReviewTimezone(savedPreferredReviewTimezone);
       if (user?.id) {
@@ -371,6 +424,7 @@ export function SettingsScreen() {
 
   const normalizedDraftValue = toBackendValue(draftPreferredTranslationLanguage);
   const normalizedDraftLearningLanguage = toLearningLanguageBackendValue(draftLearningLanguage);
+  const normalizedDraftUiLocale = toUiLocaleBackendValue(draftUiLocale);
   const normalizedDraftReviewTime = toReviewTimeBackendValue(draftPreferredReviewTime);
   const normalizedDraftReviewTimezone = toReviewTimezoneBackendValue(draftPreferredReviewTimezone);
   const reviewTimezoneOptions = getReviewTimezoneOptions(draftPreferredReviewTimezone);
@@ -378,6 +432,7 @@ export function SettingsScreen() {
     loadedPreferences !== null &&
     (normalizedDraftValue !== savedPreferredTranslationLanguage ||
       normalizedDraftLearningLanguage !== savedLearningLanguage ||
+      normalizedDraftUiLocale !== savedUiLocale ||
       draftDailyReviewEnabled !== savedDailyReviewEnabled ||
       draftDailyReviewTargetCount !== savedDailyReviewTargetCount ||
       normalizedDraftReviewTime !== savedPreferredReviewTime ||
@@ -503,6 +558,29 @@ export function SettingsScreen() {
             >
               {TRANSLATION_LANGUAGE_OPTIONS.map((option) => (
                 <option key={option.label} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </SettingsControlRow>
+
+          <SettingsControlRow
+            label="Interface language"
+            copy="Save your preferred interface language for supported Leksik surfaces. The web app remains in English for now; broader web translation will be added separately."
+          >
+            <select
+              className="w-full rounded-lg border border-token-border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 focus:border-token-brand disabled:cursor-not-allowed disabled:opacity-60"
+              name="ui_locale"
+              value={draftUiLocale}
+              onChange={(event) => {
+                setDraftUiLocale(event.target.value as UiLocaleSelectValue);
+                setErrorMessage(null);
+                setSuccessMessage(null);
+              }}
+              disabled={isLoading || isSaving}
+            >
+              {INTERFACE_LANGUAGE_OPTIONS.map((option) => (
+                <option key={option.value || "default"} value={option.value}>
                   {option.label}
                 </option>
               ))}

@@ -45,8 +45,7 @@ export function LanguagePreferencesOnboardingGate() {
     try {
       const updatedPreferences = await updateLearningPreferences({
         accessToken: session.access_token,
-        preferences: {
-          ...languagePreferences,
+        update: {
           learningLanguage,
           preferredTranslationLanguage,
         },
