@@ -16,7 +16,7 @@ export function PublicAuthCard({
   title,
   description,
   backHref,
-  backLabel = "Back",
+  backLabel,
   variant = "default",
   footer,
   children,

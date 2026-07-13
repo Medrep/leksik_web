@@ -67,6 +67,9 @@ The web client must not invent fallback client-side logic for those responsibili
 ### 5. Read-optimization rule
 Lightweight local cache may support the user experience for dictionary reads, but it does not create a separate product flow and does not change backend ownership.
 
+### 6. Web locale rule
+One globally mounted locale owner covers public and authenticated web-owned copy. Before authentication, locale precedence is supported browser locale then English; after authenticated preferences are confirmed, saved `ui_locale` takes precedence over browser locale and English. Browser locale remains transient and sign-out returns public UI to that already resolved browser locale.
+
 ## Included flows
 
 The accepted narrow web-client flows are:
@@ -111,6 +114,7 @@ Give the user a simple browser entry point into the product and route them into 
 - Landing is a lightweight entry surface, not a marketing-site expansion.
 - It may communicate that capture and daily review happen through Telegram.
 - It does not introduce broader product navigation before authentication.
+- Its web-owned copy uses the supported browser locale with English fallback after a locale-neutral readiness state.
 
 ## Flow 2 — Sign up
 
@@ -137,6 +141,7 @@ Allow a new user to create an account through the web client.
 ### Failure result
 - sign-up failure is shown to the user
 - user remains in the sign-up flow and can retry
+- web-owned validation, configuration, and generic fallback errors follow the effective public locale, while Supabase errors remain verbatim
 
 ### Exit paths
 - to sign-up confirmation on success
@@ -171,6 +176,7 @@ Allow an existing user to authenticate and enter the web client.
 ### Failure result
 - sign-in failure is shown to the user
 - user remains in the sign-in flow and can retry
+- web-owned validation, configuration, and generic fallback errors follow the effective public locale, while Supabase errors remain verbatim
 
 ### Exit paths
 - to authenticated shell entry on success
@@ -204,6 +210,7 @@ Allow the user to initiate password recovery through the web client.
 ### Failure result
 - recovery initiation failure is shown
 - user remains in the recovery flow and can retry
+- web-owned validation, configuration, and generic fallback errors follow the effective public locale, while Supabase errors remain verbatim
 
 ### Exit paths
 - back to sign in
@@ -255,7 +262,7 @@ Provide the smallest authenticated browser entry into the dictionary experience.
 
 ## Narrow add-on flow — Telegram completion
 
-The dedicated public `/telegram/complete` handoff keeps its existing token, authentication, endpoint, state-mapping, and navigation behavior. Once authenticated learning preferences are available, its checking, success, blocked/conflict, and invalid/expired web-owned copy uses the same authenticated locale runtime. States rendered before authentication or before an authenticated locale is available remain on the English fallback; no public locale provider, cookie, route prefix, or additional preferences request is introduced.
+The dedicated public `/telegram/complete` handoff keeps its existing token, authentication, endpoint, one-request, state-mapping, and navigation behavior. Its public, pre-auth, and authenticated web-owned states use the same global locale runtime: browser locale before authentication and saved `ui_locale` after authenticated preferences are confirmed, with English fallback. Arbitrary backend errors remain verbatim; no second provider, cookie, route prefix, or additional preferences request is introduced.
 
 ## Flow 6 — Dictionary list browsing
 
@@ -434,9 +441,9 @@ Allow the authenticated user to view and update accepted settings through backen
 ### Boundaries
 - This is a narrow settings flow only.
 - Settings preferences remain limited to `learning_language`, `preferred_translation_language`, `ui_locale`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`.
-- browser locale is resolved only by the authenticated web runtime and is never silently persisted
+- browser locale is resolved once by the global web runtime and is never silently persisted
 - Settings, shared authenticated-shell, Dictionary List, Dictionary Details, and the authenticated language-preferences gate use the same authenticated locale runtime and English bundle fallback
-- Telegram completion uses that runtime only after authenticated preferences are available; its public/pre-auth states and all public/auth pages remain English
+- landing, public auth/recovery, and every Telegram completion state use the same runtime before and after authentication
 - root `<html lang="en">` remains static; locale routes and server locale propagation remain out of scope
 - The Telegram panel move is a placement change for existing behavior, not Telegram feature expansion.
 - It does not include profile/account-management expansion.
@@ -537,6 +544,7 @@ Allow the authenticated user to leave the protected web-client area safely.
 - protected session is terminated
 - protected cached read state is not left accessible after sign out
 - user is no longer inside the authenticated shell
+- user-bound locale input is discarded and public UI returns to the already resolved transient browser locale
 
 ### Failure result
 - sign-out error is handled as an auth or session issue

@@ -1,12 +1,86 @@
 import type {
-  AuthenticatedMessages,
+  WebMessages,
   DictionaryDetailsMessages,
   DictionaryListMessages,
+  LandingMessages,
   OnboardingMessages,
+  PublicAuthMessages,
   SettingsMessages,
   ShellMessages,
   TelegramCompletionMessages,
 } from "@/lib/i18n/messages/types";
+
+export const ukLandingMessages = {
+  subtitle: "Ваш особистий словник — завжди під рукою.",
+  signIn: "Увійти",
+  createAccount: "Створити обліковий запис",
+  telegramHelper: "Додавайте слова за допомогою бота Telegram",
+} satisfies LandingMessages;
+
+export const ukPublicAuthMessages = {
+  shared: {
+    back: "Назад",
+    signIn: "Увійти",
+    emailLabel: "Ел. пошта",
+    emailPlaceholder: "name@example.com",
+    passwordLabel: "Пароль",
+    configurationError:
+      "Не налаштовано браузерну автентифікацію Supabase. Укажіть NEXT_PUBLIC_SUPABASE_URL і NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+  },
+  signIn: {
+    title: "З поверненням",
+    description: "Увійдіть у свій обліковий запис.",
+    noAccount: "Немає облікового запису?",
+    signUp: "Зареєструватися",
+    forgotPassword: "Забули пароль?",
+    passwordPlaceholder: "Ваш пароль",
+    submit: "Увійти",
+    submitting: "Вхід…",
+    emailRequired: "Введіть адресу електронної пошти, щоб продовжити.",
+    passwordRequired: "Введіть пароль, щоб продовжити.",
+    genericError: "Не вдалося ввійти з поточними налаштуваннями браузерної автентифікації.",
+  },
+  signUp: {
+    title: "Створити обліковий запис",
+    description: "Заповніть дані, щоб почати.",
+    existingAccount: "Уже маєте обліковий запис?",
+    displayNameLabel: "Відображуване ім’я",
+    displayNamePlaceholder: "Ваше ім’я",
+    passwordPlaceholder: "Щонайменше 8 символів",
+    confirmPasswordLabel: "Підтвердьте пароль",
+    confirmPasswordPlaceholder: "Повторіть пароль",
+    submit: "Почати",
+    submitting: "Створення облікового запису…",
+    nameRequired: "Введіть ім’я, щоб продовжити.",
+    emailRequired: "Введіть адресу електронної пошти, щоб продовжити.",
+    passwordRequired: "Введіть пароль, щоб продовжити.",
+    passwordConfirmationRequired: "Підтвердьте пароль, щоб продовжити.",
+    passwordMismatch: "Введіть однаковий пароль в обох полях.",
+    genericError: "Не вдалося створити обліковий запис із поточними налаштуваннями браузерної автентифікації.",
+  },
+  signUpConfirmation: {
+    title: "Перевірте пошту",
+    description:
+      "Перейдіть за посиланням у листі, щоб активувати обліковий запис. Якщо листа немає, перевірте папку зі спамом.",
+    confirmationMessage: "Ми надіслали посилання для підтвердження на вашу адресу електронної пошти.",
+    openSignIn: "Перейти до входу",
+  },
+  passwordRecovery: {
+    title: "Скинути пароль",
+    description: "Введіть адресу електронної пошти, і ми надішлемо посилання для скидання пароля.",
+    submit: "Надіслати посилання",
+    submitting: "Надсилання посилання…",
+    emailRequired: "Введіть адресу електронної пошти, щоб продовжити.",
+    emailIncomplete: "Заповніть поле електронної пошти, щоб продовжити.",
+    genericError: "Не вдалося почати відновлення пароля з поточними налаштуваннями браузерної автентифікації.",
+  },
+  passwordRecoveryConfirmation: {
+    title: "Перевірте вхідні",
+    description: "Якщо адреса відповідає обліковому запису, ми надішлемо посилання для скидання пароля.",
+    backToSignIn: "Повернутися до входу",
+    resetAgain: "Надіслати ще раз",
+  },
+} satisfies PublicAuthMessages;
 
 export const ukSettingsMessages = {
   navigation: {
@@ -39,7 +113,7 @@ export const ukSettingsMessages = {
   interfaceLanguage: {
     label: "Мова інтерфейсу",
     description:
-      "Збережіть бажану мову інтерфейсу для підтримуваних розділів Leksik. На цьому етапі локалізовано Налаштування; переклад інших розділів вебзастосунку буде додано окремо.",
+      "Збережіть бажану мову інтерфейсу для підтримуваних розділів вебзастосунку Leksik.",
     systemDefault: "Типова мова системи/браузера",
     localeNames: {
       en: "English",
@@ -314,10 +388,12 @@ export const ukTelegramCompletionMessages = {
 } satisfies TelegramCompletionMessages;
 
 export const ukMessages = {
+  landing: ukLandingMessages,
+  publicAuth: ukPublicAuthMessages,
   settings: ukSettingsMessages,
   shell: ukShellMessages,
   dictionaryList: ukDictionaryListMessages,
   dictionaryDetails: ukDictionaryDetailsMessages,
   onboarding: ukOnboardingMessages,
   telegramCompletion: ukTelegramCompletionMessages,
-} satisfies AuthenticatedMessages;
+} satisfies WebMessages;

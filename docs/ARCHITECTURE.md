@@ -56,15 +56,19 @@ Responsibilities:
 - settings screen
 - shared use of backend settings/preferences endpoints where applicable
 
-Authenticated localization boundary:
+Web localization boundary:
 - the web client owns its typed message bundles; backend and web share locale identifiers only
-- one authenticated locale runtime resolves locale in this order: saved `ui_locale`, supported browser locale, then English
+- one globally mounted locale runtime owns both public and authenticated web surfaces
+- before authentication, effective locale resolves in this order: supported browser locale, then English
+- after authenticated preferences are confirmed, effective locale resolves in this order: saved `ui_locale`, supported browser locale, then English
 - browser-derived locale is transient and is never persisted automatically
-- localized authenticated coverage includes Settings, the shared authenticated shell, Dictionary List, Dictionary Details, and the authenticated language-preferences onboarding gate in `en`, `pl`, `ru`, and `uk`
-- Telegram completion consumes the same runtime after authenticated preferences are ready; public/pre-auth completion states retain the English fallback rather than introducing a second locale owner
+- localized coverage includes landing, public authentication and recovery, public Telegram completion, Settings, the shared authenticated shell, Dictionary List, Dictionary Details, and the authenticated language-preferences onboarding gate in `en`, `pl`, `ru`, and `uk`
+- locale-neutral readiness states keep server and first-client markup compatible while browser locale or current-user preferences are being resolved
+- sign-out discards user-bound locale input and returns public UI to the already resolved transient browser locale
+- authenticated bootstrap and preference responses are guarded against stale-session commits
+- Supabase and arbitrary backend errors remain external pass-through text rather than web-owned translations
 - product vocabulary content remains backend-owned data and is never translated by the web localization runtime
-- public/auth surfaces remain English, as do Telegram completion states rendered before an authenticated locale is available
-- root `<html lang="en">` remains static in this slice; route locale prefixes, server locale cookies, and request-based locale propagation are not used
+- root `<html lang="en">` and static English metadata remain intentional document-boundary limitations; route locale prefixes, server locale cookies, and request-based locale propagation are not used
 - no third-party internationalization dependency is used
 
 ### Bot client

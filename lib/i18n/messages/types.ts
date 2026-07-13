@@ -233,6 +233,76 @@ export type OnboardingMessages = {
   saveError: string;
 };
 
+export type LandingMessages = {
+  subtitle: string;
+  signIn: string;
+  createAccount: string;
+  telegramHelper: string;
+};
+
+export type PublicAuthMessages = {
+  shared: {
+    back: string;
+    signIn: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    passwordLabel: string;
+    configurationError: string;
+  };
+  signIn: {
+    title: string;
+    description: string;
+    noAccount: string;
+    signUp: string;
+    forgotPassword: string;
+    passwordPlaceholder: string;
+    submit: string;
+    submitting: string;
+    emailRequired: string;
+    passwordRequired: string;
+    genericError: string;
+  };
+  signUp: {
+    title: string;
+    description: string;
+    existingAccount: string;
+    displayNameLabel: string;
+    displayNamePlaceholder: string;
+    passwordPlaceholder: string;
+    confirmPasswordLabel: string;
+    confirmPasswordPlaceholder: string;
+    submit: string;
+    submitting: string;
+    nameRequired: string;
+    emailRequired: string;
+    passwordRequired: string;
+    passwordConfirmationRequired: string;
+    passwordMismatch: string;
+    genericError: string;
+  };
+  signUpConfirmation: {
+    title: string;
+    description: string;
+    confirmationMessage: string;
+    openSignIn: string;
+  };
+  passwordRecovery: {
+    title: string;
+    description: string;
+    submit: string;
+    submitting: string;
+    emailRequired: string;
+    emailIncomplete: string;
+    genericError: string;
+  };
+  passwordRecoveryConfirmation: {
+    title: string;
+    description: string;
+    backToSignIn: string;
+    resetAgain: string;
+  };
+};
+
 export type TelegramCompletionStateMessages = {
   badge: string;
   title: string;
@@ -266,7 +336,9 @@ export type TelegramCompletionMessages = {
   };
 };
 
-export type AuthenticatedMessages = {
+export type WebMessages = {
+  landing: LandingMessages;
+  publicAuth: PublicAuthMessages;
   settings: SettingsMessages;
   shell: ShellMessages;
   dictionaryList: DictionaryListMessages;
@@ -274,3 +346,5 @@ export type AuthenticatedMessages = {
   onboarding: OnboardingMessages;
   telegramCompletion: TelegramCompletionMessages;
 };
+
+export type AuthenticatedMessages = WebMessages;

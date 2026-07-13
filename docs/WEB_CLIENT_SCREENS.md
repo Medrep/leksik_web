@@ -99,8 +99,8 @@ Provide one public Telegram-first completion surface for users arriving from Tel
 - blocked/conflict state when backend-owned linking rules block completion
 - invalid/expired state for missing, invalid, or expired completion codes
 - refreshed Telegram completion presentation with narrower centered layout, refreshed spacing and typography, state-specific icon treatment, compact supporting detail block, and button-style CTAs
-- localized checking, success, blocked/conflict, and invalid/expired web-owned states when authenticated preferences make the existing locale runtime available
-- intentional English fallback for sign-in-required, missing-code, and other states rendered before an authenticated locale is available
+- localized checking, sign-in-required, success, blocked/conflict, invalid/expired, missing-code, details, and actions through the existing global locale runtime
+- supported browser-locale copy before authentication and saved-`ui_locale` copy after authenticated preferences are confirmed, with English fallback
 
 ### Entry paths
 - direct visit to `/telegram/complete?code=...` from Telegram-first onboarding
@@ -132,6 +132,7 @@ Provide the public browser entry point into the web client and route the user in
 - primary action: sign in to `/sign-in`
 - secondary action: create account to `/sign-up`
 - brief note that capture and daily review happen through Telegram
+- complete web-owned landing copy in `en`, `pl`, `ru`, and `uk` through the global locale owner
 
 ### Entry paths
 - direct visit to web root
@@ -162,6 +163,7 @@ Allow a new user to create an account and reach the sign-up confirmation state.
 - primary submit action
 - link/path to Sign In
 - refreshed public auth form presentation for layout, spacing, typography, labels, inline field errors, and auth/config error blocks
+- localized page, form, validation, loading, configuration, generic-error, navigation, and accessibility copy in `en`, `pl`, `ru`, and `uk`; external Supabase errors remain verbatim
 
 ### Entry paths
 - from Landing / Entry
@@ -191,6 +193,7 @@ Confirm that registration was accepted and tell the user to check their email be
 - brief instruction to check email for the confirmation link
 - button-style action to Sign In using the existing sign-in route and `next` handling
 - refreshed public confirmation presentation with narrower centered layout, updated icon treatment, and supporting copy layout
+- localized confirmation copy and action in `en`, `pl`, `ru`, and `uk`
 
 ### Entry paths
 - from Sign Up after accepted submission
@@ -218,6 +221,7 @@ Allow an existing user to authenticate and enter the authenticated web-client pa
 - link/path to Password Recovery
 - link/path to Sign Up
 - refreshed public auth form presentation for layout, spacing, typography, labels, inline field errors, and auth/config error blocks
+- localized page, form, validation, loading, configuration, generic-error, navigation, and accessibility copy in `en`, `pl`, `ru`, and `uk`; external Supabase errors remain verbatim
 
 ### Entry paths
 - from Landing / Entry
@@ -248,6 +252,7 @@ Allow the user to initiate password recovery from the web client.
 - recovery email input
 - primary action to initiate recovery
 - refreshed public auth form presentation for layout, spacing, typography, labels, inline field errors, and auth/config error blocks
+- localized page, form, validation, loading, configuration, generic-error, navigation, and accessibility copy in `en`, `pl`, `ru`, and `uk`; external Supabase errors remain verbatim
 
 ### Entry paths
 - from Sign In
@@ -274,6 +279,7 @@ Confirm that the password recovery initiation request was accepted and guide the
 - button-style action back to Sign In
 - secondary reset-again link back to Password Recovery
 - refreshed public confirmation presentation with narrower centered layout, updated icon treatment, and supporting copy layout
+- localized confirmation copy and actions in `en`, `pl`, `ru`, and `uk`
 
 ### Entry paths
 - from Password Recovery after accepted submission
@@ -427,7 +433,6 @@ Provide one narrow authenticated settings/preferences screen for accepted backen
 - capture or review actions
 - support/operations tooling
 - arbitrary web-only preferences outside the backend settings/preferences contract
-- localization of public/auth content or Telegram completion states rendered before an authenticated locale is available
 - dynamic `<html lang>`, locale-prefixed routes, server locale cookies, or request-based locale propagation
 
 ## Shared layout behavior
@@ -448,6 +453,7 @@ Shared traits may include:
 - refreshed confirmation presentation on Sign Up Confirmation and Password Recovery Confirmation
 - lightweight branding
 - consistent navigation/back pattern
+- locale-neutral browser/auth readiness states followed by complete web-owned copy from the same global locale owner
 - light-theme presentation only
 
 This is a presentation pattern only.

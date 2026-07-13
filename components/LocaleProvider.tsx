@@ -1,12 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { readBrowserLocale, resolveEffectiveLocale } from "@/lib/i18n/locales";
 import {
-  getAuthenticatedMessages,
-  type AuthenticatedMessages,
+  getWebMessages,
   type SettingsMessages,
+  type WebMessages,
 } from "@/lib/i18n/messages";
 import type { UiLocale } from "@/lib/ui-locale-options";
 
@@ -15,26 +15,30 @@ type UserLocaleState = {
   uiLocale: UiLocale | null;
 };
 
-type BrowserLocaleState = {
-  locale: UiLocale;
-  userId: string;
-};
-
 type LocaleContextValue = {
   acceptAuthoritativeUiLocale: (uiLocale: UiLocale | null) => void;
   isLocaleReady: boolean;
+  isPublicLocaleReady: boolean;
   locale: UiLocale;
-  messages: AuthenticatedMessages;
+  messages: WebMessages;
   settingsMessages: SettingsMessages;
 };
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const { authStatus, languagePreferences, user } = useAuth();
+  const hasResolvedBrowserLocaleRef = useRef(false);
+  const {
+    authStatus,
+    bootstrapStatus,
+    languagePreferences,
+    languageSetupStatus,
+    user,
+  } = useAuth();
   const userId = user?.id ?? null;
   const [savedLocaleOverride, setSavedLocaleOverride] = useState<UserLocaleState | null>(null);
-  const [browserLocale, setBrowserLocale] = useState<BrowserLocaleState | null>(null);
+  const [browserLocale, setBrowserLocale] = useState<UiLocale>("en");
+  const [isBrowserLocaleReady, setIsBrowserLocaleReady] = useState(false);
   const hasAuthenticatedPreferences =
     authStatus === "authenticated" && userId !== null && languagePreferences !== null;
 
@@ -43,40 +47,38 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   }, [languagePreferences, userId]);
 
   useEffect(() => {
-    if (!hasAuthenticatedPreferences || !userId) {
-      setBrowserLocale(null);
+    if (hasResolvedBrowserLocaleRef.current) {
       return;
     }
 
-    setBrowserLocale({
-      locale: readBrowserLocale(),
-      userId,
-    });
-  }, [hasAuthenticatedPreferences, userId]);
+    hasResolvedBrowserLocaleRef.current = true;
+    setBrowserLocale(readBrowserLocale());
+    setIsBrowserLocaleReady(true);
+  }, []);
 
-  const savedLocale =
-    savedLocaleOverride?.userId === userId
+  const savedLocale = hasAuthenticatedPreferences
+    ? savedLocaleOverride?.userId === userId
       ? savedLocaleOverride.uiLocale
-      : languagePreferences?.uiLocale ?? null;
-  const resolvedBrowserLocale =
-    browserLocale?.userId === userId ? browserLocale.locale : null;
+      : languagePreferences.uiLocale
+    : null;
   const isLocaleReady =
-    hasAuthenticatedPreferences && (savedLocale !== null || resolvedBrowserLocale !== null);
-  const locale = isLocaleReady
-    ? resolveEffectiveLocale(savedLocale, resolvedBrowserLocale ?? "en")
-    : "en";
-  const messages = useMemo(() => getAuthenticatedMessages(locale), [locale]);
+    hasAuthenticatedPreferences && (savedLocale !== null || isBrowserLocaleReady);
+  const hasAuthenticatedLocaleFallback =
+    hasAuthenticatedPreferences ||
+    bootstrapStatus === "error" ||
+    languageSetupStatus === "error";
+  const isPublicLocaleReady =
+    isBrowserLocaleReady &&
+    authStatus !== "loading" &&
+    (authStatus !== "authenticated" || hasAuthenticatedLocaleFallback);
+  const locale = hasAuthenticatedPreferences
+    ? resolveEffectiveLocale(savedLocale, browserLocale)
+    : browserLocale;
+  const messages = useMemo(() => getWebMessages(locale), [locale]);
 
   function acceptAuthoritativeUiLocale(uiLocale: UiLocale | null) {
     if (!userId) {
       return;
-    }
-
-    if (uiLocale === null) {
-      setBrowserLocale({
-        locale: readBrowserLocale(),
-        userId,
-      });
     }
 
     setSavedLocaleOverride({
@@ -90,6 +92,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
       value={{
         acceptAuthoritativeUiLocale,
         isLocaleReady,
+        isPublicLocaleReady,
         locale,
         messages,
         settingsMessages: messages.settings,

@@ -1,12 +1,86 @@
 import type {
-  AuthenticatedMessages,
+  WebMessages,
   DictionaryDetailsMessages,
   DictionaryListMessages,
+  LandingMessages,
   OnboardingMessages,
+  PublicAuthMessages,
   SettingsMessages,
   ShellMessages,
   TelegramCompletionMessages,
 } from "@/lib/i18n/messages/types";
+
+export const plLandingMessages = {
+  subtitle: "Twoja osobista lista słówek — zawsze pod ręką.",
+  signIn: "Zaloguj się",
+  createAccount: "Utwórz konto",
+  telegramHelper: "Dodawaj słowa za pomocą bota Telegram",
+} satisfies LandingMessages;
+
+export const plPublicAuthMessages = {
+  shared: {
+    back: "Wstecz",
+    signIn: "Zaloguj się",
+    emailLabel: "E-mail",
+    emailPlaceholder: "name@example.com",
+    passwordLabel: "Hasło",
+    configurationError:
+      "Brakuje konfiguracji uwierzytelniania Supabase w przeglądarce. Ustaw NEXT_PUBLIC_SUPABASE_URL i NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+  },
+  signIn: {
+    title: "Miło Cię widzieć",
+    description: "Zaloguj się na swoje konto.",
+    noAccount: "Nie masz konta?",
+    signUp: "Zarejestruj się",
+    forgotPassword: "Nie pamiętasz hasła?",
+    passwordPlaceholder: "Twoje hasło",
+    submit: "Zaloguj się",
+    submitting: "Logowanie…",
+    emailRequired: "Wpisz adres e-mail, aby kontynuować.",
+    passwordRequired: "Wpisz hasło, aby kontynuować.",
+    genericError: "Nie udało się zalogować przy użyciu bieżącej konfiguracji uwierzytelniania w przeglądarce.",
+  },
+  signUp: {
+    title: "Utwórz konto",
+    description: "Wpisz swoje dane, aby rozpocząć.",
+    existingAccount: "Masz już konto?",
+    displayNameLabel: "Nazwa wyświetlana",
+    displayNamePlaceholder: "Twoja nazwa",
+    passwordPlaceholder: "Min. 8 znaków",
+    confirmPasswordLabel: "Potwierdź hasło",
+    confirmPasswordPlaceholder: "Powtórz hasło",
+    submit: "Zacznij",
+    submitting: "Tworzenie konta…",
+    nameRequired: "Wpisz nazwę, aby kontynuować.",
+    emailRequired: "Wpisz adres e-mail, aby kontynuować.",
+    passwordRequired: "Wpisz hasło, aby kontynuować.",
+    passwordConfirmationRequired: "Potwierdź hasło, aby kontynuować.",
+    passwordMismatch: "Wpisz to samo hasło w obu polach.",
+    genericError: "Nie udało się utworzyć konta przy użyciu bieżącej konfiguracji uwierzytelniania w przeglądarce.",
+  },
+  signUpConfirmation: {
+    title: "Sprawdź pocztę",
+    description:
+      "Kliknij link w wiadomości, aby aktywować konto. Jeśli jej nie widzisz, sprawdź folder ze spamem.",
+    confirmationMessage: "Wysłaliśmy link potwierdzający na Twój adres e-mail.",
+    openSignIn: "Przejdź do logowania",
+  },
+  passwordRecovery: {
+    title: "Zresetuj hasło",
+    description: "Wpisz adres e-mail, a wyślemy link do zresetowania hasła.",
+    submit: "Wyślij link resetujący",
+    submitting: "Wysyłanie linku…",
+    emailRequired: "Wpisz adres e-mail, aby kontynuować.",
+    emailIncomplete: "Uzupełnij pole adresu e-mail, aby kontynuować.",
+    genericError: "Nie udało się rozpocząć odzyskiwania hasła przy użyciu bieżącej konfiguracji uwierzytelniania w przeglądarce.",
+  },
+  passwordRecoveryConfirmation: {
+    title: "Sprawdź skrzynkę odbiorczą",
+    description: "Jeśli adres pasuje do konta, wyślemy link do zresetowania hasła.",
+    backToSignIn: "Wróć do logowania",
+    resetAgain: "Wyślij ponownie",
+  },
+} satisfies PublicAuthMessages;
 
 export const plSettingsMessages = {
   navigation: {
@@ -39,7 +113,7 @@ export const plSettingsMessages = {
   interfaceLanguage: {
     label: "Język interfejsu",
     description:
-      "Zapisz preferowany język interfejsu dla obsługiwanych powierzchni Leksik. Ten etap tłumaczy Ustawienia; pozostałe części aplikacji internetowej zostaną przetłumaczone osobno.",
+      "Zapisz preferowany język interfejsu dla obsługiwanych części aplikacji internetowej Leksik.",
     systemDefault: "Domyślny systemu/przeglądarki",
     localeNames: {
       en: "English",
@@ -314,10 +388,12 @@ export const plTelegramCompletionMessages = {
 } satisfies TelegramCompletionMessages;
 
 export const plMessages = {
+  landing: plLandingMessages,
+  publicAuth: plPublicAuthMessages,
   settings: plSettingsMessages,
   shell: plShellMessages,
   dictionaryList: plDictionaryListMessages,
   dictionaryDetails: plDictionaryDetailsMessages,
   onboarding: plOnboardingMessages,
   telegramCompletion: plTelegramCompletionMessages,
-} satisfies AuthenticatedMessages;
+} satisfies WebMessages;

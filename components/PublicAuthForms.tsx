@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useLocale } from "@/components/LocaleProvider";
 import { buildHrefWithNext, getNextRouteFromWindow, getOptionalNextRouteFromWindow } from "@/lib/auth-next";
 import { appConfig } from "@/lib/config";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
@@ -23,7 +24,19 @@ type RecoveryValues = {
   email: string;
 };
 
-type FieldErrors<T extends string> = Partial<Record<T, string>>;
+type SignUpErrorKey =
+  | "nameRequired"
+  | "emailRequired"
+  | "passwordRequired"
+  | "passwordConfirmationRequired"
+  | "passwordMismatch";
+type SignInErrorKey = "emailRequired" | "passwordRequired";
+type RecoveryErrorKey = "emailRequired";
+type FieldErrors<T extends string, TError extends string> = Partial<Record<T, TError>>;
+type AuthStatusState<T extends string> =
+  | { kind: "localized"; key: T }
+  | { kind: "external"; message: string }
+  | null;
 
 const authInputBaseClassName =
   "w-full min-w-0 max-w-full rounded-lg border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 placeholder:text-token-muted/45 focus:border-token-brand";
@@ -45,20 +58,27 @@ function sleep(ms: number) {
   });
 }
 
-function getSupabaseConfigError() {
-  if (!appConfig.hasSupabaseBrowserAuth) {
-    return "Missing Supabase browser auth configuration. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.";
+function hasSupabaseConfigError() {
+  return !appConfig.hasSupabaseBrowserAuth;
+}
+
+function getExternalAuthErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
   }
 
   return null;
 }
 
-function getAuthErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
+function resolveStatusMessage<T extends string>(
+  status: AuthStatusState<T>,
+  localizedMessages: Record<T, string>,
+) {
+  if (!status) {
+    return null;
   }
 
-  return fallback;
+  return status.kind === "external" ? status.message : localizedMessages[status.key];
 }
 
 function FieldError({ message }: { message?: string }) {
@@ -97,55 +117,53 @@ function StatusMessage({
 
 export function SignUpForm() {
   const router = useRouter();
+  const { messages } = useLocale();
+  const sharedMessages = messages.publicAuth.shared;
+  const signUpMessages = messages.publicAuth.signUp;
   const [values, setValues] = useState<SignUpValues>({
     fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
-  const [errors, setErrors] = useState<FieldErrors<keyof SignUpValues>>({});
+  const [errors, setErrors] = useState<FieldErrors<keyof SignUpValues, SignUpErrorKey>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [statusTone, setStatusTone] = useState<"neutral" | "error">("neutral");
+  const [status, setStatus] = useState<AuthStatusState<"configuration" | "generic">>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const nextErrors: FieldErrors<keyof SignUpValues> = {};
+    const nextErrors: FieldErrors<keyof SignUpValues, SignUpErrorKey> = {};
 
     if (!values.fullName.trim()) {
-      nextErrors.fullName = "Enter your name to continue.";
+      nextErrors.fullName = "nameRequired";
     }
     if (!values.email.trim()) {
-      nextErrors.email = "Enter your email to continue.";
+      nextErrors.email = "emailRequired";
     }
     if (!values.password.trim()) {
-      nextErrors.password = "Enter a password to continue.";
+      nextErrors.password = "passwordRequired";
     }
     if (!values.confirmPassword.trim()) {
-      nextErrors.confirmPassword = "Confirm your password to continue.";
+      nextErrors.confirmPassword = "passwordConfirmationRequired";
     }
     if (
       values.password.trim() &&
       values.confirmPassword.trim() &&
       values.password !== values.confirmPassword
     ) {
-      nextErrors.confirmPassword = "Repeat the same password in both fields.";
+      nextErrors.confirmPassword = "passwordMismatch";
     }
 
     setErrors(nextErrors);
-    setStatusMessage(null);
-    setStatusTone("neutral");
+    setStatus(null);
 
     if (Object.keys(nextErrors).length > 0) {
       return;
     }
 
-    const configError = getSupabaseConfigError();
-
-    if (configError) {
-      setStatusTone("error");
-      setStatusMessage(configError);
+    if (hasSupabaseConfigError()) {
+      setStatus({ kind: "localized", key: "configuration" });
       return;
     }
 
@@ -164,8 +182,7 @@ export function SignUpForm() {
       });
 
       if (error) {
-        setStatusTone("error");
-        setStatusMessage(error.message);
+        setStatus({ kind: "external", message: error.message });
         return;
       }
 
@@ -175,8 +192,12 @@ export function SignUpForm() {
 
       router.replace(buildHrefWithNext("/sign-up/confirmation", getOptionalNextRouteFromWindow()));
     } catch (error) {
-      setStatusTone("error");
-      setStatusMessage(getAuthErrorMessage(error, "Sign-up could not be completed from the current browser auth setup."));
+      const externalMessage = getExternalAuthErrorMessage(error);
+      setStatus(
+        externalMessage
+          ? { kind: "external", message: externalMessage }
+          : { kind: "localized", key: "generic" },
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -184,14 +205,20 @@ export function SignUpForm() {
 
   return (
     <form className="grid w-full min-w-0 max-w-full gap-3" onSubmit={handleSubmit} noValidate>
-      <StatusMessage tone={statusTone} message={statusMessage} />
+      <StatusMessage
+        tone="error"
+        message={resolveStatusMessage(status, {
+          configuration: sharedMessages.configurationError,
+          generic: signUpMessages.genericError,
+        })}
+      />
       <label className={authLabelClassName}>
-        <span>Display name</span>
+        <span>{signUpMessages.displayNameLabel}</span>
         <input
           className={getAuthInputClassName(Boolean(errors.fullName))}
           type="text"
           autoComplete="name"
-          placeholder="Your name"
+          placeholder={signUpMessages.displayNamePlaceholder}
           value={values.fullName}
           onChange={(event) => {
             const fullName = event.target.value;
@@ -202,16 +229,16 @@ export function SignUpForm() {
           }}
           aria-invalid={Boolean(errors.fullName)}
         />
-        <FieldError message={errors.fullName} />
+        <FieldError message={errors.fullName ? signUpMessages[errors.fullName] : undefined} />
       </label>
       <label className={authLabelClassName}>
-        <span>Email</span>
+        <span>{sharedMessages.emailLabel}</span>
         <input
           className={getAuthInputClassName(Boolean(errors.email))}
           type="email"
           autoComplete="email"
           inputMode="email"
-          placeholder="you@email.com"
+          placeholder={sharedMessages.emailPlaceholder}
           value={values.email}
           onChange={(event) => {
             const email = event.target.value;
@@ -222,15 +249,15 @@ export function SignUpForm() {
           }}
           aria-invalid={Boolean(errors.email)}
         />
-        <FieldError message={errors.email} />
+        <FieldError message={errors.email ? signUpMessages[errors.email] : undefined} />
       </label>
       <label className={authLabelClassName}>
-        <span>Password</span>
+        <span>{sharedMessages.passwordLabel}</span>
         <input
           className={getAuthInputClassName(Boolean(errors.password))}
           type="text"
           autoComplete="new-password"
-          placeholder="Min. 8 characters"
+          placeholder={signUpMessages.passwordPlaceholder}
           value={values.password}
           onChange={(event) => {
             const password = event.target.value;
@@ -241,15 +268,15 @@ export function SignUpForm() {
           }}
           aria-invalid={Boolean(errors.password)}
         />
-        <FieldError message={errors.password} />
+        <FieldError message={errors.password ? signUpMessages[errors.password] : undefined} />
       </label>
       <label className={authLabelClassName}>
-        <span>Confirm password</span>
+        <span>{signUpMessages.confirmPasswordLabel}</span>
         <input
           className={getAuthInputClassName(Boolean(errors.confirmPassword))}
           type="text"
           autoComplete="new-password"
-          placeholder="Repeat password"
+          placeholder={signUpMessages.confirmPasswordPlaceholder}
           value={values.confirmPassword}
           onChange={(event) => {
             const confirmPassword = event.target.value;
@@ -260,10 +287,12 @@ export function SignUpForm() {
           }}
           aria-invalid={Boolean(errors.confirmPassword)}
         />
-        <FieldError message={errors.confirmPassword} />
+        <FieldError
+          message={errors.confirmPassword ? signUpMessages[errors.confirmPassword] : undefined}
+        />
       </label>
       <button className={`${authPrimaryButtonClassName} mt-2`} type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Creating account..." : "Get started"}
+        {isSubmitting ? signUpMessages.submitting : signUpMessages.submit}
       </button>
     </form>
   );
@@ -271,40 +300,38 @@ export function SignUpForm() {
 
 export function SignInForm() {
   const router = useRouter();
+  const { messages } = useLocale();
+  const sharedMessages = messages.publicAuth.shared;
+  const signInMessages = messages.publicAuth.signIn;
   const [values, setValues] = useState<SignInValues>({
     email: "",
     password: "",
   });
-  const [errors, setErrors] = useState<FieldErrors<keyof SignInValues>>({});
+  const [errors, setErrors] = useState<FieldErrors<keyof SignInValues, SignInErrorKey>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [statusTone, setStatusTone] = useState<"neutral" | "error">("neutral");
+  const [status, setStatus] = useState<AuthStatusState<"configuration" | "generic">>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const nextErrors: FieldErrors<keyof SignInValues> = {};
+    const nextErrors: FieldErrors<keyof SignInValues, SignInErrorKey> = {};
 
     if (!values.email.trim()) {
-      nextErrors.email = "Enter your email to continue.";
+      nextErrors.email = "emailRequired";
     }
     if (!values.password.trim()) {
-      nextErrors.password = "Enter your password to continue.";
+      nextErrors.password = "passwordRequired";
     }
 
     setErrors(nextErrors);
-    setStatusMessage(null);
-    setStatusTone("neutral");
+    setStatus(null);
 
     if (Object.keys(nextErrors).length > 0) {
       return;
     }
 
-    const configError = getSupabaseConfigError();
-
-    if (configError) {
-      setStatusTone("error");
-      setStatusMessage(configError);
+    if (hasSupabaseConfigError()) {
+      setStatus({ kind: "localized", key: "configuration" });
       return;
     }
 
@@ -318,15 +345,18 @@ export function SignInForm() {
       });
 
       if (error) {
-        setStatusTone("error");
-        setStatusMessage(error.message);
+        setStatus({ kind: "external", message: error.message });
         return;
       }
 
       router.replace(getNextRouteFromWindow());
     } catch (error) {
-      setStatusTone("error");
-      setStatusMessage(getAuthErrorMessage(error, "Sign-in could not be completed from the current browser auth setup."));
+      const externalMessage = getExternalAuthErrorMessage(error);
+      setStatus(
+        externalMessage
+          ? { kind: "external", message: externalMessage }
+          : { kind: "localized", key: "generic" },
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -334,15 +364,21 @@ export function SignInForm() {
 
   return (
     <form className="grid w-full min-w-0 max-w-full gap-3" onSubmit={handleSubmit} noValidate>
-      <StatusMessage tone={statusTone} message={statusMessage} />
+      <StatusMessage
+        tone="error"
+        message={resolveStatusMessage(status, {
+          configuration: sharedMessages.configurationError,
+          generic: signInMessages.genericError,
+        })}
+      />
       <label className={authLabelClassName}>
-        <span>Email</span>
+        <span>{sharedMessages.emailLabel}</span>
         <input
           className={getAuthInputClassName(Boolean(errors.email))}
           type="email"
           autoComplete="email"
           inputMode="email"
-          placeholder="you@email.com"
+          placeholder={sharedMessages.emailPlaceholder}
           value={values.email}
           onChange={(event) => {
             const email = event.target.value;
@@ -353,20 +389,20 @@ export function SignInForm() {
           }}
           aria-invalid={Boolean(errors.email)}
         />
-        <FieldError message={errors.email} />
+        <FieldError message={errors.email ? signInMessages[errors.email] : undefined} />
       </label>
       <label className={authLabelClassName}>
         <div className="flex w-full min-w-0 items-center justify-between gap-3">
-          <span>Password</span>
+          <span>{sharedMessages.passwordLabel}</span>
           <Link className="min-w-0 text-right text-xs text-token-brand transition hover:brightness-95" href="/password-recovery">
-            Forgot password?
+            {signInMessages.forgotPassword}
           </Link>
         </div>
         <input
           className={getAuthInputClassName(Boolean(errors.password))}
           type="text"
           autoComplete="current-password"
-          placeholder="Your password"
+          placeholder={signInMessages.passwordPlaceholder}
           value={values.password}
           onChange={(event) => {
             const password = event.target.value;
@@ -377,10 +413,10 @@ export function SignInForm() {
           }}
           aria-invalid={Boolean(errors.password)}
         />
-        <FieldError message={errors.password} />
+        <FieldError message={errors.password ? signInMessages[errors.password] : undefined} />
       </label>
       <button className={`${authPrimaryButtonClassName} mt-2`} type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Signing in..." : "Sign in"}
+        {isSubmitting ? signInMessages.submitting : signInMessages.submit}
       </button>
     </form>
   );
@@ -388,36 +424,35 @@ export function SignInForm() {
 
 export function PasswordRecoveryForm() {
   const router = useRouter();
+  const { messages } = useLocale();
+  const sharedMessages = messages.publicAuth.shared;
+  const recoveryMessages = messages.publicAuth.passwordRecovery;
   const [values, setValues] = useState<RecoveryValues>({ email: "" });
-  const [errors, setErrors] = useState<FieldErrors<keyof RecoveryValues>>({});
+  const [errors, setErrors] = useState<FieldErrors<keyof RecoveryValues, RecoveryErrorKey>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [statusTone, setStatusTone] = useState<"neutral" | "error">("neutral");
+  const [status, setStatus] = useState<
+    AuthStatusState<"configuration" | "generic" | "emailIncomplete">
+  >(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const nextErrors: FieldErrors<keyof RecoveryValues> = {};
+    const nextErrors: FieldErrors<keyof RecoveryValues, RecoveryErrorKey> = {};
 
     if (!values.email.trim()) {
-      nextErrors.email = "Enter your email to continue.";
+      nextErrors.email = "emailRequired";
     }
 
     setErrors(nextErrors);
-    setStatusMessage(null);
-    setStatusTone("neutral");
+    setStatus(null);
 
     if (Object.keys(nextErrors).length > 0) {
-      setStatusTone("error");
-      setStatusMessage("Complete the email field before continuing.");
+      setStatus({ kind: "localized", key: "emailIncomplete" });
       return;
     }
 
-    const configError = getSupabaseConfigError();
-
-    if (configError) {
-      setStatusTone("error");
-      setStatusMessage(configError);
+    if (hasSupabaseConfigError()) {
+      setStatus({ kind: "localized", key: "configuration" });
       return;
     }
 
@@ -428,17 +463,18 @@ export function PasswordRecoveryForm() {
       const { error } = await supabase.auth.resetPasswordForEmail(values.email.trim());
 
       if (error) {
-        setStatusTone("error");
-        setStatusMessage(error.message);
+        setStatus({ kind: "external", message: error.message });
         return;
       }
 
       await sleep(200);
       router.push("/password-recovery/confirmation");
     } catch (error) {
-      setStatusTone("error");
-      setStatusMessage(
-        getAuthErrorMessage(error, "Password recovery could not be started from the current browser auth setup."),
+      const externalMessage = getExternalAuthErrorMessage(error);
+      setStatus(
+        externalMessage
+          ? { kind: "external", message: externalMessage }
+          : { kind: "localized", key: "generic" },
       );
     } finally {
       setIsSubmitting(false);
@@ -447,15 +483,22 @@ export function PasswordRecoveryForm() {
 
   return (
     <form className="grid w-full min-w-0 max-w-full gap-3" onSubmit={handleSubmit} noValidate>
-      <StatusMessage tone={statusTone} message={statusMessage} />
+      <StatusMessage
+        tone="error"
+        message={resolveStatusMessage(status, {
+          configuration: sharedMessages.configurationError,
+          generic: recoveryMessages.genericError,
+          emailIncomplete: recoveryMessages.emailIncomplete,
+        })}
+      />
       <label className={authLabelClassName}>
-        <span>Email</span>
+        <span>{sharedMessages.emailLabel}</span>
         <input
           className={getAuthInputClassName(Boolean(errors.email))}
           type="email"
           autoComplete="email"
           inputMode="email"
-          placeholder="you@email.com"
+          placeholder={sharedMessages.emailPlaceholder}
           value={values.email}
           onChange={(event) => {
             const email = event.target.value;
@@ -463,19 +506,16 @@ export function PasswordRecoveryForm() {
             if (errors.email) {
               setErrors({ email: undefined });
             }
-            if (statusMessage) {
-              setStatusMessage(null);
-            }
-            if (statusTone === "error") {
-              setStatusTone("neutral");
+            if (status) {
+              setStatus(null);
             }
           }}
           aria-invalid={Boolean(errors.email)}
         />
-        <FieldError message={errors.email} />
+        <FieldError message={errors.email ? recoveryMessages[errors.email] : undefined} />
       </label>
       <button className={`${authPrimaryButtonClassName} mt-2`} type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Sending reset link..." : "Send reset link"}
+        {isSubmitting ? recoveryMessages.submitting : recoveryMessages.submit}
       </button>
     </form>
   );

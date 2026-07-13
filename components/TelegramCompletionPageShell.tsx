@@ -145,7 +145,7 @@ export function TelegramCompletionPageShell({
   signUpHref,
 }: TelegramCompletionPageShellProps) {
   const { authStatus, bootstrapStatus, refreshBootstrap, session } = useAuth();
-  const { messages } = useLocale();
+  const { isPublicLocaleReady, messages } = useLocale();
   const telegramMessages = messages.telegramCompletion;
   const attemptedCompletionKeyRef = useRef<string | null>(null);
   const [completionResult, setCompletionResult] = useState<CompletionResult>({
@@ -273,6 +273,23 @@ export function TelegramCompletionPageShell({
 
     return () => controller.abort();
   }, [artifact, authStatus, bootstrapStatus, refreshBootstrap, session?.access_token]);
+
+  if (!isPublicLocaleReady) {
+    return (
+      <section
+        aria-busy="true"
+        className="auth-appear w-full min-w-0 max-w-[25rem] px-0 py-0 text-center sm:rounded-2xl sm:border sm:border-token-border sm:bg-token-surfaceStrong sm:px-8 sm:py-8"
+      >
+        <div aria-hidden="true" className="flex w-full min-w-0 flex-col items-center">
+          <div className="h-14 w-14 rounded-full bg-token-border/60" />
+          <div className="mt-5 h-3 w-24 rounded bg-token-border/50" />
+          <div className="mt-3 h-6 w-48 max-w-full rounded bg-token-border/70" />
+          <div className="mt-3 h-4 w-56 max-w-full rounded bg-token-border/50" />
+          <div className="mt-6 h-20 w-full rounded-xl bg-token-border/50" />
+        </div>
+      </section>
+    );
+  }
 
   const shellState = resolveShellState({
     authStatus,

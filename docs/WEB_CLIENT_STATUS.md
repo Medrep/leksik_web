@@ -95,7 +95,8 @@ Current implementation status
 - `learning_language` and `preferred_translation_language` share the same controlled non-null language options: `en`, `pl`, `ru`, `uk`, `de`, `es`, and `pt`.
 - `preferred_translation_language` behavior remains unchanged: the existing label/value mapping and null-cleared backend behavior remain intact.
 - `ui_locale` is wired as the nullable Interface language preference with controlled values `en`, `pl`, `ru`, and `uk`; `null` is shown as `System/browser default` and clears the explicit saved override.
-- One authenticated web-owned locale runtime now resolves effective locale in the order saved `ui_locale`, supported browser locale, then English.
+- One globally mounted web-owned locale runtime now covers both public and authenticated surfaces.
+- Unauthenticated locale precedence is supported browser locale then English; after authenticated preferences are confirmed, precedence remains saved `ui_locale`, supported browser locale, then English.
 - Browser locale resolution is transient, supports regional `en`, `pl`, `ru`, and `uk` tags, and is never silently persisted.
 - Authenticated localization coverage now includes Settings, the shared authenticated shell, Dictionary List, and Dictionary Details in `en`, `pl`, `ru`, and `uk` through the same locale owner and typed bundle system.
 - Dictionary List includes localized search, loading, empty/error/helper states, Telegram CTA copy, and a narrow locale-aware saved-word count; Dictionary Details includes localized navigation, states, labels, missing-content copy, and delete confirmation flow.
@@ -104,9 +105,13 @@ Current implementation status
 - The web client owns typed message bundles; backend and web share locale identifiers, not translation bundles, and no third-party i18n dependency was introduced.
 - The authenticated language-preferences onboarding gate now uses the existing locale runtime for its title, helper copy, field labels, controlled option display labels, action/loading state, generic error, and accessible names; both existing language values remain required and `ui_locale` remains optional.
 - Telegram completion uses the same typed bundles for runtime-safe authenticated checking, success, blocked/conflict, and invalid/expired states without changing token handling, endpoint behavior, result mapping, or navigation.
-- Public/auth pages and Telegram completion states rendered before an authenticated locale is available remain English; root `<html lang="en">` remains intentionally static.
-- No public locale owner, additional preferences request, or third-party internationalization dependency was introduced; locale precedence remains saved `ui_locale`, supported browser locale, then English.
-- Locale-aware routes, server locale cookies, request-based locale propagation, dynamic metadata localization, and broader web localization remain out of scope.
+- Landing, Sign In, Sign Up, both confirmation screens, Password Recovery, and all public/pre-auth Telegram completion states now use the same `en`, `pl`, `ru`, and `uk` bundles.
+- Locale-neutral readiness states prevent avoidable temporary English or browser-locale copy while browser locale or returning-user preferences are unresolved.
+- Sign-out discards user-bound locale input and returns public UI to the already resolved transient browser locale.
+- Auth bootstrap and learning-preferences responses use a narrow session-generation/owner guard so stale responses cannot commit identity or locale input to a replacement session.
+- Web-owned public validation, configuration, loading, and generic errors are localized from durable message keys; Supabase and arbitrary backend errors remain verbatim.
+- No second locale owner, additional preferences request, locale persistence, or third-party internationalization dependency was introduced.
+- Root `<html lang="en">` and static English metadata remain intentionally unchanged; locale-aware routes, server locale cookies, and request-based locale propagation remain out of scope.
 - Settings preference updates now send only fields changed from the backend-confirmed saved baseline; omitted fields remain untouched, while explicit nullable changes continue to serialize as `null`.
 - `preferred_review_timezone` is loaded and saved through the existing shared preferences flow; nullable or unset timezone values are handled safely and can be saved back as `null`.
 - `daily_review_target_count` uses step `5`, minimum `5`, and maximum `50`; temporarily null daily-review preference values are handled with narrow defensive defaults.

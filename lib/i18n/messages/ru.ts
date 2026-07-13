@@ -1,12 +1,86 @@
 import type {
-  AuthenticatedMessages,
+  WebMessages,
   DictionaryDetailsMessages,
   DictionaryListMessages,
+  LandingMessages,
   OnboardingMessages,
+  PublicAuthMessages,
   SettingsMessages,
   ShellMessages,
   TelegramCompletionMessages,
 } from "@/lib/i18n/messages/types";
+
+export const ruLandingMessages = {
+  subtitle: "Ваш личный словарь — всегда под рукой.",
+  signIn: "Войти",
+  createAccount: "Создать аккаунт",
+  telegramHelper: "Добавляйте слова с помощью бота Telegram",
+} satisfies LandingMessages;
+
+export const ruPublicAuthMessages = {
+  shared: {
+    back: "Назад",
+    signIn: "Войти",
+    emailLabel: "Эл. почта",
+    emailPlaceholder: "name@example.com",
+    passwordLabel: "Пароль",
+    configurationError:
+      "Не настроена браузерная аутентификация Supabase. Укажите NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+  },
+  signIn: {
+    title: "С возвращением",
+    description: "Войдите в свой аккаунт.",
+    noAccount: "Нет аккаунта?",
+    signUp: "Зарегистрироваться",
+    forgotPassword: "Забыли пароль?",
+    passwordPlaceholder: "Ваш пароль",
+    submit: "Войти",
+    submitting: "Выполняется вход…",
+    emailRequired: "Введите адрес электронной почты, чтобы продолжить.",
+    passwordRequired: "Введите пароль, чтобы продолжить.",
+    genericError: "Не удалось войти с текущими настройками браузерной аутентификации.",
+  },
+  signUp: {
+    title: "Создать аккаунт",
+    description: "Заполните данные, чтобы начать.",
+    existingAccount: "Уже есть аккаунт?",
+    displayNameLabel: "Отображаемое имя",
+    displayNamePlaceholder: "Ваше имя",
+    passwordPlaceholder: "Не менее 8 символов",
+    confirmPasswordLabel: "Подтвердите пароль",
+    confirmPasswordPlaceholder: "Повторите пароль",
+    submit: "Начать",
+    submitting: "Создание аккаунта…",
+    nameRequired: "Введите имя, чтобы продолжить.",
+    emailRequired: "Введите адрес электронной почты, чтобы продолжить.",
+    passwordRequired: "Введите пароль, чтобы продолжить.",
+    passwordConfirmationRequired: "Подтвердите пароль, чтобы продолжить.",
+    passwordMismatch: "Введите одинаковый пароль в обоих полях.",
+    genericError: "Не удалось создать аккаунт с текущими настройками браузерной аутентификации.",
+  },
+  signUpConfirmation: {
+    title: "Проверьте почту",
+    description:
+      "Перейдите по ссылке в письме, чтобы активировать аккаунт. Если письма нет, проверьте папку «Спам».",
+    confirmationMessage: "Мы отправили ссылку для подтверждения на ваш адрес электронной почты.",
+    openSignIn: "Перейти ко входу",
+  },
+  passwordRecovery: {
+    title: "Сбросить пароль",
+    description: "Введите адрес электронной почты, и мы отправим ссылку для сброса пароля.",
+    submit: "Отправить ссылку",
+    submitting: "Отправка ссылки…",
+    emailRequired: "Введите адрес электронной почты, чтобы продолжить.",
+    emailIncomplete: "Заполните поле электронной почты, чтобы продолжить.",
+    genericError: "Не удалось начать восстановление пароля с текущими настройками браузерной аутентификации.",
+  },
+  passwordRecoveryConfirmation: {
+    title: "Проверьте входящие",
+    description: "Если адрес соответствует аккаунту, мы отправим ссылку для сброса пароля.",
+    backToSignIn: "Вернуться ко входу",
+    resetAgain: "Отправить ещё раз",
+  },
+} satisfies PublicAuthMessages;
 
 export const ruSettingsMessages = {
   navigation: {
@@ -39,7 +113,7 @@ export const ruSettingsMessages = {
   interfaceLanguage: {
     label: "Язык интерфейса",
     description:
-      "Сохраните предпочитаемый язык интерфейса для поддерживаемых разделов Leksik. На этом этапе локализованы Настройки; перевод остальных разделов веб-приложения будет добавлен отдельно.",
+      "Сохраните предпочитаемый язык интерфейса для поддерживаемых разделов веб-приложения Leksik.",
     systemDefault: "По умолчанию системы/браузера",
     localeNames: {
       en: "English",
@@ -314,10 +388,12 @@ export const ruTelegramCompletionMessages = {
 } satisfies TelegramCompletionMessages;
 
 export const ruMessages = {
+  landing: ruLandingMessages,
+  publicAuth: ruPublicAuthMessages,
   settings: ruSettingsMessages,
   shell: ruShellMessages,
   dictionaryList: ruDictionaryListMessages,
   dictionaryDetails: ruDictionaryDetailsMessages,
   onboarding: ruOnboardingMessages,
   telegramCompletion: ruTelegramCompletionMessages,
-} satisfies AuthenticatedMessages;
+} satisfies WebMessages;

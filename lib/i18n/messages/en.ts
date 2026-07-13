@@ -1,12 +1,86 @@
 import type {
-  AuthenticatedMessages,
+  WebMessages,
   DictionaryDetailsMessages,
   DictionaryListMessages,
+  LandingMessages,
   OnboardingMessages,
+  PublicAuthMessages,
   SettingsMessages,
   ShellMessages,
   TelegramCompletionMessages,
 } from "@/lib/i18n/messages/types";
+
+export const enLandingMessages = {
+  subtitle: "Your personal vocabulary list, always at hand.",
+  signIn: "Sign in",
+  createAccount: "Create account",
+  telegramHelper: "Add words via the Telegram bot",
+} satisfies LandingMessages;
+
+export const enPublicAuthMessages = {
+  shared: {
+    back: "Back",
+    signIn: "Sign in",
+    emailLabel: "Email",
+    emailPlaceholder: "name@example.com",
+    passwordLabel: "Password",
+    configurationError:
+      "Missing Supabase browser auth configuration. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+  },
+  signIn: {
+    title: "Welcome back",
+    description: "Sign in to your account.",
+    noAccount: "No account?",
+    signUp: "Sign up",
+    forgotPassword: "Forgot password?",
+    passwordPlaceholder: "Your password",
+    submit: "Sign in",
+    submitting: "Signing in...",
+    emailRequired: "Enter your email to continue.",
+    passwordRequired: "Enter your password to continue.",
+    genericError: "Sign-in could not be completed from the current browser auth setup.",
+  },
+  signUp: {
+    title: "Create account",
+    description: "Fill in your details to get started.",
+    existingAccount: "Already have an account?",
+    displayNameLabel: "Display name",
+    displayNamePlaceholder: "Your name",
+    passwordPlaceholder: "Min. 8 characters",
+    confirmPasswordLabel: "Confirm password",
+    confirmPasswordPlaceholder: "Repeat password",
+    submit: "Get started",
+    submitting: "Creating account...",
+    nameRequired: "Enter your name to continue.",
+    emailRequired: "Enter your email to continue.",
+    passwordRequired: "Enter a password to continue.",
+    passwordConfirmationRequired: "Confirm your password to continue.",
+    passwordMismatch: "Repeat the same password in both fields.",
+    genericError: "Sign-up could not be completed from the current browser auth setup.",
+  },
+  signUpConfirmation: {
+    title: "Check your email",
+    description:
+      "Click the link in the email to activate your account. Check your spam folder if you don't see it.",
+    confirmationMessage: "We sent a confirmation link to your email address.",
+    openSignIn: "Open sign in",
+  },
+  passwordRecovery: {
+    title: "Reset password",
+    description: "Enter your email and we'll send a reset link.",
+    submit: "Send reset link",
+    submitting: "Sending reset link...",
+    emailRequired: "Enter your email to continue.",
+    emailIncomplete: "Complete the email field before continuing.",
+    genericError: "Password recovery could not be started from the current browser auth setup.",
+  },
+  passwordRecoveryConfirmation: {
+    title: "Check your inbox",
+    description: "If the address matches an account, we'll send a reset link.",
+    backToSignIn: "Back to sign in",
+    resetAgain: "Reset again",
+  },
+} satisfies PublicAuthMessages;
 
 export const enSettingsMessages = {
   navigation: {
@@ -39,7 +113,7 @@ export const enSettingsMessages = {
   interfaceLanguage: {
     label: "Interface language",
     description:
-      "Save your preferred interface language for supported Leksik surfaces. This slice localizes Settings; broader web translation will be added separately.",
+      "Save your preferred interface language for supported Leksik web surfaces.",
     systemDefault: "System/browser default",
     localeNames: {
       en: "English",
@@ -314,10 +388,12 @@ export const enTelegramCompletionMessages = {
 } satisfies TelegramCompletionMessages;
 
 export const enMessages = {
+  landing: enLandingMessages,
+  publicAuth: enPublicAuthMessages,
   settings: enSettingsMessages,
   shell: enShellMessages,
   dictionaryList: enDictionaryListMessages,
   dictionaryDetails: enDictionaryDetailsMessages,
   onboarding: enOnboardingMessages,
   telegramCompletion: enTelegramCompletionMessages,
-} satisfies AuthenticatedMessages;
+} satisfies WebMessages;

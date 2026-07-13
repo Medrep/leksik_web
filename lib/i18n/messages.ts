@@ -2,22 +2,24 @@ import { enMessages } from "@/lib/i18n/messages/en";
 import { plMessages } from "@/lib/i18n/messages/pl";
 import { ruMessages } from "@/lib/i18n/messages/ru";
 import type {
-  AuthenticatedMessages,
   DictionaryWordCountMessages,
+  WebMessages,
 } from "@/lib/i18n/messages/types";
 import { ukMessages } from "@/lib/i18n/messages/uk";
 import type { UiLocale } from "@/lib/ui-locale-options";
 
-const AUTHENTICATED_MESSAGES: Partial<Record<UiLocale, AuthenticatedMessages>> = {
+const WEB_MESSAGES: Partial<Record<UiLocale, WebMessages>> = {
   en: enMessages,
   pl: plMessages,
   ru: ruMessages,
   uk: ukMessages,
 };
 
-export function getAuthenticatedMessages(locale: UiLocale): AuthenticatedMessages {
-  return AUTHENTICATED_MESSAGES[locale] ?? enMessages;
+export function getWebMessages(locale: UiLocale): WebMessages {
+  return WEB_MESSAGES[locale] ?? enMessages;
 }
+
+export const getAuthenticatedMessages = getWebMessages;
 
 export function formatDictionaryWordCount(
   locale: UiLocale,
@@ -52,9 +54,12 @@ export type {
   DictionaryDetailsMessages,
   DictionaryListMessages,
   DictionaryWordCountMessages,
+  LandingMessages,
   OnboardingMessages,
+  PublicAuthMessages,
   SettingsMessages,
   ShellMessages,
   TelegramCompletionMessages,
   TelegramCompletionStateMessages,
+  WebMessages,
 } from "@/lib/i18n/messages/types";

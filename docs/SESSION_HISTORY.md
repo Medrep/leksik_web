@@ -36,6 +36,32 @@ Short description of the next smallest recommended step.
 
 ---
 
+## 2026-07-13 — Public and authentication localization added
+
+#### Context
+The approved global locale runtime already covered authenticated surfaces, and the next narrow slice extended that same owner across landing, authentication, recovery, and public Telegram completion.
+
+#### Work completed
+- Added typed landing and public-auth namespaces to the existing `en`, `pl`, `ru`, and `uk` bundles and localized public form validation, loading, configuration, and generic web-owned errors.
+- Broadened the existing locale lifecycle so unauthenticated users use supported browser locale then English, authenticated users use saved `ui_locale` then browser locale then English, and sign-out returns to the already resolved transient browser locale.
+- Added locale-neutral readiness states for hydration-safe public rendering and a narrow session-generation/owner guard for stale auth bootstrap and preferences responses.
+- Preserved Server Component URL normalization, safe `next` construction, Supabase calls, Telegram completion endpoint/state behavior, and verbatim external Supabase/backend errors.
+
+#### Accepted outputs
+- Exactly one globally mounted locale owner now covers all approved web-owned public and authenticated surfaces without another preferences request or dependency.
+- Browser locale remains transient and is never stored in cookies or local storage.
+- Root `<html lang="en">` and static English metadata remain intentional deferred document-locale limitations.
+
+#### Deferred / not now
+- dynamic document language or localized metadata
+- locale routes, cookies, server/request negotiation, or public language picker
+- translation tooling, backend/mobile localization, or vocabulary-content translation
+
+#### Next step
+Keep future web-owned localization additions inside the same typed bundle and locale-owner boundary.
+
+---
+
 ## 2026-07-13 — Authenticated onboarding and Telegram completion localization added
 
 #### Context

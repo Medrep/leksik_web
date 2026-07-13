@@ -30,6 +30,20 @@ function GatePanel({
   );
 }
 
+function LocaleReadinessPanel() {
+  return (
+    <section
+      aria-busy="true"
+      className="shell-panel auth-appear w-full min-w-0 max-w-full overflow-x-clip rounded-[1.4rem] px-6 py-10 sm:px-8 sm:py-12"
+    >
+      <div aria-hidden="true" className="mx-auto flex w-full min-w-0 max-w-xl flex-col items-start gap-4">
+        <div className="h-9 w-64 max-w-full rounded bg-token-border/60" />
+        <div className="h-4 w-80 max-w-full rounded bg-token-border/50" />
+      </div>
+    </section>
+  );
+}
+
 export function AuthenticatedRouteGate({
   children,
   resourceLabel,
@@ -48,7 +62,7 @@ export function AuthenticatedRouteGate({
     languageSetupStatus,
     refreshBootstrap,
   } = useAuth();
-  const { isLocaleReady, messages } = useLocale();
+  const { isLocaleReady, isPublicLocaleReady, messages } = useLocale();
   const isSettings = resourceLabel === "settings";
   const configDescription = isSettings
     ? messages.shell.gate.configurationSettings
@@ -69,6 +83,10 @@ export function AuthenticatedRouteGate({
       router.replace(`/sign-in${nextPath}`);
     }
   }, [authStatus, pathname, router]);
+
+  if (!isPublicLocaleReady) {
+    return <LocaleReadinessPanel />;
+  }
 
   if (!hasBootstrapConfig) {
     return (

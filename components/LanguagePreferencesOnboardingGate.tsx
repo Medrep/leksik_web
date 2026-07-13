@@ -58,7 +58,9 @@ export function LanguagePreferencesOnboardingGate() {
         invalidateCachedDictionaryReadDataForUser(user.id);
       }
 
-      completeLanguageSetup(updatedPreferences);
+      if (user?.id) {
+        completeLanguageSetup(updatedPreferences, user.id);
+      }
     } catch (error) {
       if (error instanceof BackendRequestError && error.status === 401) {
         void refreshBootstrap();

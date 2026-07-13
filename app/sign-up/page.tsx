@@ -1,7 +1,4 @@
-import Link from "next/link";
-import { PublicAuthCard } from "@/components/PublicAuthCard";
-import { SignUpForm } from "@/components/PublicAuthForms";
-import { PublicAuthRedirect } from "@/components/PublicAuthRedirect";
+import { PublicAuthScreen } from "@/components/PublicAuthScreen";
 import { PublicLayoutShell } from "@/components/PublicLayoutShell";
 import { buildHrefWithNext, getOptionalNextRouteFromSearchParams, type SearchParamsRecord } from "@/lib/auth-next";
 
@@ -14,24 +11,10 @@ export default function SignUpPage({ searchParams }: SignUpPageProps) {
 
   return (
     <PublicLayoutShell activePath="/sign-up">
-      <PublicAuthRedirect />
-      <PublicAuthCard
-        variant="form"
-        title="Create account"
-        description="Fill in your details to get started."
-        backHref="/"
-        backLabel="Back"
-        footer={
-          <>
-            Already have an account?{" "}
-            <Link className="text-token-brand" href={buildHrefWithNext("/sign-in", nextRoute)}>
-              Sign in
-            </Link>
-          </>
-        }
-      >
-        <SignUpForm />
-      </PublicAuthCard>
+      <PublicAuthScreen
+        kind="signUp"
+        signInHref={buildHrefWithNext("/sign-in", nextRoute)}
+      />
     </PublicLayoutShell>
   );
 }
