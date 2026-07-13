@@ -3,25 +3,36 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { useLocale } from "@/components/LocaleProvider";
 import { BackendRequestError } from "@/lib/backend-client";
+import {
+  formatDictionaryWordCount,
+  type DictionaryListMessages,
+} from "@/lib/i18n/messages";
 import { fetchLearningPreferences, getPreferencesRequestMessage } from "@/lib/preferences";
 import { readCachedDictionaryList, writeCachedDictionaryList } from "@/lib/vocab-cache";
 import { fetchDictionaryList, getVocabRequestMessage, type DictionaryListItem } from "@/lib/vocab";
 
-function LoadingCard() {
+function LoadingCard({ messages }: { messages: DictionaryListMessages }) {
   return (
     <div className="w-full min-w-0 max-w-full rounded-xl border border-token-border bg-token-brandSoft/40 p-4">
-      <p className="text-[0.9375rem] font-medium text-token-text">Dictionary loading</p>
-      <p className="mt-1 text-[0.8125rem] leading-5 text-token-muted">Loading words…</p>
+      <p className="text-[0.9375rem] font-medium text-token-text">{messages.loading.cardTitle}</p>
+      <p className="mt-1 text-[0.8125rem] leading-5 text-token-muted">{messages.loading.words}</p>
       <div className="mt-3 h-3 w-2/5 rounded-full bg-token-brandSoft" />
       <div className="mt-3 h-3 w-11/12 rounded-full bg-token-brandSoft" />
     </div>
   );
 }
 
-function ResultCard({ item }: { item: DictionaryListItem }) {
+function ResultCard({
+  item,
+  messages,
+}: {
+  item: DictionaryListItem;
+  messages: DictionaryListMessages;
+}) {
   const badge = item.language ?? item.learningStatus;
-  const previewText = item.translation ?? item.explanation ?? "Open to view this saved word.";
+  const previewText = item.translation ?? item.explanation ?? messages.card.openHelper;
 
   return (
     <Link className="block w-full min-w-0 max-w-full" href={`/dictionary/${item.id}`}>
@@ -75,6 +86,8 @@ function StateCard({
 
 export function DictionaryListScreen() {
   const { refreshBootstrap, session } = useAuth();
+  const { locale, messages } = useLocale();
+  const dictionaryMessages = messages.dictionaryList;
   const [items, setItems] = useState<DictionaryListItem[]>([]);
   const [preferredTranslationLanguage, setPreferredTranslationLanguage] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
@@ -148,7 +161,7 @@ export function DictionaryListScreen() {
         }
 
         setPreferencesErrorMessage(
-          getPreferencesRequestMessage(error, "The dictionary preferences could not be loaded from the backend."),
+          getPreferencesRequestMessage(error, dictionaryMessages.errors.preferences),
         );
       } finally {
         if (!controller.signal.aborted) {
@@ -216,7 +229,7 @@ export function DictionaryListScreen() {
           setItems([]);
           setHasLoadedOnce(true);
           setListErrorMessage(
-            getVocabRequestMessage(error, "The dictionary list could not be loaded from the backend."),
+            getVocabRequestMessage(error, dictionaryMessages.errors.list),
           );
         }
       } finally {
@@ -261,7 +274,8 @@ export function DictionaryListScreen() {
             <input
               className="min-h-11 w-full min-w-0 bg-transparent py-2 pl-9 pr-16 text-sm text-token-text outline-none placeholder:text-token-muted/45"
               type="search"
-              placeholder="Search words..."
+              aria-label={dictionaryMessages.search.label}
+              placeholder={dictionaryMessages.search.placeholder}
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
             />
@@ -271,7 +285,7 @@ export function DictionaryListScreen() {
                 type="button"
                 onClick={() => setSearchText("")}
               >
-                Clear
+                {dictionaryMessages.search.clear}
               </button>
             ) : null}
           </div>
@@ -280,44 +294,52 @@ export function DictionaryListScreen() {
         <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-3">
           <p className="min-w-0 break-words text-xs text-token-muted/70">
             {showInitialLoading
-              ? "Loading words..."
-              : `${visibleItems.length} word${visibleItems.length === 1 ? "" : "s"}`}
-            {hasQuery ? ` for “${activeQuery}”` : ""}
+              ? dictionaryMessages.loading.words
+              : formatDictionaryWordCount(locale, visibleItems.length, dictionaryMessages.count)}
+            {hasQuery
+              ? `${dictionaryMessages.search.queryPrefix}${activeQuery}${dictionaryMessages.search.querySuffix}`
+              : ""}
           </p>
-          {isRefreshing ? <p className="text-xs text-token-muted">Updating results…</p> : null}
+          {isRefreshing ? (
+            <p className="text-xs text-token-muted">{dictionaryMessages.loading.updating}</p>
+          ) : null}
         </div>
 
         {!showInitialLoading && isLoadingPreferences ? (
           <StateCard
             tone="soft"
-            title="Loading translation preference"
-            copy="Translations are hidden until preferences are ready."
+            title={dictionaryMessages.loading.preferenceTitle}
+            copy={dictionaryMessages.loading.preferenceDescription}
           />
         ) : null}
 
         {showInitialLoading ? (
           <div className="grid w-full min-w-0 max-w-full gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <LoadingCard />
-            <LoadingCard />
-            <LoadingCard />
+            <LoadingCard messages={dictionaryMessages} />
+            <LoadingCard messages={dictionaryMessages} />
+            <LoadingCard messages={dictionaryMessages} />
           </div>
         ) : null}
 
         {errorMessage ? (
           <StateCard
             tone="danger"
-            title="Could not load dictionary"
+            title={dictionaryMessages.errors.title}
             copy={errorMessage}
           />
         ) : null}
 
         {showEmptyState ? (
           <StateCard
-            title={hasQuery ? "No search results" : "No saved words yet"}
+            title={
+              hasQuery
+                ? dictionaryMessages.empty.searchTitle
+                : dictionaryMessages.empty.dictionaryTitle
+            }
             copy={
               hasQuery
-                ? "No words matched that search. Try a different word or phrase."
-                : "Use Telegram to send your first word or phrase."
+                ? dictionaryMessages.empty.searchDescription
+                : dictionaryMessages.empty.dictionaryDescription
             }
             action={
               !hasQuery ? (
@@ -327,7 +349,7 @@ export function DictionaryListScreen() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Open Telegram
+                  {dictionaryMessages.empty.openTelegram}
                 </a>
               ) : null
             }
@@ -337,7 +359,7 @@ export function DictionaryListScreen() {
         {!showInitialLoading && !errorMessage && visibleItems.length > 0 ? (
           <div className="grid w-full min-w-0 max-w-full gap-2.5 md:grid-cols-2 xl:grid-cols-3">
             {visibleItems.map((item) => (
-              <ResultCard key={item.id} item={item} />
+              <ResultCard key={item.id} item={item} messages={dictionaryMessages} />
             ))}
           </div>
         ) : null}

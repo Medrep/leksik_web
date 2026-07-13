@@ -1,4 +1,10 @@
-import type { SettingsMessages } from "@/lib/i18n/messages/types";
+import type {
+  AuthenticatedMessages,
+  DictionaryDetailsMessages,
+  DictionaryListMessages,
+  SettingsMessages,
+  ShellMessages,
+} from "@/lib/i18n/messages/types";
 
 export const plSettingsMessages = {
   navigation: {
@@ -127,3 +133,119 @@ export const plSettingsMessages = {
     confirmButton: "Usuń konto trwale",
   },
 } satisfies SettingsMessages;
+
+export const plShellMessages = {
+  navigation: {
+    dictionary: "Słownik",
+    settings: "Ustawienia",
+  },
+  signOut: {
+    action: "Wyloguj się",
+    loading: "Wylogowywanie…",
+    error: "Nie udało się wylogować. Spróbuj ponownie.",
+  },
+  gate: {
+    configurationTitle: "Konfiguracja aplikacji jest niekompletna",
+    configurationDictionary:
+      "Ustaw NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY i NEXT_PUBLIC_API_BASE_URL przed otwarciem słownika.",
+    configurationSettings:
+      "Ustaw NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY i NEXT_PUBLIC_API_BASE_URL przed otwarciem ustawień.",
+    preparingDictionary: "Przygotowywanie słownika",
+    preparingSettings: "Przygotowywanie ustawień",
+    checkingAccess: "Sprawdzanie sesji i wczytywanie dostępu.",
+    redirectingTitle: "Przekierowywanie do logowania",
+    signInForDictionary: "Aby otworzyć słownik, musisz się zalogować.",
+    signInForSettings: "Aby otworzyć ustawienia, musisz się zalogować.",
+    openDictionaryError: "Nie udało się otworzyć słownika",
+    openSettingsError: "Nie udało się otworzyć ustawień",
+    sessionError: "Nie udało się potwierdzić bieżącej sesji.",
+    languageSettingsTitle: "Nie udało się wczytać ustawień językowych",
+    languageSettingsError: "Nie udało się potwierdzić bieżących ustawień językowych.",
+    retry: "Spróbuj ponownie",
+  },
+} satisfies ShellMessages;
+
+export const plDictionaryListMessages = {
+  search: {
+    label: "Przeszukaj słownik",
+    placeholder: "Szukaj słów...",
+    clear: "Wyczyść",
+    queryPrefix: " dla „",
+    querySuffix: "”",
+  },
+  count: {
+    one: "zapisane słowo",
+    few: "zapisane słowa",
+    many: "zapisanych słów",
+    other: "zapisanych słów",
+  },
+  loading: {
+    cardTitle: "Ładowanie słownika",
+    words: "Wczytywanie słów…",
+    updating: "Aktualizowanie wyników…",
+    preferenceTitle: "Wczytywanie preferencji tłumaczenia",
+    preferenceDescription: "Tłumaczenia są ukryte do czasu wczytania preferencji.",
+  },
+  errors: {
+    title: "Nie udało się wczytać słownika",
+    preferences: "Nie udało się wczytać preferencji słownika z serwera.",
+    list: "Nie udało się wczytać listy słownika z serwera.",
+  },
+  empty: {
+    searchTitle: "Brak wyników wyszukiwania",
+    searchDescription: "Żadne słowo nie pasuje do wyszukiwania. Spróbuj użyć innego słowa lub wyrażenia.",
+    dictionaryTitle: "Nie masz jeszcze zapisanych słów",
+    dictionaryDescription: "Wyślij pierwsze słowo lub wyrażenie przez Telegram.",
+    openTelegram: "Otwórz Telegram",
+  },
+  card: {
+    openHelper: "Otwórz, aby zobaczyć zapisane słowo.",
+  },
+} satisfies DictionaryListMessages;
+
+export const plDictionaryDetailsMessages = {
+  navigation: {
+    dictionary: "Słownik",
+  },
+  loading: {
+    cardTitle: "Ładowanie karty",
+  },
+  states: {
+    unavailableTitle: "Słowo jest niedostępne",
+    unavailableDescription: "To słowo może nie istnieć lub być niedostępne dla bieżącego konta.",
+    loadErrorTitle: "Nie udało się wczytać tego słowa",
+  },
+  metadata: {
+    canonical: "Forma kanoniczna",
+  },
+  preference: {
+    unavailable: "Nie udało się wczytać preferencji tłumaczenia, dlatego karta jest wyświetlana bez tłumaczenia.",
+  },
+  sections: {
+    translation: "Tłumaczenie",
+    explanation: "Objaśnienie",
+    examples: "Przykłady",
+    delete: "Usuwanie",
+  },
+  missingContent: "Brak treści dla tego elementu.",
+  delete: {
+    action: "Usuń ze słownika",
+    confirmationTitle: "Usunąć to słowo ze słownika?",
+    confirmationDescription: "Słowo zniknie ze standardowego widoku słownika.",
+    loading: "Usuwanie…",
+    confirm: "Potwierdź usunięcie",
+    cancel: "Anuluj",
+  },
+  errors: {
+    preferences: "Nie udało się wczytać preferencji słownika z serwera.",
+    details: "Nie udało się wczytać szczegółów karty z serwera.",
+    delete: "Nie udało się usunąć słowa na serwerze.",
+  },
+} satisfies DictionaryDetailsMessages;
+
+export const plMessages = {
+  settings: plSettingsMessages,
+  shell: plShellMessages,
+  dictionaryList: plDictionaryListMessages,
+  dictionaryDetails: plDictionaryDetailsMessages,
+} satisfies AuthenticatedMessages;

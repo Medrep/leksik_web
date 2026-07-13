@@ -1,4 +1,10 @@
-import type { SettingsMessages } from "@/lib/i18n/messages/types";
+import type {
+  AuthenticatedMessages,
+  DictionaryDetailsMessages,
+  DictionaryListMessages,
+  SettingsMessages,
+  ShellMessages,
+} from "@/lib/i18n/messages/types";
 
 export const ukSettingsMessages = {
   navigation: {
@@ -127,3 +133,119 @@ export const ukSettingsMessages = {
     confirmButton: "Видалити обліковий запис назавжди",
   },
 } satisfies SettingsMessages;
+
+export const ukShellMessages = {
+  navigation: {
+    dictionary: "Словник",
+    settings: "Налаштування",
+  },
+  signOut: {
+    action: "Вийти",
+    loading: "Вихід…",
+    error: "Не вдалося вийти. Спробуйте ще раз.",
+  },
+  gate: {
+    configurationTitle: "Конфігурацію застосунку не завершено",
+    configurationDictionary:
+      "Укажіть NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY і NEXT_PUBLIC_API_BASE_URL перед відкриттям словника.",
+    configurationSettings:
+      "Укажіть NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY і NEXT_PUBLIC_API_BASE_URL перед відкриттям налаштувань.",
+    preparingDictionary: "Підготовка словника",
+    preparingSettings: "Підготовка налаштувань",
+    checkingAccess: "Перевіряємо сеанс і завантажуємо доступ.",
+    redirectingTitle: "Перехід до входу",
+    signInForDictionary: "Щоб відкрити словник, потрібно ввійти.",
+    signInForSettings: "Щоб відкрити налаштування, потрібно ввійти.",
+    openDictionaryError: "Не вдалося відкрити словник",
+    openSettingsError: "Не вдалося відкрити налаштування",
+    sessionError: "Не вдалося підтвердити поточний сеанс.",
+    languageSettingsTitle: "Не вдалося завантажити мовні налаштування",
+    languageSettingsError: "Не вдалося підтвердити поточні мовні налаштування.",
+    retry: "Спробувати ще раз",
+  },
+} satisfies ShellMessages;
+
+export const ukDictionaryListMessages = {
+  search: {
+    label: "Пошук у словнику",
+    placeholder: "Шукати слова...",
+    clear: "Очистити",
+    queryPrefix: " за запитом «",
+    querySuffix: "»",
+  },
+  count: {
+    one: "збережене слово",
+    few: "збережені слова",
+    many: "збережених слів",
+    other: "збережених слів",
+  },
+  loading: {
+    cardTitle: "Завантаження словника",
+    words: "Завантаження слів…",
+    updating: "Оновлення результатів…",
+    preferenceTitle: "Завантаження налаштування перекладу",
+    preferenceDescription: "Переклади приховано, доки налаштування не завантажаться.",
+  },
+  errors: {
+    title: "Не вдалося завантажити словник",
+    preferences: "Не вдалося завантажити налаштування словника із сервера.",
+    list: "Не вдалося завантажити список словника із сервера.",
+  },
+  empty: {
+    searchTitle: "Нічого не знайдено",
+    searchDescription: "За цим запитом нічого не знайдено. Спробуйте інше слово або фразу.",
+    dictionaryTitle: "Збережених слів поки немає",
+    dictionaryDescription: "Надішліть перше слово або фразу через Telegram.",
+    openTelegram: "Відкрити Telegram",
+  },
+  card: {
+    openHelper: "Відкрийте, щоб переглянути збережене слово.",
+  },
+} satisfies DictionaryListMessages;
+
+export const ukDictionaryDetailsMessages = {
+  navigation: {
+    dictionary: "Словник",
+  },
+  loading: {
+    cardTitle: "Завантаження картки",
+  },
+  states: {
+    unavailableTitle: "Слово недоступне",
+    unavailableDescription: "Можливо, це слово відсутнє або недоступне поточному обліковому запису.",
+    loadErrorTitle: "Не вдалося завантажити це слово",
+  },
+  metadata: {
+    canonical: "Канонічна форма",
+  },
+  preference: {
+    unavailable: "Не вдалося завантажити налаштування перекладу, тому картку показано без перекладу.",
+  },
+  sections: {
+    translation: "Переклад",
+    explanation: "Пояснення",
+    examples: "Приклади",
+    delete: "Видалення",
+  },
+  missingContent: "Для цього елемента немає даних.",
+  delete: {
+    action: "Видалити зі словника",
+    confirmationTitle: "Видалити це слово зі словника?",
+    confirmationDescription: "Воно зникне зі звичайного перегляду словника.",
+    loading: "Видалення…",
+    confirm: "Підтвердити видалення",
+    cancel: "Скасувати",
+  },
+  errors: {
+    preferences: "Не вдалося завантажити налаштування словника із сервера.",
+    details: "Не вдалося завантажити дані картки із сервера.",
+    delete: "Не вдалося видалити слово на сервері.",
+  },
+} satisfies DictionaryDetailsMessages;
+
+export const ukMessages = {
+  settings: ukSettingsMessages,
+  shell: ukShellMessages,
+  dictionaryList: ukDictionaryListMessages,
+  dictionaryDetails: ukDictionaryDetailsMessages,
+} satisfies AuthenticatedMessages;

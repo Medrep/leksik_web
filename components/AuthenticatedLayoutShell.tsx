@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useLocale } from "./LocaleProvider";
 import { BrandMark } from "./BrandMark";
 import { SignOutButton } from "./SignOutButton";
 
 export function AuthenticatedLayoutShell({ children }: { children: React.ReactNode }) {
+  const { messages } = useLocale();
+
   return (
     <div className="relative min-h-screen w-full min-w-0 max-w-full overflow-x-clip px-4 py-5 sm:px-6 sm:py-6">
       <div
@@ -15,14 +20,14 @@ export function AuthenticatedLayoutShell({ children }: { children: React.ReactNo
       />
       <header className="auth-appear relative z-10 mx-auto flex w-full min-w-0 max-w-full items-center justify-between gap-3 self-stretch border-b border-token-border pb-4 sm:max-w-6xl">
         <div className="flex min-w-0 items-center gap-4">
-          <BrandMark to="/dictionary" />
+          <BrandMark ariaLabel={messages.shell.navigation.dictionary} to="/dictionary" />
         </div>
         <div className="flex min-w-0 max-w-full shrink-0 items-center gap-3">
           <Link
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-token-muted transition hover:bg-token-brandSoft hover:text-token-brand"
             href="/settings"
-            aria-label="Settings"
-            title="Settings"
+            aria-label={messages.shell.navigation.settings}
+            title={messages.shell.navigation.settings}
           >
             <svg
               aria-hidden="true"

@@ -36,6 +36,32 @@ Short description of the next smallest recommended step.
 
 ---
 
+## 2026-07-13 — Authenticated shell and dictionary localization added
+
+#### Context
+The authenticated locale runtime and Settings namespace were already implemented, and the next approved slice extended that same runtime to the main dictionary experience.
+
+#### Work completed
+- Extended the existing typed `en`, `pl`, `ru`, and `uk` bundles with shared-shell, Dictionary List, and Dictionary Details namespaces while retaining English fallback.
+- Localized shell navigation/accessibility copy, sign-out states, protected-route loading/errors/retry, Dictionary List search/count/loading/empty/error/helper copy, and Dictionary Details navigation/states/labels/delete flow.
+- Added one narrow repository-owned word-count formatter with English, Polish, Russian, and Ukrainian count forms.
+- Preserved vocabulary terms, translations, explanations, examples, metadata values, badge codes, identifiers, requests, payloads, caching, search, and deletion behavior unchanged.
+
+#### Accepted outputs
+- Localized authenticated coverage now includes Settings, the shared authenticated shell, Dictionary List, and Dictionary Details through one locale owner with no additional preferences request or third-party localization dependency.
+- Successful authoritative Settings locale saves update all covered authenticated surfaces without reload; unsaved drafts still do not change the active locale.
+- Public/auth, onboarding, and Telegram completion surfaces remain English, and root `<html lang="en">` remains intentionally static.
+
+#### Deferred / not now
+- localization of public/auth, onboarding, and Telegram completion surfaces
+- dynamic `<html lang>`, localized metadata, locale-aware routing, and server locale propagation
+- translation-management tooling or shared backend/client translation bundles
+
+#### Next step
+Localize another web-owned surface only through a separately approved slice.
+
+---
+
 ## 2026-07-13 — Authenticated locale runtime and Settings localization added
 
 #### Context

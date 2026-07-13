@@ -48,15 +48,20 @@ export function AuthenticatedRouteGate({
     languageSetupStatus,
     refreshBootstrap,
   } = useAuth();
-  const { isLocaleReady } = useLocale();
-  const configDescription = resourceLabel
-    ? `Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and NEXT_PUBLIC_API_BASE_URL before opening your ${resourceLabel}.`
-    : "Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and NEXT_PUBLIC_API_BASE_URL before opening the dictionary.";
-  const loadingTitle = resourceLabel ? `Preparing your ${resourceLabel}` : "Preparing your dictionary";
-  const redirectDescription = resourceLabel
-    ? `You need to sign in before opening your ${resourceLabel}.`
-    : "You need to sign in before opening the dictionary.";
-  const errorTitle = resourceLabel ? `We couldn't open your ${resourceLabel}` : "We couldn't open the dictionary";
+  const { isLocaleReady, messages } = useLocale();
+  const isSettings = resourceLabel === "settings";
+  const configDescription = isSettings
+    ? messages.shell.gate.configurationSettings
+    : messages.shell.gate.configurationDictionary;
+  const loadingTitle = isSettings
+    ? messages.shell.gate.preparingSettings
+    : messages.shell.gate.preparingDictionary;
+  const redirectDescription = isSettings
+    ? messages.shell.gate.signInForSettings
+    : messages.shell.gate.signInForDictionary;
+  const errorTitle = isSettings
+    ? messages.shell.gate.openSettingsError
+    : messages.shell.gate.openDictionaryError;
 
   useEffect(() => {
     if (authStatus === "unauthenticated") {
@@ -68,7 +73,7 @@ export function AuthenticatedRouteGate({
   if (!hasBootstrapConfig) {
     return (
       <GatePanel
-        title="App configuration is incomplete"
+        title={messages.shell.gate.configurationTitle}
         description={configDescription}
       />
     );
@@ -84,7 +89,7 @@ export function AuthenticatedRouteGate({
     return (
       <GatePanel
         title={loadingTitle}
-        description="Checking your session and loading access."
+        description={messages.shell.gate.checkingAccess}
       />
     );
   }
@@ -92,7 +97,7 @@ export function AuthenticatedRouteGate({
   if (authStatus === "unauthenticated") {
     return (
       <GatePanel
-        title="Redirecting to sign in"
+        title={messages.shell.gate.redirectingTitle}
         description={redirectDescription}
       />
     );
@@ -102,10 +107,10 @@ export function AuthenticatedRouteGate({
     return (
       <GatePanel
         title={errorTitle}
-        description={bootstrapError ?? "The current session couldn't be confirmed."}
+        description={bootstrapError ?? messages.shell.gate.sessionError}
         action={
           <button className="secondary-button" type="button" onClick={() => void refreshBootstrap()}>
-            Try again
+            {messages.shell.gate.retry}
           </button>
         }
       />
@@ -115,11 +120,11 @@ export function AuthenticatedRouteGate({
   if (languageSetupStatus === "error") {
     return (
       <GatePanel
-        title="We couldn't load your language settings"
-        description={languageSetupError ?? "The current language settings couldn't be confirmed."}
+        title={messages.shell.gate.languageSettingsTitle}
+        description={languageSetupError ?? messages.shell.gate.languageSettingsError}
         action={
           <button className="secondary-button" type="button" onClick={() => void refreshBootstrap()}>
-            Try again
+            {messages.shell.gate.retry}
           </button>
         }
       />

@@ -97,10 +97,12 @@ Current implementation status
 - `ui_locale` is wired as the nullable Interface language preference with controlled values `en`, `pl`, `ru`, and `uk`; `null` is shown as `System/browser default` and clears the explicit saved override.
 - One authenticated web-owned locale runtime now resolves effective locale in the order saved `ui_locale`, supported browser locale, then English.
 - Browser locale resolution is transient, supports regional `en`, `pl`, `ru`, and `uk` tags, and is never silently persisted.
-- Settings is the first complete localized web namespace in `en`, `pl`, `ru`, and `uk`, including preference controls, Telegram connection states/actions, generic Settings errors, loading/success UI, accessibility labels, and account deletion.
+- Authenticated localization coverage now includes Settings, the shared authenticated shell, Dictionary List, and Dictionary Details in `en`, `pl`, `ru`, and `uk` through the same locale owner and typed bundle system.
+- Dictionary List includes localized search, loading, empty/error/helper states, Telegram CTA copy, and a narrow locale-aware saved-word count; Dictionary Details includes localized navigation, states, labels, missing-content copy, and delete confirmation flow.
+- Product vocabulary terms, generated translations, explanations, examples, metadata values, language badges, identifiers, backend requests, and payloads remain unchanged by the web localization runtime.
 - An unsaved Interface language draft does not change the active locale; the locale changes immediately only from the authoritative successful PUT response, while failed saves preserve the previous locale and draft.
 - The web client owns typed message bundles; backend and web share locale identifiers, not translation bundles, and no third-party i18n dependency was introduced.
-- Public/auth, dictionary, onboarding, Telegram completion, and shared authenticated-shell surfaces remain English; root `<html lang="en">` remains intentionally static.
+- Public/auth, onboarding, and Telegram completion surfaces remain English; root `<html lang="en">` remains intentionally static.
 - Locale-aware routes, server locale cookies, request-based locale propagation, dynamic metadata localization, and broader web localization remain out of scope.
 - Settings preference updates now send only fields changed from the backend-confirmed saved baseline; omitted fields remain untouched, while explicit nullable changes continue to serialize as `null`.
 - `preferred_review_timezone` is loaded and saved through the existing shared preferences flow; nullable or unset timezone values are handled safely and can be saved back as `null`.

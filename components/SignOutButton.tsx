@@ -3,23 +3,25 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import { useLocale } from "@/components/LocaleProvider";
 
 export function SignOutButton() {
   const router = useRouter();
   const { signOut } = useAuth();
+  const { messages } = useLocale();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
 
   async function handleClick() {
     setIsSubmitting(true);
-    setErrorMessage(null);
+    setHasError(false);
 
     const result = await signOut();
 
     setIsSubmitting(false);
 
     if (result.error) {
-      setErrorMessage(result.error);
+      setHasError(true);
       return;
     }
 
@@ -34,9 +36,13 @@ export function SignOutButton() {
         onClick={() => void handleClick()}
         disabled={isSubmitting}
       >
-        {isSubmitting ? "Signing out..." : "Sign out"}
+        {isSubmitting ? messages.shell.signOut.loading : messages.shell.signOut.action}
       </button>
-      {errorMessage ? <p className="max-w-full break-words text-right text-xs leading-5 text-red-700 sm:max-w-[18rem]">{errorMessage}</p> : null}
+      {hasError ? (
+        <p className="max-w-full break-words text-right text-xs leading-5 text-red-700 sm:max-w-[18rem]">
+          {messages.shell.signOut.error}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -303,6 +303,7 @@ Provide the main authenticated web-client screen for browsing and searching the 
 - item summary block for each result
 - empty state with a simple CTA inside Telegram-first product boundaries when no items are visible
 - navigation into Card Details
+- complete web-owned Dictionary List message coverage in `en`, `pl`, `ru`, and `uk`, including search, locale-aware saved-word count, loading, empty, generic-error, helper, Telegram CTA, and accessibility copy
 
 ### Entry paths
 - after successful sign-in
@@ -350,6 +351,8 @@ Show the accepted card fields for one user-scoped dictionary item together with 
 - narrow delete action from Card Details only
 - refreshed delete presentation with confirmation, `Confirm delete`, `Cancel`, `Deleting…`, and delete error messaging
 - refreshed one-column reading-oriented detail composition with updated loading/error panels
+- complete web-owned Dictionary Details message coverage in `en`, `pl`, `ru`, and `uk`, including back navigation, loading/not-found/error states, labels, missing-content copy, and delete confirmation states
+- backend vocabulary terms, generated translations, explanations, examples, metadata values, language badges, and identifiers remain unchanged
 
 ### Entry paths
 - from Dictionary List
@@ -422,7 +425,7 @@ Provide one narrow authenticated settings/preferences screen for accepted backen
 - capture or review actions
 - support/operations tooling
 - arbitrary web-only preferences outside the backend settings/preferences contract
-- localization of public/auth, dictionary, onboarding, Telegram completion, or shared authenticated-shell content
+- localization of public/auth, onboarding, or Telegram completion content
 - dynamic `<html lang>`, locale-prefixed routes, server locale cookies, or request-based locale propagation
 
 ## Shared layout behavior

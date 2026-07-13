@@ -3,7 +3,11 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { readBrowserLocale, resolveEffectiveLocale } from "@/lib/i18n/locales";
-import { getSettingsMessages, type SettingsMessages } from "@/lib/i18n/messages";
+import {
+  getAuthenticatedMessages,
+  type AuthenticatedMessages,
+  type SettingsMessages,
+} from "@/lib/i18n/messages";
 import type { UiLocale } from "@/lib/ui-locale-options";
 
 type UserLocaleState = {
@@ -20,6 +24,7 @@ type LocaleContextValue = {
   acceptAuthoritativeUiLocale: (uiLocale: UiLocale | null) => void;
   isLocaleReady: boolean;
   locale: UiLocale;
+  messages: AuthenticatedMessages;
   settingsMessages: SettingsMessages;
 };
 
@@ -60,7 +65,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const locale = isLocaleReady
     ? resolveEffectiveLocale(savedLocale, resolvedBrowserLocale ?? "en")
     : "en";
-  const settingsMessages = useMemo(() => getSettingsMessages(locale), [locale]);
+  const messages = useMemo(() => getAuthenticatedMessages(locale), [locale]);
 
   function acceptAuthoritativeUiLocale(uiLocale: UiLocale | null) {
     if (!userId) {
@@ -86,7 +91,8 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
         acceptAuthoritativeUiLocale,
         isLocaleReady,
         locale,
-        settingsMessages,
+        messages,
+        settingsMessages: messages.settings,
       }}
     >
       {children}

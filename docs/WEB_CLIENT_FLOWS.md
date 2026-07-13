@@ -274,6 +274,8 @@ Allow the authenticated user to browse their saved dictionary items.
 ### Success result
 - user can browse their own dictionary items
 - list supports responsive presentation for desktop and mobile browser
+- web-owned Dictionary List copy follows the effective authenticated locale, including search, count plural forms, loading, empty, and generic-error states
+- vocabulary terms, generated content, language badges, identifiers, requests, and payloads remain unchanged by localization
 
 ### Failure result
 - loading or access error is shown
@@ -357,6 +359,8 @@ Card details are limited to accepted dictionary/card fields:
 ### Success result
 - user can read the stored card content for their own item
 - user can navigate back to dictionary list
+- web-owned Dictionary Details navigation, states, labels, helper copy, and delete confirmation follow the effective authenticated locale
+- vocabulary terms, translations, explanations, examples, metadata values, identifiers, requests, and payloads are never translated or rewritten by the web localization runtime
 
 ### Failure result
 - missing or non-owned item does not open as a valid card view
@@ -425,7 +429,8 @@ Allow the authenticated user to view and update accepted settings through backen
 - This is a narrow settings flow only.
 - Settings preferences remain limited to `learning_language`, `preferred_translation_language`, `ui_locale`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`.
 - browser locale is resolved only by the authenticated web runtime and is never silently persisted
-- public/auth, dictionary, onboarding, Telegram completion, and shared-shell copy remain English in this slice
+- Settings, shared authenticated-shell, Dictionary List, and Dictionary Details copy use the same authenticated locale runtime and English bundle fallback
+- public/auth, onboarding, and Telegram completion surfaces remain English
 - root `<html lang="en">` remains static; locale routes and server locale propagation remain out of scope
 - The Telegram panel move is a placement change for existing behavior, not Telegram feature expansion.
 - It does not include profile/account-management expansion.

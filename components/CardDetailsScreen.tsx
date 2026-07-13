@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { useLocale } from "@/components/LocaleProvider";
 import { BackendRequestError } from "@/lib/backend-client";
+import type { DictionaryDetailsMessages } from "@/lib/i18n/messages";
 import { fetchLearningPreferences, getPreferencesRequestMessage } from "@/lib/preferences";
 import {
   invalidateCachedDictionaryItem,
@@ -23,10 +25,10 @@ type CardDetailsScreenProps = {
   item_id: string;
 };
 
-function LoadingBlock() {
+function LoadingBlock({ messages }: { messages: DictionaryDetailsMessages }) {
   return (
     <div className="w-full min-w-0 max-w-full rounded-xl border border-token-border bg-token-brandSoft/40 p-4">
-      <p className="text-[0.9375rem] font-medium text-token-text">Card loading</p>
+      <p className="text-[0.9375rem] font-medium text-token-text">{messages.loading.cardTitle}</p>
       <div className="mt-3 h-3 w-1/3 rounded-full bg-token-brandSoft" />
       <div className="mt-3 h-3 w-11/12 rounded-full bg-token-brandSoft" />
       <div className="mt-3 h-3 w-2/3 rounded-full bg-token-brandSoft" />
@@ -109,6 +111,8 @@ function getTranslationModeLabel({
 export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
   const router = useRouter();
   const { refreshBootstrap, session } = useAuth();
+  const { messages } = useLocale();
+  const dictionaryMessages = messages.dictionaryDetails;
   const [details, setDetails] = useState<DictionaryCardDetails | null>(null);
   const [detailsErrorMessage, setDetailsErrorMessage] = useState<string | null>(null);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
@@ -165,7 +169,7 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
         }
 
         setPreferencesErrorMessage(
-          getPreferencesRequestMessage(error, "The dictionary preferences could not be loaded from the backend."),
+          getPreferencesRequestMessage(error, dictionaryMessages.errors.preferences),
         );
       } finally {
         if (!controller.signal.aborted) {
@@ -246,7 +250,7 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
         if (!hasCachedDetails) {
           setDetails(null);
           setDetailsErrorMessage(
-            getVocabRequestMessage(error, "The card details could not be loaded from the backend."),
+            getVocabRequestMessage(error, dictionaryMessages.errors.details),
           );
         }
       } finally {
@@ -323,7 +327,7 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
         return;
       }
 
-      setDeleteErrorMessage(getVocabRequestMessage(error, "The word could not be deleted from the backend."));
+      setDeleteErrorMessage(getVocabRequestMessage(error, dictionaryMessages.errors.delete));
     } finally {
       setIsDeleting(false);
     }
@@ -332,9 +336,13 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
   return (
     <section className="auth-appear mx-auto grid w-full min-w-0 max-w-full gap-6 sm:max-w-[44rem]">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-token-border pb-4">
-        <Link className="inline-flex items-center gap-2 text-[0.8125rem] text-token-muted transition hover:text-token-brand" href="/dictionary">
+        <Link
+          aria-label={dictionaryMessages.navigation.dictionary}
+          className="inline-flex items-center gap-2 text-[0.8125rem] text-token-muted transition hover:text-token-brand"
+          href="/dictionary"
+        >
           <span aria-hidden="true">←</span>
-          Dictionary
+          {dictionaryMessages.navigation.dictionary}
         </Link>
         {translationModeLabel ? (
           <span className="rounded-full bg-token-brandSoft px-2.5 py-1 text-[0.6875rem] font-medium uppercase leading-none text-token-brand">
@@ -345,18 +353,25 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
 
       {isLoading ? (
         <article className="grid w-full min-w-0 max-w-full gap-3">
-          <LoadingBlock />
-          <LoadingBlock />
-          <LoadingBlock />
+          <LoadingBlock messages={dictionaryMessages} />
+          <LoadingBlock messages={dictionaryMessages} />
+          <LoadingBlock messages={dictionaryMessages} />
         </article>
       ) : null}
 
       {!isLoading && isNotFound ? (
-        <StatePanel title="Word unavailable" copy="This word may be missing or unavailable to the current account." />
+        <StatePanel
+          title={dictionaryMessages.states.unavailableTitle}
+          copy={dictionaryMessages.states.unavailableDescription}
+        />
       ) : null}
 
       {!isLoading && detailsErrorMessage ? (
-        <StatePanel tone="danger" title="Could not load this word" copy={detailsErrorMessage} />
+        <StatePanel
+          tone="danger"
+          title={dictionaryMessages.states.loadErrorTitle}
+          copy={detailsErrorMessage}
+        />
       ) : null}
 
       {!isLoading && !isNotFound && !detailsErrorMessage && details ? (
@@ -372,29 +387,31 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
             ) : null}
             {details.canonicalForm ? (
               <p className="mt-1 break-words text-[0.6875rem] leading-5 text-token-muted/55">
-                Canonical: {details.canonicalForm}
+                {dictionaryMessages.metadata.canonical}: {details.canonicalForm}
               </p>
             ) : null}
             {preferencesErrorMessage ? (
               <p className="mt-3 max-w-md break-words text-xs leading-5 text-token-muted/70">
-                Translation preference could not be loaded, so this card is shown without translation.
+                {dictionaryMessages.preference.unavailable}
               </p>
             ) : null}
           </div>
 
           <div className="grid w-full min-w-0 max-w-full gap-5 border-t border-token-border pt-5">
             {canShowTranslation ? (
-              <DetailSection label="Translation">
+              <DetailSection label={dictionaryMessages.sections.translation}>
                 <p className="text-token-text">{details.translation}</p>
               </DetailSection>
             ) : null}
 
-            <DetailSection label="Explanation">
-              <p className="text-token-muted">{details.explanation ?? "Not available for this item."}</p>
+            <DetailSection label={dictionaryMessages.sections.explanation}>
+              <p className="text-token-muted">
+                {details.explanation ?? dictionaryMessages.missingContent}
+              </p>
             </DetailSection>
 
             {details.examples.length > 0 ? (
-              <DetailSection label="Examples">
+              <DetailSection label={dictionaryMessages.sections.examples}>
                 <div className="rounded-lg border border-token-border bg-transparent px-3">
                   {details.examples.map((example, index) => (
                     <p
@@ -408,7 +425,10 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
               </DetailSection>
             ) : null}
 
-            <DetailSection label="Delete" className="border-t border-token-border pt-4">
+            <DetailSection
+              label={dictionaryMessages.sections.delete}
+              className="border-t border-token-border pt-4"
+            >
               <div className="grid gap-3">
                 {!isDeleteConfirming ? (
                   <button
@@ -420,13 +440,15 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
                     }}
                     disabled={isDeleting}
                   >
-                    Delete from dictionary
+                    {dictionaryMessages.delete.action}
                   </button>
                 ) : (
                   <div className="rounded-xl border border-[#E8B7AF] bg-[#FFF4F1] p-4 text-[#8A3328]">
-                    <p className="text-[0.8125rem] font-medium">Delete this word from your dictionary?</p>
+                    <p className="text-[0.8125rem] font-medium">
+                      {dictionaryMessages.delete.confirmationTitle}
+                    </p>
                     <p className="mt-1 text-xs leading-5">
-                      This removes it from normal dictionary browsing.
+                      {dictionaryMessages.delete.confirmationDescription}
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button
@@ -435,7 +457,9 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
                         onClick={() => void handleDelete()}
                         disabled={isDeleting}
                       >
-                        {isDeleting ? "Deleting…" : "Confirm delete"}
+                        {isDeleting
+                          ? dictionaryMessages.delete.loading
+                          : dictionaryMessages.delete.confirm}
                       </button>
                       <button
                         className="inline-flex min-h-10 items-center justify-center rounded-lg border border-token-brand bg-token-surfaceStrong px-4 text-sm font-medium text-token-brand transition hover:bg-token-brandSoft disabled:cursor-not-allowed disabled:opacity-60"
@@ -446,7 +470,7 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
                         }}
                         disabled={isDeleting}
                       >
-                        Cancel
+                        {dictionaryMessages.delete.cancel}
                       </button>
                     </div>
                     {deleteErrorMessage ? (
