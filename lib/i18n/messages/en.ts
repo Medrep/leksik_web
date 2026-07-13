@@ -2,8 +2,10 @@ import type {
   AuthenticatedMessages,
   DictionaryDetailsMessages,
   DictionaryListMessages,
+  OnboardingMessages,
   SettingsMessages,
   ShellMessages,
+  TelegramCompletionMessages,
 } from "@/lib/i18n/messages/types";
 
 export const enSettingsMessages = {
@@ -243,9 +245,79 @@ export const enDictionaryDetailsMessages = {
   },
 } satisfies DictionaryDetailsMessages;
 
+export const enOnboardingMessages = {
+  title: "Set up your languages",
+  subtitle: "Choose the language you want to learn and the language for translations.",
+  learningLanguage: {
+    label: "I’m learning",
+    placeholder: "Select language",
+  },
+  translationLanguage: {
+    label: "Show translations in",
+    placeholder: "Select language",
+  },
+  helper: "You can still save words from other languages later.",
+  continue: "Continue",
+  saving: "Continuing…",
+  saveError: "Could not save language settings. Please try again.",
+} satisfies OnboardingMessages;
+
+export const enTelegramCompletionMessages = {
+  states: {
+    checking: {
+      badge: "Checking",
+      title: "Checking this Telegram link",
+      description: "This page has the Telegram completion code and is checking it with the backend.",
+      detailTitle: "Telegram-first completion",
+    },
+    authRequired: {
+      badge: "Sign in required",
+      title: "Sign in to continue from Telegram",
+      description: "Use your product account before this Telegram completion link can be handled.",
+      detailTitle: "Sign in required",
+    },
+    success: {
+      badge: "Completed",
+      title: "Telegram connected",
+      description: "Your product account and Telegram account are now connected for capture and daily review.",
+      detailTitle: "Telegram-first completion",
+    },
+    blocked: {
+      badge: "Blocked",
+      title: "This Telegram link cannot be completed here",
+      description: "Backend-owned linking rules blocked this completion. This web client does not support reassignment or unlinking.",
+      detailTitle: "Blocked by backend rules",
+    },
+    invalid: {
+      badge: "Invalid or expired",
+      title: "This Telegram completion link is not usable",
+      description: "The link is missing its completion artifact, is expired, or cannot be used for this account.",
+      detailTitle: "Invalid completion link",
+    },
+  },
+  details: {
+    noCodeProvided: "No Telegram completion code was provided.",
+    linkingCompleted: "Telegram linking completed.",
+    accountConflict: "This Telegram account is already linked or cannot be attached to this product account.",
+    backendIncomplete: "The backend did not complete this Telegram link.",
+    conflictFallback: "This Telegram link is blocked by backend-owned conflict rules.",
+    invalidFallback: "This Telegram completion code is invalid or expired.",
+    genericFailure: "The backend could not complete this Telegram link.",
+    codeFound: "A Telegram completion code was found in this URL.",
+    codeNotFound: "No Telegram completion code was found in this URL.",
+  },
+  actions: {
+    signIn: "Sign in",
+    createAccount: "Create account",
+    openDictionary: "Open dictionary",
+  },
+} satisfies TelegramCompletionMessages;
+
 export const enMessages = {
   settings: enSettingsMessages,
   shell: enShellMessages,
   dictionaryList: enDictionaryListMessages,
   dictionaryDetails: enDictionaryDetailsMessages,
+  onboarding: enOnboardingMessages,
+  telegramCompletion: enTelegramCompletionMessages,
 } satisfies AuthenticatedMessages;

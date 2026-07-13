@@ -99,6 +99,8 @@ Provide one public Telegram-first completion surface for users arriving from Tel
 - blocked/conflict state when backend-owned linking rules block completion
 - invalid/expired state for missing, invalid, or expired completion codes
 - refreshed Telegram completion presentation with narrower centered layout, refreshed spacing and typography, state-specific icon treatment, compact supporting detail block, and button-style CTAs
+- localized checking, success, blocked/conflict, and invalid/expired web-owned states when authenticated preferences make the existing locale runtime available
+- intentional English fallback for sign-in-required, missing-code, and other states rendered before an authenticated locale is available
 
 ### Entry paths
 - direct visit to `/telegram/complete?code=...` from Telegram-first onboarding
@@ -425,7 +427,7 @@ Provide one narrow authenticated settings/preferences screen for accepted backen
 - capture or review actions
 - support/operations tooling
 - arbitrary web-only preferences outside the backend settings/preferences contract
-- localization of public/auth, onboarding, or Telegram completion content
+- localization of public/auth content or Telegram completion states rendered before an authenticated locale is available
 - dynamic `<html lang>`, locale-prefixed routes, server locale cookies, or request-based locale propagation
 
 ## Shared layout behavior
@@ -465,6 +467,7 @@ Shared traits may include:
 - sign-out action
 - light-theme presentation only
 - no explanatory side panels or internal helper chrome
+- a localized two-field language-preferences gate when either existing required language preference is missing; canonical option values, completion rules, and preferences payload behavior remain unchanged
 
 This is a minimal shell only.
 It must not expand into a broader application workspace.

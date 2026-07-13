@@ -216,9 +216,61 @@ export type DictionaryDetailsMessages = {
   };
 };
 
+export type OnboardingMessages = {
+  title: string;
+  subtitle: string;
+  learningLanguage: {
+    label: string;
+    placeholder: string;
+  };
+  translationLanguage: {
+    label: string;
+    placeholder: string;
+  };
+  helper: string;
+  continue: string;
+  saving: string;
+  saveError: string;
+};
+
+export type TelegramCompletionStateMessages = {
+  badge: string;
+  title: string;
+  description: string;
+  detailTitle: string;
+};
+
+export type TelegramCompletionMessages = {
+  states: {
+    checking: TelegramCompletionStateMessages;
+    authRequired: TelegramCompletionStateMessages;
+    success: TelegramCompletionStateMessages;
+    blocked: TelegramCompletionStateMessages;
+    invalid: TelegramCompletionStateMessages;
+  };
+  details: {
+    noCodeProvided: string;
+    linkingCompleted: string;
+    accountConflict: string;
+    backendIncomplete: string;
+    conflictFallback: string;
+    invalidFallback: string;
+    genericFailure: string;
+    codeFound: string;
+    codeNotFound: string;
+  };
+  actions: {
+    signIn: string;
+    createAccount: string;
+    openDictionary: string;
+  };
+};
+
 export type AuthenticatedMessages = {
   settings: SettingsMessages;
   shell: ShellMessages;
   dictionaryList: DictionaryListMessages;
   dictionaryDetails: DictionaryDetailsMessages;
+  onboarding: OnboardingMessages;
+  telegramCompletion: TelegramCompletionMessages;
 };

@@ -36,6 +36,31 @@ Short description of the next smallest recommended step.
 
 ---
 
+## 2026-07-13 — Authenticated onboarding and Telegram completion localization added
+
+#### Context
+The existing authenticated locale runtime already covered Settings, shell, and dictionary surfaces; the next approved slice extended it to the language-preferences gate and the runtime-safe portion of the public Telegram completion handoff.
+
+#### Work completed
+- Added typed onboarding and Telegram completion namespaces to the existing `en`, `pl`, `ru`, and `uk` bundles with the same English fallback.
+- Localized the authenticated two-field language gate, reusing the existing controlled option values and Settings language-name labels without changing completeness, payload, authoritative response, or continuation behavior.
+- Localized Telegram completion checking, success, blocked/conflict, invalid/expired, details, and actions whenever authenticated preferences make the existing locale available; arbitrary backend error strings remain unchanged.
+
+#### Accepted outputs
+- Exactly one locale owner remains, with precedence saved `ui_locale` → supported browser locale → English and no additional preferences request or dependency.
+- Telegram tokens, endpoint calls, state mapping, auth handling, retry/bootstrap behavior, and navigation are unchanged.
+- Public/auth pages and Telegram completion states rendered before an authenticated locale is ready remain English; root `<html lang="en">` remains intentionally static.
+
+#### Deferred / not now
+- public/auth localization or a public locale provider
+- pre-auth Telegram completion localization
+- dynamic `<html lang>`, locale routes, locale cookies, or server/request locale propagation
+
+#### Next step
+Localize another web-owned surface only through a separately approved slice.
+
+---
+
 ## 2026-07-13 — Authenticated shell and dictionary localization added
 
 #### Context

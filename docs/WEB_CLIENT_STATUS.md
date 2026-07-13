@@ -102,7 +102,10 @@ Current implementation status
 - Product vocabulary terms, generated translations, explanations, examples, metadata values, language badges, identifiers, backend requests, and payloads remain unchanged by the web localization runtime.
 - An unsaved Interface language draft does not change the active locale; the locale changes immediately only from the authoritative successful PUT response, while failed saves preserve the previous locale and draft.
 - The web client owns typed message bundles; backend and web share locale identifiers, not translation bundles, and no third-party i18n dependency was introduced.
-- Public/auth, onboarding, and Telegram completion surfaces remain English; root `<html lang="en">` remains intentionally static.
+- The authenticated language-preferences onboarding gate now uses the existing locale runtime for its title, helper copy, field labels, controlled option display labels, action/loading state, generic error, and accessible names; both existing language values remain required and `ui_locale` remains optional.
+- Telegram completion uses the same typed bundles for runtime-safe authenticated checking, success, blocked/conflict, and invalid/expired states without changing token handling, endpoint behavior, result mapping, or navigation.
+- Public/auth pages and Telegram completion states rendered before an authenticated locale is available remain English; root `<html lang="en">` remains intentionally static.
+- No public locale owner, additional preferences request, or third-party internationalization dependency was introduced; locale precedence remains saved `ui_locale`, supported browser locale, then English.
 - Locale-aware routes, server locale cookies, request-based locale propagation, dynamic metadata localization, and broader web localization remain out of scope.
 - Settings preference updates now send only fields changed from the backend-confirmed saved baseline; omitted fields remain untouched, while explicit nullable changes continue to serialize as `null`.
 - `preferred_review_timezone` is loaded and saved through the existing shared preferences flow; nullable or unset timezone values are handled safely and can be saved back as `null`.

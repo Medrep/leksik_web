@@ -234,6 +234,7 @@ Provide the smallest authenticated browser entry into the dictionary experience.
 ### Success result
 - authenticated user reaches the protected web-client area
 - dictionary becomes the main post-auth destination
+- when either required language preference is missing, the existing authenticated language gate uses the resolved interface locale and continues only after both canonical language values are saved through the existing preferences path
 
 ### Failure result
 - unauthenticated user is sent to sign in
@@ -247,9 +248,14 @@ Provide the smallest authenticated browser entry into the dictionary experience.
 
 ### Boundaries
 - Authenticated shell is intentionally minimal.
+- The language-preferences gate remains a two-field authenticated prerequisite; `ui_locale` is optional, and learning/translation selections never become interface-locale fallbacks.
 - It is not a broader application workspace.
 - It is not a multi-feature dashboard.
 - It is not an admin shell or broad account-management shell.
+
+## Narrow add-on flow — Telegram completion
+
+The dedicated public `/telegram/complete` handoff keeps its existing token, authentication, endpoint, state-mapping, and navigation behavior. Once authenticated learning preferences are available, its checking, success, blocked/conflict, and invalid/expired web-owned copy uses the same authenticated locale runtime. States rendered before authentication or before an authenticated locale is available remain on the English fallback; no public locale provider, cookie, route prefix, or additional preferences request is introduced.
 
 ## Flow 6 — Dictionary list browsing
 
@@ -429,8 +435,8 @@ Allow the authenticated user to view and update accepted settings through backen
 - This is a narrow settings flow only.
 - Settings preferences remain limited to `learning_language`, `preferred_translation_language`, `ui_locale`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`.
 - browser locale is resolved only by the authenticated web runtime and is never silently persisted
-- Settings, shared authenticated-shell, Dictionary List, and Dictionary Details copy use the same authenticated locale runtime and English bundle fallback
-- public/auth, onboarding, and Telegram completion surfaces remain English
+- Settings, shared authenticated-shell, Dictionary List, Dictionary Details, and the authenticated language-preferences gate use the same authenticated locale runtime and English bundle fallback
+- Telegram completion uses that runtime only after authenticated preferences are available; its public/pre-auth states and all public/auth pages remain English
 - root `<html lang="en">` remains static; locale routes and server locale propagation remain out of scope
 - The Telegram panel move is a placement change for existing behavior, not Telegram feature expansion.
 - It does not include profile/account-management expansion.

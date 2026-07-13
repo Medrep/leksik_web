@@ -52,6 +52,9 @@ export type {
   DictionaryDetailsMessages,
   DictionaryListMessages,
   DictionaryWordCountMessages,
+  OnboardingMessages,
   SettingsMessages,
   ShellMessages,
+  TelegramCompletionMessages,
+  TelegramCompletionStateMessages,
 } from "@/lib/i18n/messages/types";

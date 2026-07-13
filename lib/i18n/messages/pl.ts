@@ -2,8 +2,10 @@ import type {
   AuthenticatedMessages,
   DictionaryDetailsMessages,
   DictionaryListMessages,
+  OnboardingMessages,
   SettingsMessages,
   ShellMessages,
+  TelegramCompletionMessages,
 } from "@/lib/i18n/messages/types";
 
 export const plSettingsMessages = {
@@ -243,9 +245,79 @@ export const plDictionaryDetailsMessages = {
   },
 } satisfies DictionaryDetailsMessages;
 
+export const plOnboardingMessages = {
+  title: "Skonfiguruj języki",
+  subtitle: "Wybierz język, którego chcesz się uczyć, oraz język tłumaczeń.",
+  learningLanguage: {
+    label: "Uczę się",
+    placeholder: "Wybierz język",
+  },
+  translationLanguage: {
+    label: "Pokazuj tłumaczenia w języku",
+    placeholder: "Wybierz język",
+  },
+  helper: "Później nadal możesz zapisywać słowa z innych języków.",
+  continue: "Kontynuuj",
+  saving: "Kontynuowanie…",
+  saveError: "Nie udało się zapisać ustawień językowych. Spróbuj ponownie.",
+} satisfies OnboardingMessages;
+
+export const plTelegramCompletionMessages = {
+  states: {
+    checking: {
+      badge: "Sprawdzanie",
+      title: "Sprawdzanie tego linku Telegram",
+      description: "Ta strona zawiera kod dokończenia połączenia z Telegramem i sprawdza go na serwerze.",
+      detailTitle: "Dokończenie połączenia z Telegramem",
+    },
+    authRequired: {
+      badge: "Wymagane logowanie",
+      title: "Zaloguj się, aby kontynuować z Telegrama",
+      description: "Zaloguj się na konto produktu, zanim ten link dokończenia połączenia z Telegramem zostanie obsłużony.",
+      detailTitle: "Wymagane logowanie",
+    },
+    success: {
+      badge: "Ukończono",
+      title: "Telegram połączony",
+      description: "Konto produktu i konto Telegram są teraz połączone na potrzeby zapisywania słów i codziennych powtórek.",
+      detailTitle: "Dokończenie połączenia z Telegramem",
+    },
+    blocked: {
+      badge: "Zablokowano",
+      title: "Nie można tutaj dokończyć tego połączenia z Telegramem",
+      description: "Reguły łączenia należące do backendu zablokowały tę operację. Ten klient internetowy nie obsługuje przepisywania ani odłączania kont.",
+      detailTitle: "Zablokowano przez reguły backendu",
+    },
+    invalid: {
+      badge: "Nieprawidłowy lub wygasły",
+      title: "Nie można użyć tego linku dokończenia połączenia z Telegramem",
+      description: "W linku brakuje kodu dokończenia, kod wygasł albo nie może zostać użyty dla tego konta.",
+      detailTitle: "Nieprawidłowy link dokończenia",
+    },
+  },
+  details: {
+    noCodeProvided: "Nie podano kodu dokończenia połączenia z Telegramem.",
+    linkingCompleted: "Połączenie z Telegramem zostało ukończone.",
+    accountConflict: "To konto Telegram jest już połączone albo nie może zostać przypisane do tego konta produktu.",
+    backendIncomplete: "Backend nie dokończył tego połączenia z Telegramem.",
+    conflictFallback: "Ten link Telegram jest zablokowany przez reguły konfliktów należące do backendu.",
+    invalidFallback: "Ten kod dokończenia połączenia z Telegramem jest nieprawidłowy lub wygasł.",
+    genericFailure: "Backend nie mógł dokończyć tego połączenia z Telegramem.",
+    codeFound: "W tym adresie URL znaleziono kod dokończenia połączenia z Telegramem.",
+    codeNotFound: "W tym adresie URL nie znaleziono kodu dokończenia połączenia z Telegramem.",
+  },
+  actions: {
+    signIn: "Zaloguj się",
+    createAccount: "Utwórz konto",
+    openDictionary: "Otwórz słownik",
+  },
+} satisfies TelegramCompletionMessages;
+
 export const plMessages = {
   settings: plSettingsMessages,
   shell: plShellMessages,
   dictionaryList: plDictionaryListMessages,
   dictionaryDetails: plDictionaryDetailsMessages,
+  onboarding: plOnboardingMessages,
+  telegramCompletion: plTelegramCompletionMessages,
 } satisfies AuthenticatedMessages;

@@ -3,13 +3,18 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { useLocale } from "@/components/LocaleProvider";
 import { BackendRequestError } from "@/lib/backend-client";
+import type { TelegramCompletionMessages } from "@/lib/i18n/messages";
 import { completeTelegramLink } from "@/lib/telegram-link";
 
 type CompletionShellState = "checking" | "auth-required" | "success" | "blocked" | "invalid";
 
 type CompletionResult = {
-  message: string | null;
+  detail:
+    | { kind: "localized"; key: keyof TelegramCompletionMessages["details"] }
+    | { kind: "external"; message: string }
+    | null;
   state: "idle" | "checking" | "success" | "blocked" | "invalid";
 };
 
@@ -19,59 +24,30 @@ type TelegramCompletionPageShellProps = {
   signUpHref: string;
 };
 
-const STATE_COPY: Record<
+const STATE_PRESENTATION: Record<
   CompletionShellState,
   {
-    badge: string;
-    title: string;
-    description: string;
-    detailTitle: string;
     icon: "check" | "clock" | "lock" | "blocked" | "invalid";
     tone: "brand" | "danger";
   }
 > = {
   checking: {
-    badge: "Checking",
-    title: "Checking this Telegram link",
-    description:
-      "This page has the Telegram completion code and is checking it with the backend.",
-    detailTitle: "Telegram-first completion",
     icon: "clock",
     tone: "brand",
   },
   "auth-required": {
-    badge: "Sign in required",
-    title: "Sign in to continue from Telegram",
-    description:
-      "Use your product account before this Telegram completion link can be handled.",
-    detailTitle: "Sign in required",
     icon: "lock",
     tone: "brand",
   },
   success: {
-    badge: "Completed",
-    title: "Telegram connected",
-    description:
-      "Your product account and Telegram account are now connected for capture and daily review.",
-    detailTitle: "Telegram-first completion",
     icon: "check",
     tone: "brand",
   },
   blocked: {
-    badge: "Blocked",
-    title: "This Telegram link cannot be completed here",
-    description:
-      "Backend-owned linking rules blocked this completion. This web client does not support reassignment or unlinking.",
-    detailTitle: "Blocked by backend rules",
     icon: "blocked",
     tone: "danger",
   },
   invalid: {
-    badge: "Invalid or expired",
-    title: "This Telegram completion link is not usable",
-    description:
-      "The link is missing its completion artifact, is expired, or cannot be used for this account.",
-    detailTitle: "Invalid completion link",
     icon: "invalid",
     tone: "danger",
   },
@@ -81,8 +57,8 @@ function StateIcon({
   icon,
   tone,
 }: {
-  icon: (typeof STATE_COPY)[CompletionShellState]["icon"];
-  tone: (typeof STATE_COPY)[CompletionShellState]["tone"];
+  icon: (typeof STATE_PRESENTATION)[CompletionShellState]["icon"];
+  tone: (typeof STATE_PRESENTATION)[CompletionShellState]["tone"];
 }) {
   const iconClassName =
     tone === "danger"
@@ -169,9 +145,11 @@ export function TelegramCompletionPageShell({
   signUpHref,
 }: TelegramCompletionPageShellProps) {
   const { authStatus, bootstrapStatus, refreshBootstrap, session } = useAuth();
+  const { messages } = useLocale();
+  const telegramMessages = messages.telegramCompletion;
   const attemptedCompletionKeyRef = useRef<string | null>(null);
   const [completionResult, setCompletionResult] = useState<CompletionResult>({
-    message: null,
+    detail: null,
     state: "idle",
   });
   const hasArtifact = artifact !== null;
@@ -179,7 +157,7 @@ export function TelegramCompletionPageShell({
   useEffect(() => {
     if (!artifact) {
       setCompletionResult({
-        message: "No Telegram completion code was provided.",
+        detail: { kind: "localized", key: "noCodeProvided" },
         state: "invalid",
       });
       attemptedCompletionKeyRef.current = null;
@@ -191,7 +169,7 @@ export function TelegramCompletionPageShell({
         currentResult.state === "success" || currentResult.state === "blocked" || currentResult.state === "invalid"
           ? currentResult
           : {
-              message: null,
+              detail: null,
               state: "idle",
             },
       );
@@ -208,7 +186,7 @@ export function TelegramCompletionPageShell({
 
     attemptedCompletionKeyRef.current = completionKey;
     setCompletionResult({
-      message: null,
+      detail: null,
       state: "checking",
     });
 
@@ -228,7 +206,7 @@ export function TelegramCompletionPageShell({
 
         if (nextStatus.state === "linked") {
           setCompletionResult({
-            message: "Telegram linking completed.",
+            detail: { kind: "localized", key: "linkingCompleted" },
             state: "success",
           });
           return;
@@ -236,14 +214,14 @@ export function TelegramCompletionPageShell({
 
         if (nextStatus.state === "conflict") {
           setCompletionResult({
-            message: "This Telegram account is already linked or cannot be attached to this product account.",
+            detail: { kind: "localized", key: "accountConflict" },
             state: "blocked",
           });
           return;
         }
 
         setCompletionResult({
-          message: "The backend did not complete this Telegram link.",
+          detail: { kind: "localized", key: "backendIncomplete" },
           state: "blocked",
         });
       } catch (error) {
@@ -254,7 +232,7 @@ export function TelegramCompletionPageShell({
         if (error instanceof BackendRequestError && error.status === 401) {
           attemptedCompletionKeyRef.current = null;
           setCompletionResult({
-            message: null,
+            detail: null,
             state: "idle",
           });
           void refreshBootstrap();
@@ -263,7 +241,9 @@ export function TelegramCompletionPageShell({
 
         if (error instanceof BackendRequestError && error.status === 409) {
           setCompletionResult({
-            message: error.message || "This Telegram link is blocked by backend-owned conflict rules.",
+            detail: error.message
+              ? { kind: "external", message: error.message }
+              : { kind: "localized", key: "conflictFallback" },
             state: "blocked",
           });
           return;
@@ -271,16 +251,19 @@ export function TelegramCompletionPageShell({
 
         if (error instanceof BackendRequestError && (error.status === 400 || error.status === 404 || error.status === 410)) {
           setCompletionResult({
-            message: error.message || "This Telegram completion code is invalid or expired.",
+            detail: error.message
+              ? { kind: "external", message: error.message }
+              : { kind: "localized", key: "invalidFallback" },
             state: "invalid",
           });
           return;
         }
 
         setCompletionResult({
-          message: error instanceof Error && error.message.trim()
-            ? error.message
-            : "The backend could not complete this Telegram link.",
+          detail:
+            error instanceof Error && error.message.trim()
+              ? { kind: "external", message: error.message }
+              : { kind: "localized", key: "genericFailure" },
           state: "blocked",
         });
       }
@@ -297,25 +280,31 @@ export function TelegramCompletionPageShell({
     completionResult,
     hasArtifact,
   });
-  const copy = STATE_COPY[shellState];
-  const detailMessage = completionResult.message ?? (
-    hasArtifact
-      ? "A Telegram completion code was found in this URL."
-      : "No Telegram completion code was found in this URL."
-  );
+  const presentation = STATE_PRESENTATION[shellState];
+  const copy =
+    shellState === "auth-required"
+      ? telegramMessages.states.authRequired
+      : telegramMessages.states[shellState];
+  const detailMessage = completionResult.detail
+    ? completionResult.detail.kind === "external"
+      ? completionResult.detail.message
+      : telegramMessages.details[completionResult.detail.key]
+    : hasArtifact
+      ? telegramMessages.details.codeFound
+      : telegramMessages.details.codeNotFound;
 
   const detailClassName =
-    copy.tone === "danger"
+    presentation.tone === "danger"
       ? "border-[#E8B7AF] bg-[#FFF4F1] text-[#8A3328]"
       : "border-token-border bg-[#FEFAF2] text-token-muted";
 
   return (
     <section className="auth-appear w-full min-w-0 max-w-[25rem] px-0 py-0 text-center sm:rounded-2xl sm:border sm:border-token-border sm:bg-token-surfaceStrong sm:px-8 sm:py-8">
       <div className="flex w-full min-w-0 flex-col items-center">
-        <StateIcon icon={copy.icon} tone={copy.tone} />
+        <StateIcon icon={presentation.icon} tone={presentation.tone} />
         <p
           className={
-            copy.tone === "danger"
+            presentation.tone === "danger"
               ? "mt-5 text-xs font-medium uppercase tracking-[0.16em] text-[#8A3328]"
               : "mt-5 text-xs font-medium uppercase tracking-[0.16em] text-token-brand"
           }
@@ -336,13 +325,13 @@ export function TelegramCompletionPageShell({
               className="inline-flex min-h-11 items-center justify-center rounded-lg bg-token-brand px-5 text-sm font-semibold text-white transition hover:brightness-95"
               href={signInHref}
             >
-              Sign in
+              {telegramMessages.actions.signIn}
             </Link>
             <Link
               className="inline-flex min-h-11 items-center justify-center rounded-lg border border-token-brand bg-transparent px-5 text-sm font-semibold text-token-brand transition hover:bg-token-brandSoft"
               href={signUpHref}
             >
-              Create account
+              {telegramMessages.actions.createAccount}
             </Link>
           </div>
         ) : null}
@@ -353,7 +342,7 @@ export function TelegramCompletionPageShell({
               className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-token-brand px-5 text-sm font-semibold text-white transition hover:brightness-95"
               href="/dictionary"
             >
-              Open dictionary
+              {telegramMessages.actions.openDictionary}
             </Link>
           </div>
         ) : null}

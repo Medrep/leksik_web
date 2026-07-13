@@ -2,8 +2,10 @@ import type {
   AuthenticatedMessages,
   DictionaryDetailsMessages,
   DictionaryListMessages,
+  OnboardingMessages,
   SettingsMessages,
   ShellMessages,
+  TelegramCompletionMessages,
 } from "@/lib/i18n/messages/types";
 
 export const ukSettingsMessages = {
@@ -243,9 +245,79 @@ export const ukDictionaryDetailsMessages = {
   },
 } satisfies DictionaryDetailsMessages;
 
+export const ukOnboardingMessages = {
+  title: "Налаштуйте мови",
+  subtitle: "Виберіть мову, яку хочете вивчати, і мову перекладу.",
+  learningLanguage: {
+    label: "Я вивчаю",
+    placeholder: "Виберіть мову",
+  },
+  translationLanguage: {
+    label: "Показувати переклади мовою",
+    placeholder: "Виберіть мову",
+  },
+  helper: "Пізніше ви й надалі зможете зберігати слова з інших мов.",
+  continue: "Продовжити",
+  saving: "Продовження…",
+  saveError: "Не вдалося зберегти мовні налаштування. Спробуйте ще раз.",
+} satisfies OnboardingMessages;
+
+export const ukTelegramCompletionMessages = {
+  states: {
+    checking: {
+      badge: "Перевірка",
+      title: "Перевіряємо це посилання Telegram",
+      description: "На цій сторінці є код завершення підключення Telegram, і зараз він перевіряється на сервері.",
+      detailTitle: "Завершення підключення через Telegram",
+    },
+    authRequired: {
+      badge: "Потрібно ввійти",
+      title: "Увійдіть, щоб продовжити з Telegram",
+      description: "Увійдіть в обліковий запис сервісу, перш ніж це посилання завершення підключення Telegram зможе бути оброблено.",
+      detailTitle: "Потрібно ввійти",
+    },
+    success: {
+      badge: "Завершено",
+      title: "Telegram підключено",
+      description: "Ваш обліковий запис у сервісі та обліковий запис Telegram тепер пов’язані для збереження слів і щоденного повторення.",
+      detailTitle: "Завершення підключення через Telegram",
+    },
+    blocked: {
+      badge: "Заблоковано",
+      title: "Це підключення Telegram неможливо завершити тут",
+      description: "Серверні правила підключення заблокували операцію. Цей вебклієнт не підтримує перепризначення або від’єднання облікових записів.",
+      detailTitle: "Заблоковано серверними правилами",
+    },
+    invalid: {
+      badge: "Недійсне або застаріле посилання",
+      title: "Це посилання завершення підключення Telegram неможливо використати",
+      description: "У посиланні немає коду завершення, термін його дії минув або його не можна використати для цього облікового запису.",
+      detailTitle: "Недійсне посилання завершення",
+    },
+  },
+  details: {
+    noCodeProvided: "Код завершення підключення Telegram не вказано.",
+    linkingCompleted: "Підключення Telegram завершено.",
+    accountConflict: "Цей обліковий запис Telegram уже пов’язаний або його не можна приєднати до цього облікового запису сервісу.",
+    backendIncomplete: "Сервер не завершив це підключення Telegram.",
+    conflictFallback: "Це посилання Telegram заблоковано серверними правилами конфліктів.",
+    invalidFallback: "Цей код завершення підключення Telegram недійсний або прострочений.",
+    genericFailure: "Серверу не вдалося завершити це підключення Telegram.",
+    codeFound: "У цьому URL знайдено код завершення підключення Telegram.",
+    codeNotFound: "У цьому URL не знайдено коду завершення підключення Telegram.",
+  },
+  actions: {
+    signIn: "Увійти",
+    createAccount: "Створити обліковий запис",
+    openDictionary: "Відкрити словник",
+  },
+} satisfies TelegramCompletionMessages;
+
 export const ukMessages = {
   settings: ukSettingsMessages,
   shell: ukShellMessages,
   dictionaryList: ukDictionaryListMessages,
   dictionaryDetails: ukDictionaryDetailsMessages,
+  onboarding: ukOnboardingMessages,
+  telegramCompletion: ukTelegramCompletionMessages,
 } satisfies AuthenticatedMessages;

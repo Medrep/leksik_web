@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { useLocale } from "@/components/LocaleProvider";
 import { BackendRequestError } from "@/lib/backend-client";
 import { LANGUAGE_OPTIONS, isLanguageCode, type LanguageCode } from "@/lib/language-options";
 import { updateLearningPreferences } from "@/lib/preferences";
@@ -21,6 +22,8 @@ export function LanguagePreferencesOnboardingGate() {
     session,
     user,
   } = useAuth();
+  const { messages } = useLocale();
+  const onboardingMessages = messages.onboarding;
   const [learningLanguage, setLearningLanguage] = useState<LanguageSelectValue>(
     toInitialSelectValue(languagePreferences?.learningLanguage),
   );
@@ -29,7 +32,7 @@ export function LanguagePreferencesOnboardingGate() {
       toInitialSelectValue(languagePreferences?.preferredTranslationLanguage),
     );
   const [isSaving, setIsSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasSaveError, setHasSaveError] = useState(false);
   const canContinue = Boolean(learningLanguage && preferredTranslationLanguage);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -40,7 +43,7 @@ export function LanguagePreferencesOnboardingGate() {
     }
 
     setIsSaving(true);
-    setErrorMessage(null);
+    setHasSaveError(false);
 
     try {
       const updatedPreferences = await updateLearningPreferences({
@@ -62,7 +65,7 @@ export function LanguagePreferencesOnboardingGate() {
         return;
       }
 
-      setErrorMessage("Could not save language settings. Please try again.");
+      setHasSaveError(true);
     } finally {
       setIsSaving(false);
     }
@@ -72,10 +75,10 @@ export function LanguagePreferencesOnboardingGate() {
     <section className="auth-appear mx-auto flex w-full min-w-0 max-w-[32rem] flex-col gap-6">
       <div className="min-w-0 max-w-full">
         <h1 className="break-words text-[1.65rem] font-semibold leading-tight text-token-text sm:text-[2rem]">
-          Set up your languages
+          {onboardingMessages.title}
         </h1>
         <p className="mt-3 break-words text-[0.95rem] leading-7 text-token-muted">
-          Choose the language you want to learn and the language for translations.
+          {onboardingMessages.subtitle}
         </p>
       </div>
 
@@ -85,8 +88,11 @@ export function LanguagePreferencesOnboardingGate() {
         noValidate
       >
         <label className="grid gap-2">
-          <span className="text-[0.8125rem] font-medium text-token-text">I’m learning</span>
+          <span className="text-[0.8125rem] font-medium text-token-text">
+            {onboardingMessages.learningLanguage.label}
+          </span>
           <select
+            aria-label={onboardingMessages.learningLanguage.label}
             className="field-input"
             name="learning_language"
             value={learningLanguage}
@@ -94,21 +100,24 @@ export function LanguagePreferencesOnboardingGate() {
             disabled={isSaving}
             onChange={(event) => {
               setLearningLanguage(event.target.value as LanguageSelectValue);
-              setErrorMessage(null);
+              setHasSaveError(false);
             }}
           >
-            <option value="">Select language</option>
+            <option value="">{onboardingMessages.learningLanguage.placeholder}</option>
             {LANGUAGE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {messages.settings.languageNames[option.value]}
               </option>
             ))}
           </select>
         </label>
 
         <label className="grid gap-2">
-          <span className="text-[0.8125rem] font-medium text-token-text">Show translations in</span>
+          <span className="text-[0.8125rem] font-medium text-token-text">
+            {onboardingMessages.translationLanguage.label}
+          </span>
           <select
+            aria-label={onboardingMessages.translationLanguage.label}
             className="field-input"
             name="preferred_translation_language"
             value={preferredTranslationLanguage}
@@ -116,25 +125,27 @@ export function LanguagePreferencesOnboardingGate() {
             disabled={isSaving}
             onChange={(event) => {
               setPreferredTranslationLanguage(event.target.value as LanguageSelectValue);
-              setErrorMessage(null);
+              setHasSaveError(false);
             }}
           >
-            <option value="">Select language</option>
+            <option value="">{onboardingMessages.translationLanguage.placeholder}</option>
             {LANGUAGE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {messages.settings.languageNames[option.value]}
               </option>
             ))}
           </select>
         </label>
 
         <p className="break-words text-[0.8125rem] leading-5 text-token-muted">
-          You can still save words from other languages later.
+          {onboardingMessages.helper}
         </p>
 
-        {errorMessage ? (
+        {hasSaveError ? (
           <div className="rounded-xl border border-[#E8B7AF] bg-[#FFF4F1] px-4 py-3 text-[#8A3328]">
-            <p className="break-words text-[0.8125rem] leading-5">{errorMessage}</p>
+            <p className="break-words text-[0.8125rem] leading-5">
+              {onboardingMessages.saveError}
+            </p>
           </div>
         ) : null}
 
@@ -143,7 +154,7 @@ export function LanguagePreferencesOnboardingGate() {
           type="submit"
           disabled={isSaving || !canContinue}
         >
-          {isSaving ? "Continue..." : "Continue"}
+          {isSaving ? onboardingMessages.saving : onboardingMessages.continue}
         </button>
       </form>
     </section>

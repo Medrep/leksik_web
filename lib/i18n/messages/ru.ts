@@ -2,8 +2,10 @@ import type {
   AuthenticatedMessages,
   DictionaryDetailsMessages,
   DictionaryListMessages,
+  OnboardingMessages,
   SettingsMessages,
   ShellMessages,
+  TelegramCompletionMessages,
 } from "@/lib/i18n/messages/types";
 
 export const ruSettingsMessages = {
@@ -243,9 +245,79 @@ export const ruDictionaryDetailsMessages = {
   },
 } satisfies DictionaryDetailsMessages;
 
+export const ruOnboardingMessages = {
+  title: "Настройте языки",
+  subtitle: "Выберите язык, который хотите изучать, и язык перевода.",
+  learningLanguage: {
+    label: "Я изучаю",
+    placeholder: "Выберите язык",
+  },
+  translationLanguage: {
+    label: "Показывать переводы на",
+    placeholder: "Выберите язык",
+  },
+  helper: "Позже вы всё равно сможете сохранять слова из других языков.",
+  continue: "Продолжить",
+  saving: "Продолжение…",
+  saveError: "Не удалось сохранить языковые настройки. Попробуйте ещё раз.",
+} satisfies OnboardingMessages;
+
+export const ruTelegramCompletionMessages = {
+  states: {
+    checking: {
+      badge: "Проверка",
+      title: "Проверяем эту ссылку Telegram",
+      description: "На этой странице есть код завершения подключения Telegram, и сейчас он проверяется на сервере.",
+      detailTitle: "Завершение подключения через Telegram",
+    },
+    authRequired: {
+      badge: "Требуется вход",
+      title: "Войдите, чтобы продолжить из Telegram",
+      description: "Войдите в учётную запись сервиса, прежде чем эта ссылка завершения подключения Telegram сможет быть обработана.",
+      detailTitle: "Требуется вход",
+    },
+    success: {
+      badge: "Завершено",
+      title: "Telegram подключён",
+      description: "Ваша учётная запись в сервисе и аккаунт Telegram теперь связаны для сохранения слов и ежедневного повторения.",
+      detailTitle: "Завершение подключения через Telegram",
+    },
+    blocked: {
+      badge: "Заблокировано",
+      title: "Это подключение Telegram нельзя завершить здесь",
+      description: "Серверные правила подключения заблокировали операцию. Этот веб-клиент не поддерживает переназначение или отключение аккаунтов.",
+      detailTitle: "Заблокировано серверными правилами",
+    },
+    invalid: {
+      badge: "Недействительная или устаревшая ссылка",
+      title: "Эту ссылку завершения подключения Telegram нельзя использовать",
+      description: "В ссылке нет кода завершения, срок его действия истёк или его нельзя использовать для этой учётной записи.",
+      detailTitle: "Недействительная ссылка завершения",
+    },
+  },
+  details: {
+    noCodeProvided: "Код завершения подключения Telegram не указан.",
+    linkingCompleted: "Подключение Telegram завершено.",
+    accountConflict: "Этот аккаунт Telegram уже связан или не может быть прикреплён к данной учётной записи сервиса.",
+    backendIncomplete: "Сервер не завершил это подключение Telegram.",
+    conflictFallback: "Эта ссылка Telegram заблокирована серверными правилами конфликтов.",
+    invalidFallback: "Этот код завершения подключения Telegram недействителен или просрочен.",
+    genericFailure: "Серверу не удалось завершить это подключение Telegram.",
+    codeFound: "В этом URL найден код завершения подключения Telegram.",
+    codeNotFound: "В этом URL не найден код завершения подключения Telegram.",
+  },
+  actions: {
+    signIn: "Войти",
+    createAccount: "Создать аккаунт",
+    openDictionary: "Открыть словарь",
+  },
+} satisfies TelegramCompletionMessages;
+
 export const ruMessages = {
   settings: ruSettingsMessages,
   shell: ruShellMessages,
   dictionaryList: ruDictionaryListMessages,
   dictionaryDetails: ruDictionaryDetailsMessages,
+  onboarding: ruOnboardingMessages,
+  telegramCompletion: ruTelegramCompletionMessages,
 } satisfies AuthenticatedMessages;

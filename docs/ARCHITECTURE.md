@@ -60,9 +60,10 @@ Authenticated localization boundary:
 - the web client owns its typed message bundles; backend and web share locale identifiers only
 - one authenticated locale runtime resolves locale in this order: saved `ui_locale`, supported browser locale, then English
 - browser-derived locale is transient and is never persisted automatically
-- localized authenticated coverage includes Settings, the shared authenticated shell, Dictionary List, and Dictionary Details in `en`, `pl`, `ru`, and `uk`
+- localized authenticated coverage includes Settings, the shared authenticated shell, Dictionary List, Dictionary Details, and the authenticated language-preferences onboarding gate in `en`, `pl`, `ru`, and `uk`
+- Telegram completion consumes the same runtime after authenticated preferences are ready; public/pre-auth completion states retain the English fallback rather than introducing a second locale owner
 - product vocabulary content remains backend-owned data and is never translated by the web localization runtime
-- public/auth, onboarding, and Telegram completion surfaces remain English
+- public/auth surfaces remain English, as do Telegram completion states rendered before an authenticated locale is available
 - root `<html lang="en">` remains static in this slice; route locale prefixes, server locale cookies, and request-based locale propagation are not used
 - no third-party internationalization dependency is used
 
