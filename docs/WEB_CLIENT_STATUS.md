@@ -165,15 +165,9 @@ Known confirmed contract points
   - learning_language
   - ui_locale
 
-Known explicitly provisional contract points
-- exact GET /vocab response envelope and item schema beyond the current accepted narrow field family
-- exact guaranteed vs optional fields for list/details beyond the currently confirmed baseline
-- exact examples payload shape beyond current accepted narrow handling
-- exact unauthenticated and access-denial status-code behavior for both vocab reads and delete
-- item-id field naming in response payloads if backend/docs still mix `item_id`, `id`, or another confirmed identifier field
-
-Local contract-clarification artifact
-- docs/BACKEND_CONTRACT_CLARIFICATION_NOTE.md
+Backend contract authority
+- backend repository documentation defines API contracts and semantics
+- docs/BACKEND_INTEGRATION.md documents only consumed endpoints and frontend mapping
 
 Important implementation rules going forward
 - do not add new frontend features unless explicitly accepted
