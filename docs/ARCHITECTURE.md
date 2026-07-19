@@ -1,329 +1,146 @@
-# Architecture v1
+# Web Architecture
 
-## 1. Architecture goal
+## Purpose and authority
 
-Build a **backend-first MVP** with a primary bot flow and thin client surfaces:
-- **bot client** — capture + daily review
-- **mobile app client** — auth + dictionary + manual add + delete from dictionary + settings
-- **narrow web client** — auth + dictionary read + settings
+This is the architecture document for the Leksik web repository. It describes the web application boundary, internal web architecture, and repository ownership boundaries.
 
-The system must:
-- accept words and phrases
-- immediately return a ready card
-- store a user dictionary
-- run daily mini-quizzes
-- support shared user settings/preferences across clients where applicable
-- be ready for future payment and OCR
+The web application is a thin client over backend APIs. This document does not define backend architecture, API schemas or semantics, authorization rules, domain behavior, persistence, Telegram runtime, workers, or scheduling. Those concerns defer to canonical documentation in the backend repository.
 
-## 2. Architecture style
+Web scope, user workflows, screen behavior, and implementation status remain in their focused web documents rather than being duplicated here.
 
-### Chosen style
-**Modular monolith**
+## Application boundary
 
-That means:
-- one backend codebase
-- one Postgres database
-- one worker codebase/process
-- logical separation into application modules
+The repository contains a separately versioned Next.js App Router application for responsive browser use.
 
-This is the recommended MVP architecture because it is simple enough for AI-assisted implementation and clean enough to grow later.
+The web application owns:
 
-## 3. Core components
+- browser routes and screen composition;
+- browser authentication integration;
+- authenticated and public UI state;
+- frontend mapping from backend responses into web view data;
+- web localization;
+- browser-side cache and state behavior;
+- responsive UI behavior.
 
-### Mobile app client
-Responsibilities:
-- auth
-- dictionary list
-- search
-- filter by language
-- filter by learning status
-- card details
-- manual add
-- delete from dictionary
-- settings screen
-- local cache for dictionary list and card details
+The backend remains authoritative for authenticated identity, product access, vocabulary and preference behavior, account behavior, and all other domain decisions. The web client may present backend state and initiate supported operations, but it does not become a second system of record.
 
-Delivery:
-- the mobile app is a separate client project
-- mobile implementation is done in Antigravity
-- mobile remains a thin client over the shared backend API
+## Authentication architecture
 
-### Narrow web client
-Responsibilities:
-- auth entry
-- dictionary list
-- card details
-- settings screen
-- shared use of backend settings/preferences endpoints where applicable
+Browser authentication is handled through the Supabase browser client. The browser session supplies an access token for protected backend requests.
 
-Web localization boundary:
-- the web client owns its typed message bundles; backend and web share locale identifiers only
-- one globally mounted locale runtime owns both public and authenticated web surfaces
-- before authentication, effective locale resolves in this order: supported browser locale, then English
-- after authenticated preferences are confirmed, effective locale resolves in this order: saved `ui_locale`, supported browser locale, then English
-- browser-derived locale is transient and is never persisted automatically
-- localized coverage includes landing, public authentication and recovery, public Telegram completion, Settings, the shared authenticated shell, Dictionary List, Dictionary Details, and the authenticated language-preferences onboarding gate in `en`, `pl`, `ru`, and `uk`
-- locale-neutral readiness states keep server and first-client markup compatible while browser locale or current-user preferences are being resolved
-- sign-out discards user-bound locale input and returns public UI to the already resolved transient browser locale
-- authenticated bootstrap and preference responses are guarded against stale-session commits
-- Supabase and arbitrary backend errors remain external pass-through text rather than web-owned translations
-- product vocabulary content remains backend-owned data and is never translated by the web localization runtime
-- root `<html lang="en">` and static English metadata remain intentional document-boundary limitations; route locale prefixes, server locale cookies, and request-based locale propagation are not used
-- no third-party internationalization dependency is used
+The backend receives the access token as bearer authentication and remains responsible for validating identity, access, and authorization. Web route guards and visibility rules support browser navigation and presentation only; they do not replace backend enforcement.
 
-### Bot client
-Responsibilities:
-- receive user text
-- send capture requests to backend
-- display ready card
-- deliver review questions
-- submit answers
-- show compact feedback
+Public authentication and recovery surfaces are separated from authenticated dictionary and settings surfaces. Authenticated entry depends on both a valid browser session and successful backend acceptance.
 
-### Backend API (FastAPI)
-Main product core.
-Responsibilities:
-- auth-aware API
-- vocabulary capture
-- dictionary read API
-- dictionary soft delete
-- preferences read/update
-- review answer submission
-- access checks
-- orchestration of synchronous flows
+## Routing and UI architecture
 
-### Worker process
-Responsibilities:
-- processing jobs
-- enrichment jobs
-- daily review generation
-- retries
-- future OCR jobs
-- future billing sync jobs
+The App Router owns the web route hierarchy and separates:
 
-### Database (Postgres)
-Source of truth for:
-- users
-- access states
-- raw inputs
-- vocabulary items
-- examples
-- learning states
-- review sessions/questions/answers
-- processing jobs
+- public entry, authentication, recovery, and Telegram-completion surfaces;
+- authenticated dictionary and settings surfaces;
+- shared public and authenticated layouts.
 
-### Auth provider
-**Supabase Auth**
+Route details, screen contents, entry and exit paths, and user workflows belong in the web screen and flow documents.
 
-### Storage
-**Supabase Storage**
+The repository provides one responsive browser UI for mobile and desktop widths. Responsive presentation may adapt layout and density, but it does not change product scope, backend ownership, or available domain behavior.
 
-### LLM provider
-**Qwen API**
+## Frontend API mapping
 
-Used only for:
-- structured enrichment
-- translation when `preferred_translation_language` is set and differs from the source language
-- short explanation in the source word language
-- examples
-- canonicalization support
+The web repository owns the mapping layer between backend wire responses and web-facing view data.
 
-Not used for:
-- learning state logic
-- scheduling
-- review scoring
-- access logic
+That layer may:
 
-## 4. Backend modules
+- normalize confirmed backend fields for rendering;
+- shape loading, success, empty, and error states for the UI;
+- keep web components independent from raw transport handling.
 
-### Identity & Access
-Handles:
-- current user context
-- access state
-- review, timezone, and translation preferences
-- future billing-ready entitlement checks
+It must not redefine backend schemas, invent alternative authorization rules, or reproduce backend domain logic. Canonical backend API documentation remains authoritative when web mapping assumptions and backend contracts differ.
 
-### Vocabulary Intake
-Handles:
-- raw text capture from bot/app
-- raw input creation
-- handoff into enrichment pipeline
+## Localization architecture
 
-### Enrichment
-Handles:
-- normalization
-- word vs phrase classification
-- translation when `preferred_translation_language` is set and differs from the source language
-- short explanation in the source word language
-- examples
-- vocabulary item creation/update
-- source linkage
+The web client owns its localization runtime and typed web message bundles. Backend and web surfaces may share locale identifiers, but they do not share runtime translation bundles.
 
-### Dictionary
-Handles:
-- list
-- details
-- search
-- filters
-- soft-delete exclusion from normal reads
+Supported web locales are:
 
-### Learning State
-Handles:
-- initialize state for new item
-- automatic status updates
-- exclusion of deleted items from active learning/review
-- next-review metadata basics
+- English (`en`);
+- Polish (`pl`);
+- Russian (`ru`);
+- Ukrainian (`uk`).
 
-### Review
-Handles:
-- eligible item selection
-- review session generation
-- scheduled/manual review session origin metadata
-- question generation
-- answer evaluation
-- learning state updates
+One web-owned locale runtime covers public and authenticated web surfaces.
 
-### Scheduled Review Runtime
-Handles:
-- callable backend runtime service for scheduled daily review processing
-- per-user scheduled-review due-time state
-- scheduler claim/lease state
-- scheduled local-date anti-duplicate markers
-- scheduled-session traceability markers
+Locale resolution is:
 
-### Job Processing
-Handles:
-- queued jobs
-- retries
-- scheduled execution
+- before authenticated preferences are available: supported browser locale, then English;
+- after authenticated preferences are available: saved `ui_locale`, supported browser locale, then English.
 
-### Billing Access
-Handles:
-- access checks
-- plan/access-state compatibility
+Browser-derived locale is transient and is not automatically persisted. Sign-out removes user-bound locale input and returns the public UI to the resolved browser locale.
 
-### OCR boundary
-Planned, not implemented in MVP.
+Web-owned interface copy uses the web bundles. Vocabulary content, generated translations and explanations, backend payload values, Supabase errors, and arbitrary backend errors are not rewritten by the web localization runtime.
 
-## 5. Runtime shape
+The root document currently retains static English metadata and `<html lang="en">`. Locale-prefixed routes, server locale cookies, and request-derived server metadata are not part of the current architecture. No third-party internationalization library is used.
 
-### Process 1 — API server
-Serves:
-- app requests
-- bot requests
-- auth-aware product operations
+## Client state and cache
 
-### Process 2 — worker
-Runs:
-- enrichment jobs
-- review generation jobs
-- retries
-- scheduled tasks
+Client state coordinates browser session state, authenticated readiness, locale readiness, UI drafts, and request presentation. Backend responses remain authoritative.
 
-Both can be built from the same repository and the same Docker image with different start commands.
+The dictionary cache is a browser-side read optimization. The frontend owns safe cache invalidation when authentication boundaries, user identity, mutations, or relevant preferences make cached data stale or unsafe to reuse.
 
-Current scheduled-review implementation note:
-- the backend has a callable scheduled runtime core for due-user selection, lease/claim handling, local-day idempotency, scheduled-session creation, runtime marker advancement, and Telegram delivery attempts for newly created scheduled sessions
-- a dedicated worker invocation loop exists and production Docker Compose wiring runs it as a separate service from the API
-- `processing_jobs` integration and generic worker/job orchestration remain deferred
+The cache does not provide:
 
-## 6. Main end-to-end flows
+- an offline-first product mode;
+- background synchronization guarantees;
+- conflict resolution;
+- a durable write queue;
+- authority over backend data.
 
-### Bot capture flow
-1. User sends word/phrase to bot
-2. Bot sends request to backend
-3. Backend authenticates/maps user
-4. Vocabulary Intake creates `raw_input`
-5. Enrichment processes input
-6. Vocabulary item is created or matched
-7. Examples and source are stored
-8. Learning state is initialized if needed
-9. Backend returns ready card payload
-10. Bot displays card
+Cache failure must not change backend ownership or prevent normal backend reads.
 
-### App manual add flow
-1. User enters word/phrase in app
-2. App sends request to backend
-3. Backend creates `raw_input`
-4. Enrichment runs
-5. Vocabulary item is created/updated
-6. Learning state initialized if needed
-7. Backend returns ready card
-8. App shows result
+## Repository ownership boundaries
 
-### Dictionary browsing flow
-1. App requests dictionary list
-2. Client may use local cache for dictionary list/details as a read optimization only
-3. Backend remains the source of truth and loads user-scoped non-deleted items
-4. Filters/search applied
-5. Response returned to app
+### Web repository
 
-### Daily review generation flow
-1. Scheduler/worker invocation calls the scheduled runtime core for users eligible for review
-2. Scheduled Review Runtime claims due users with a short lease
-3. Review module loads eligible learning states
-4. At most one scheduled review session is created per user local day
-5. Runtime markers are advanced so repeated ticks do not duplicate or hot-loop
-6. Telegram delivery is attempted only for newly created scheduled sessions
+The web repository owns:
 
-### Review answer flow
-1. Bot sends selected answer to backend
-2. Review module evaluates answer
-3. Review answer is stored
-4. Learning State module updates item state
-5. Backend returns compact feedback
-6. Bot shows feedback and moves to next question
+- Next.js routes and screens;
+- browser authentication integration;
+- frontend API mapping;
+- localization runtime and bundles;
+- responsive UI architecture;
+- browser UI state and cache behavior.
 
-## 7. Synchronous vs asynchronous behavior
+### Backend repository
 
-### Synchronous user-facing flows
-- capture from bot
-- manual add from app
-- dictionary reads
-- dictionary soft delete
-- settings/preferences updates
-- review answer submission
+The backend repository owns:
 
-### Asynchronous internal flows
-- retries after failed enrichment
-- daily review generation
-- future OCR processing
-- future billing event processing
+- API contracts and semantics;
+- authorization and access enforcement;
+- persistence and data-model authority;
+- domain rules;
+- Telegram backend flows;
+- workers and scheduled processing.
 
-### Important UX rule
-After capture, the user must receive a ready card immediately.
+Backend canonical documentation is authoritative for those concerns. This document references that authority rather than copying it.
 
-So MVP behavior should be:
-- create raw input
-- run enrichment in-request with controlled timeout
-- if successful, return ready card immediately
-- if not, fail gracefully and schedule retry
+### Admin repository
 
-## 8. Question generation approach
+The admin repository owns:
 
-Chosen approach:
-**Template-based MCQ generation**
+- admin routes and UI;
+- operator workflows;
+- admin presentation behavior.
 
-Backend owns question assembly.
+Admin behavior is not part of the web application architecture.
 
-Supported MVP question types:
-- choose the correct meaning
-- choose the correct word/phrase by meaning
-- choose the correct option in context
+## Deployment boundary
 
-LLM provides structured card content, but the backend owns review logic.
+The web application is independently versioned and deployable from the backend and admin applications. At runtime it connects to configured Supabase browser-auth services and a configured backend API.
 
-## 9. Security and data handling baseline
+No platform-specific deployment topology is defined by this document or by the current framework configuration. Introducing one is a separate explicit decision.
 
-- all user data is user-scoped
-- access checks happen server-side
-- bot messages must map to authenticated user identity
-- raw input should not be retained forever without purpose
-- future OCR uploads should follow minimal-retention approach
-- account deletion / full data deletion should be planned from the start
+## Related web documentation
 
-## 10. Final architecture statement
-
-MVP v1 is a backend-first modular monolith built on FastAPI and Postgres, with a shared product core serving two clients (bot and mobile app), a separate worker process for enrichment and review generation, Qwen used only for structured card enrichment, and architecture boundaries prepared from day one for future billing and OCR.
-
-The mobile app is a separate client project implemented in Antigravity and remains a thin client over the shared backend API.
+- [Web scope](WEB_CLIENT_SCOPE.md)
+- [User flows](WEB_CLIENT_FLOWS.md)
+- [Screens and routes](WEB_CLIENT_SCREENS.md)
+- [Current status](WEB_CLIENT_STATUS.md)
