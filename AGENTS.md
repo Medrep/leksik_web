@@ -2,105 +2,97 @@
 
 ## Purpose
 
-This repository contains the narrow responsive web client for the Personal AI Vocabulary System.
+This repository contains the narrow responsive web client for Leksik.
 
-This is a separate client project.
-It is not the backend repo.
-It is not the mobile app repo.
+The web client is a separate Next.js project and a thin client over the shared backend API. Keep changes scoped to the web repository unless work in another repository is explicitly authorized.
 
-The web client is a thin client over the shared backend API.
+## Current product role
 
-## Product role
+The accepted web surface includes:
 
-The web client exists to provide a small user-facing entrypoint before the mobile app is built.
+- browser authentication entry and recovery;
+- authenticated dictionary list, search, details, and narrow deletion;
+- backend-backed settings and preferences;
+- Telegram link status and authenticated completion;
+- self-service account deletion;
+- web-owned localization and responsive light-theme UI.
 
-Current approved scope:
-- landing / entry
-- sign up
-- sign in
-- password recovery only if required
-- authenticated app shell
-- dictionary list
-- card details
-- responsive browser support for mobile and desktop
+Telegram remains the primary capture and daily-review channel. The web client must not become a parallel product core.
+
+## Repository ownership
+
+### Web repository
+
+This repository owns:
+
+- the Next.js application;
+- web routes and screens;
+- browser authentication integration;
+- client-side state and cache;
+- the web localization runtime and UI behavior;
+- frontend API mapping;
+- web-specific UX behavior.
+
+### Backend repository
+
+The backend repository owns:
+
+- API schemas and semantics;
+- authorization and access rules;
+- domain behavior;
+- Telegram backend flows;
+- workers and scheduled processing;
+- the persistence model.
+
+Backend canonical documentation remains authoritative for backend contracts. Web documentation must reference those contracts and must not duplicate backend API or data-model authority.
+
+### Admin repository
+
+The admin repository owns:
+
+- admin UI;
+- operator workflows;
+- admin presentation behavior.
+
+During web-only tasks, sibling repositories may be inspected when necessary but must not be modified unless explicitly authorized. Report cross-repository mismatches instead of silently changing another repository.
 
 ## Explicit anti-scope
 
 Do not add or expand into:
-- manual add flow
-- review UI
-- Telegram replacement
-- admin panel
-- billing UI
-- OCR
-- manual status change
-- advanced settings/profile work unless strictly required by auth flow
-- client-owned business logic
-- backend logic duplication
 
-## System baseline
-
-- backend remains the system core
-- Telegram remains the primary capture and daily review channel
-- this web client is a narrow bridge, not a full web product
-- mobile remains a separate future client project
-
-## Backend integration rules
-
-- Treat backend API contracts as the source of truth
-- Do not invent parallel auth semantics in the client
-- Do not move access checks to the client
-- Do not duplicate dictionary ownership logic in the client
-- If a backend/API gap is found, document the smallest missing dependency instead of working around it with client-side logic
+- manual vocabulary capture;
+- review UI;
+- Telegram replacement;
+- admin or operator tooling;
+- billing UI;
+- OCR;
+- manual learning-status changes;
+- client-owned domain or authorization logic;
+- copied backend contracts.
 
 ## Implementation rules
 
-- Keep the web client narrow
-- Prefer simple, maintainable structure over abstraction-heavy architecture
-- Prefer implementation slices in this order:
-  1. auth entry
-  2. authenticated shell
-  3. dictionary list
-  4. card details
-- Keep responsive behavior practical, not design-system heavy
-- Do not expand scope silently
+- Inspect the current implementation and relevant web documentation before modifying.
+- Keep changes small, focused, and within the accepted web surface.
+- Preserve backend ownership of identity, access, vocabulary, preferences, and other domain behavior.
+- Do not invent client-side workarounds for backend contract gaps.
+- Keep cache as a read optimization, not an offline-first or synchronization system.
+- Keep responsive behavior practical and localization inside the existing web-owned runtime.
+- Do not introduce major dependencies or change deployment topology without explicit approval.
+- Do not expand scope silently.
 
-## Allowed changes
+## Documentation rules
 
-Typical allowed work:
-- web screens within approved scope
-- routing
-- auth entry UI
-- dictionary list/detail UI
-- responsive layout
-- API integration for approved flows
-- narrow frontend docs
-
-## Changes that require explicit approval
-
-Ask before:
-- adding new product scope
-- changing auth model assumptions
-- adding client-side state/business logic beyond normal UI needs
-- introducing major dependencies
-- changing deployment topology
-- expanding beyond the approved screen list
-
-## Docs to use in this repo
-
-Primary docs for this repo should be:
-- web client scope brief
-- web client flows
-- web client screen list
-- API dependencies
-- local decisions/history for the web workstream
-
-Do not use backend deployment/runbook docs as implementation guidance for this repo unless explicitly relevant.
+- Use web documentation for web routes, screens, flows, localization, cache behavior, and frontend mapping.
+- Use backend canonical documentation for API, authorization, domain, and persistence contracts.
+- Keep repository instructions practical; do not copy full architecture, API, or data-model specifications here.
+- Update web documentation only when the task requires it or the implemented web behavior changes.
 
 ## Delivery posture
 
-This repo should stay:
-- simple
-- thin
-- backend-dependent
-- easy to deploy independently
+Keep this repository:
+
+- simple;
+- thin;
+- backend-dependent;
+- independently versioned and deployable.

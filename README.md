@@ -1,127 +1,87 @@
-# Responsive Web Client Baseline
+# Leksik Web Client
 
 ## Purpose
 
-This repository is the separate responsive web client for the Personal AI Vocabulary System.
+This repository contains the separate responsive web client for Leksik.
 
-It is a narrow browser client only.
-It is not the backend repo.
-It is not the mobile app repo.
+It is a narrow Next.js client over the shared backend API. The backend remains the system core and owns domain behavior, API contracts, authorization, and persistence. Telegram remains the primary interface for vocabulary capture and daily review.
 
-The backend remains the system core.
-Telegram remains the primary interface for capture and daily review.
+Browser account entry uses Supabase Auth directly. Protected backend requests use the Supabase access token as a bearer token, and the backend remains authoritative for authenticated identity and product access.
 
-The current repo boundary includes the approved narrow screen set, while the currently integrated backend-backed UI slices remain Supabase browser auth entry, thin authenticated-entry bootstrap through backend auth checks, backend-backed Dictionary List loading/search, backend-backed Card Details rendering, a minimal authenticated Telegram link status/completion subflow inside Settings, and the dedicated `/telegram/complete` route for Telegram-first authenticated completion handoff.
-It does not redesign backend behavior or expand beyond the accepted narrow screen scope.
+## Implemented web surface
 
-## Accepted repo boundary
+The current web client provides:
 
-### In scope
-- Landing / Entry
-- Sign Up
-- Sign In
-- Password Recovery
-- Password Recovery Confirmation
-- Dictionary List
-- Dictionary search inside Dictionary List
-- Card Details
-- Settings
-- Dedicated Telegram Completion at `/telegram/complete`
-- sign-out action
-- light-theme presentation only
-- responsive browser support for mobile and desktop
+- sign up, sign in, sign out, and password-recovery initiation;
+- authenticated dictionary list, search, and card details;
+- details-first dictionary deletion;
+- backend-backed learning settings and preferences;
+- Telegram link status and authenticated completion, including the dedicated `/telegram/complete` route;
+- self-service account deletion from Settings;
+- localized web-owned UI in English, Polish, Russian, and Ukrainian;
+- responsive mobile and desktop browser layouts;
+- light-theme presentation.
 
-### Out of scope
-- manual add
-- review UI
-- Telegram replacement
-- admin
-- billing UI
-- OCR
-- manual status change
-- advanced filters
-- profile/account-management expansion beyond the accepted narrow settings screen
-- client-owned business logic
+Manual vocabulary capture, review UI, admin tooling, billing UI, OCR, and manual learning-status changes remain outside the web-client scope.
 
-## Thin-client ownership model
+## Ownership boundaries
 
-- Supabase Auth owns browser auth entry and browser session state
-- backend owns access state checks
-- backend owns dictionary list/search/details behavior
-- backend owns accepted settings/preferences behavior
-- the web client only renders browser states and routes between approved screens
+- The web repository owns Next.js routes, screens, browser authentication integration, frontend API mapping, client-side cache/state, localization, and web UX.
+- The backend repository owns API schemas and semantics, authorization, domain behavior, Telegram/backend runtime, workers, scheduled processing, and persistence.
+- The admin repository owns admin UI, operator workflows, and admin presentation.
 
-If a required backend/API capability is missing, document the gap.
-Do not invent client-side workaround logic.
+Backend canonical documentation remains authoritative for backend contracts. This repository should document how the web client consumes those contracts, not copy backend API or data-model authority.
 
-## Minimum backend/API dependencies
+## Requirements
 
-- Supabase browser auth for sign up, sign in, sign out, and password recovery initiation
-- `GET /auth/me`
-- `GET /auth/access`
-- `GET /vocab`
-- `GET /vocab/{item_id}`
-- `GET /messaging-links/telegram`
-- `POST /messaging-links/telegram/complete`
+- Node.js 20, as pinned in [`.nvmrc`](.nvmrc)
+- npm
+- A configured Supabase project and backend API
 
-## Main dependency risk to validate
+Required public environment variables:
 
-Before each new integration slice, confirm the narrow browser-to-backend contract the web client depends on.
-The current auth slice is based on direct Supabase browser auth plus backend bearer-token checks.
-If a required capability is missing, do not work around it in the client.
+```text
+NEXT_PUBLIC_API_BASE_URL
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+```
 
-## Auth Validation Result
+Use [`.env.example`](.env.example) as the local configuration template.
 
-Confirmed auth model for this repository:
-- browser auth entry happens through Supabase Auth directly
-- the backend remains a bearer-token-consuming protected API
-- after browser auth, the web client sends `Authorization: Bearer <supabase_jwt>` to `GET /auth/me` and `GET /auth/access`
-- the browser flow does not depend on backend-owned `/auth/signup`, `/auth/login`, `/auth/logout`, or `/auth/recover` endpoints
-- the browser flow does not assume backend cookie/session auth
+## Development
 
-Current implementation boundary:
-- the web client uses Supabase for sign up, sign in, sign out, and password recovery initiation
-- authenticated entry into protected routes is accepted only after backend `/auth/me` and `/auth/access` succeed
-- Dictionary List uses `GET /vocab` with the confirmed `search` query parameter and keeps search inside the same screen
-- Card Details uses `GET /vocab/{item_id}` and promotes only the accepted read-only detail fields into the UI
-- Settings includes the relocated small authenticated Telegram link panel that reads `GET /messaging-links/telegram` and submits `POST /messaging-links/telegram/complete`
-- `/telegram/complete` is the dedicated public Telegram-first completion route and submits the existing completion code to `POST /messaging-links/telegram/complete` only after Supabase auth and backend auth bootstrap are ready
-- the web client uses the light-theme presentation only; appearance switching is not currently supported
-- confirmed project evidence already supports field names such as `display_text`, `canonical_text`, `translation`, `short_explanation`, `examples`, and `learning_status`
-- exact `GET /vocab` and `GET /vocab/{item_id}` response envelope schemas are still only partially documented here, and item-id field naming in response payloads remains conservatively handled in the client mapper
-- no client-owned auth/session workaround model is introduced beyond the built-in Supabase browser session behavior
-
-Current required environment for this slice:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_API_BASE_URL`
-
-## Local build troubleshooting
-
-If `npm run build` hangs or behaves inconsistently because of broken local build/install state, a clean local rebuild may help:
+Install dependencies:
 
 ```sh
-rm -rf node_modules .next
 npm install
+```
+
+Start the development server:
+
+```sh
+npm run dev
+```
+
+Create a production build:
+
+```sh
 npm run build
 ```
 
-## Source docs
+Start the production server after building:
 
-Use these files as the repository source of truth for the accepted boundary:
-- [docs/WEB_CLIENT_SCOPE.md]
-- [docs/WEB_CLIENT_FLOWS.md]
-- [docs/WEB_CLIENT_SCREENS.md]
+```sh
+npm run start
+```
 
-This responsive web client lives in a separate repository.
-The broader product, API, and architecture docs live in the backend/project repository and remain the source of truth for those areas.
-This separate web-client repository implements against the accepted web-client docs above together with the local README baseline.
-The endpoint list in this README is the current integration baseline for the web client.
-Future integration slices must still be validated against the backend/project repository docs and live backend behavior.
+The current `package.json` does not define test or lint scripts. Do not invent `npm test` or `npm run lint` as repository validation commands unless those scripts are added in an explicitly approved task.
 
-## Recommended next slice
+## Documentation
 
-Contract validation and payload hardening:
-- validate any still-provisional field mappings and query-parameter assumptions against the backend/project repository contract
-- tighten UI rendering around confirmed payload shapes without expanding product scope
-- continue treating backend responses as the source of truth for access and vocabulary data
+- [Web scope](docs/WEB_CLIENT_SCOPE.md)
+- [User flows](docs/WEB_CLIENT_FLOWS.md)
+- [Screens and routes](docs/WEB_CLIENT_SCREENS.md)
+- [Current status](docs/WEB_CLIENT_STATUS.md)
+- [Manual smoke checks](docs/WEB_CLIENT_MANUAL_SMOKE.md)
+
+These files own web-specific scope and behavior. Broader product, API, authorization, data-model, Telegram, worker, and backend-runtime contracts remain owned by the backend repository.
