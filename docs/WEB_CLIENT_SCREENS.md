@@ -1,570 +1,364 @@
-# WEB_CLIENT_SCREENS.md
-
-## Purpose
-
-This document defines the screen list for the responsive web client of the Personal AI Vocabulary System.
-
-Its purpose is to translate the accepted narrow web-client scope and flow set into a practical implementation-baseline screen map.
-
-This document defines:
-- screen list
-- purpose of each screen
-- key UI blocks per screen
-- entry and exit paths between screens
-- what is intentionally excluded from each screen
-
-This document does not define:
-- backend implementation
-- component-level implementation detail
-- design-system specification
-- mobile app screens
-- capture screens
-- review screens
-- admin or billing screens
-
-The backend remains the system core.
-Telegram remains the primary interface for capture and daily review.
-
-## Status
-
-- implementation-baseline screen document
-- aligned to the approved narrow responsive web-client scope
-- not a full frontend product screen map
-- not a mobile-app specification
-
-## Screen system principles
-
-### 1. Narrow screen rule
-Only screens required for:
-- account entry
-- authenticated dictionary browsing
-- dictionary search within Dictionary List
-- read-only card details viewing
-- narrow backend-backed settings/preferences
-- responsive browser usability
-- password recovery
-
-are included in this document.
-
-### 2. Backend-first rule
-Screens render backend-owned state.
-They do not introduce client-owned business logic.
-
-### 3. Telegram-first rule
-The web client does not add screens for:
-- vocabulary capture
-- ready-card creation after capture
-- daily review
-- review answering
-- review feedback
-
-Those remain in Telegram.
-
-### 4. Responsive rule
-This is one responsive screen system for:
-- mobile browser
-- desktop browser
-
-It is not a separate mobile-web product and not a separate desktop product.
-
-## Screen list
-
-The approved narrow screen set is:
-
-1. Landing / Entry
-2. Sign Up
-3. Sign Up Confirmation
-4. Sign In
-5. Password Recovery
-6. Password Recovery Confirmation
-7. Dictionary List
-8. Card Details
-9. Settings
-
-Narrow accepted add-on route:
-- Dedicated Telegram Completion at `/telegram/complete`
-
-No additional product screens should be assumed unless explicitly accepted later.
-
-## Narrow Add-On — Dedicated Telegram Completion
-
-### Purpose
-Provide one public Telegram-first completion surface for users arriving from Telegram with a backend-owned one-time completion code.
-
-### Key UI blocks
-- Telegram-specific completion status
-- auth-required state when the product account session is not ready
-- loading/checking state while authenticated completion is handed to the backend
-- success state after backend completion returns linked
-- blocked/conflict state when backend-owned linking rules block completion
-- invalid/expired state for missing, invalid, or expired completion codes
-- refreshed Telegram completion presentation with narrower centered layout, refreshed spacing and typography, state-specific icon treatment, compact supporting detail block, and button-style CTAs
-- localized checking, sign-in-required, success, blocked/conflict, invalid/expired, missing-code, details, and actions through the existing global locale runtime
-- supported browser-locale copy before authentication and saved-`ui_locale` copy after authenticated preferences are confirmed, with English fallback
-
-### Entry paths
-- direct visit to `/telegram/complete?code=...` from Telegram-first onboarding
-- return from Sign In through the `next` parameter
-
-### Exit paths
-- to Sign In when authentication is required
-- to Sign Up when account creation is needed
-- to Dictionary through the success CTA after backend completion returns linked
-
-### Intentionally excluded
-- generic onboarding framework
-- settings or dictionary branch behavior
-- provider-management UI
-- account-center behavior
-- unlink or reassignment flow
-- second completion endpoint or fallback completion route
-- client-owned interpretation of Telegram identity or ownership
-- Telegram capture or review behavior
-
-## Screen 1 — Landing / Entry
-
-### Purpose
-Provide the public browser entry point into the web client and route the user into sign up or sign in.
-
-### Key UI blocks
-- product mark / identity
-- short product positioning text
-- primary action: sign in to `/sign-in`
-- secondary action: create account to `/sign-up`
-- brief note that capture and daily review happen through Telegram
-- complete web-owned landing copy in `en`, `pl`, `ru`, and `uk` through the global locale owner
-
-### Entry paths
-- direct visit to web root
-- return to public entry after sign-out action
-
-### Exit paths
-- to Sign In
-- to Sign Up
-
-### Intentionally excluded
-- large marketing-site sections
-- feature-comparison sections
-- pricing
-- onboarding walkthrough
-- Telegram linking flow
-- app dashboard navigation before authentication
-- review or capture actions
-
-## Screen 2 — Sign Up
-
-### Purpose
-Allow a new user to create an account and reach the sign-up confirmation state.
-
-### Key UI blocks
-- back navigation to Landing / Entry if retained by UI
-- screen title
-- required sign-up form fields, including the `Display name` UI label for the name field
-- primary submit action
-- link/path to Sign In
-- refreshed public auth form presentation for layout, spacing, typography, labels, inline field errors, and auth/config error blocks
-- localized page, form, validation, loading, configuration, generic-error, navigation, and accessibility copy in `en`, `pl`, `ru`, and `uk`; external Supabase errors remain verbatim
-
-### Entry paths
-- from Landing / Entry
-- from Sign In
-
-### Exit paths
-- to Sign Up Confirmation after successful submission
-- to Sign In
-- to Landing / Entry if that navigation pattern is retained
-
-### Intentionally excluded
-- profile-completion flow
-- billing step
-- access-plan selection
-- Telegram linking
-- tutorial/onboarding wizard
-- advanced account settings
-- any post-sign-up capture flow
-
-## Screen 3 — Sign Up Confirmation
-
-### Purpose
-Confirm that registration was accepted and tell the user to check their email before signing in.
-
-### Key UI blocks
-- success/confirmation message
-- brief instruction to check email for the confirmation link
-- button-style action to Sign In using the existing sign-in route and `next` handling
-- refreshed public confirmation presentation with narrower centered layout, updated icon treatment, and supporting copy layout
-- localized confirmation copy and action in `en`, `pl`, `ru`, and `uk`
-
-### Entry paths
-- from Sign Up after accepted submission
-
-### Exit paths
-- to Sign In with existing `next` handling
-
-### Intentionally excluded
-- resend-email implementation or backend call
-- onboarding expansion
-- account-setup wizard
-- authenticated product navigation
-- broader account-management UI
-
-## Screen 4 — Sign In
-
-### Purpose
-Allow an existing user to authenticate and enter the authenticated web-client path.
-
-### Key UI blocks
-- back navigation to Landing / Entry if retained by UI
-- screen title
-- sign-in form fields
-- primary submit action
-- link/path to Password Recovery
-- link/path to Sign Up
-- refreshed public auth form presentation for layout, spacing, typography, labels, inline field errors, and auth/config error blocks
-- localized page, form, validation, loading, configuration, generic-error, navigation, and accessibility copy in `en`, `pl`, `ru`, and `uk`; external Supabase errors remain verbatim
-
-### Entry paths
-- from Landing / Entry
-- from Sign Up
-- from protected-route redirect for unauthenticated user
-
-### Exit paths
-- to Dictionary List after successful sign-in
-- to Password Recovery
-- to Sign Up
-- to Landing / Entry if that navigation pattern is retained
-
-### Intentionally excluded
-- broader account-management UI
-- security-center UI
-- social login expansion unless explicitly accepted later
-- Telegram linking
-- capture or review actions
-
-## Screen 5 — Password Recovery
-
-### Purpose
-Allow the user to initiate password recovery from the web client.
-
-### Key UI blocks
-- back navigation to Sign In
-- screen title
-- recovery email input
-- primary action to initiate recovery
-- refreshed public auth form presentation for layout, spacing, typography, labels, inline field errors, and auth/config error blocks
-- localized page, form, validation, loading, configuration, generic-error, navigation, and accessibility copy in `en`, `pl`, `ru`, and `uk`; external Supabase errors remain verbatim
-
-### Entry paths
-- from Sign In
-
-### Exit paths
-- to Password Recovery Confirmation after successful submission
-- back to Sign In
-
-### Intentionally excluded
-- broader account-management area
-- password policy/settings area
-- multi-step recovery dashboard
-- unrelated support/contact flows
-- authenticated product navigation
-
-## Screen 6 — Password Recovery Confirmation
-
-### Purpose
-Confirm that the password recovery initiation request was accepted and guide the user back to Sign In.
-
-### Key UI blocks
-- success/confirmation message
-- brief instruction such as check-your-inbox
-- button-style action back to Sign In
-- secondary reset-again link back to Password Recovery
-- refreshed public confirmation presentation with narrower centered layout, updated icon treatment, and supporting copy layout
-- localized confirmation copy and actions in `en`, `pl`, `ru`, and `uk`
-
-### Entry paths
-- from Password Recovery after accepted submission
-
-### Exit paths
-- to Sign In
-- to Password Recovery for reset-again
-
-### Intentionally excluded
-- resend-email implementation or backend call
-- account-management expansion
-- support workflow
-- broader auth troubleshooting UI
-- authenticated product navigation
-
-## Screen 7 — Dictionary List
-
-### Purpose
-Provide the main authenticated web-client screen for browsing and searching the current user’s dictionary.
-
-### Key UI blocks
-- minimal authenticated header/shell
-- product mark / identity
-- settings gear entry to `/settings` in the shared authenticated header before Sign out
-- sign-out action
-- dictionary search input
-- dictionary result count or equivalent lightweight list context
-- responsive list/grid of user-scoped dictionary items
-- item summary block for each result
-- empty state with a simple CTA inside Telegram-first product boundaries when no items are visible
-- navigation into Card Details
-- complete web-owned Dictionary List message coverage in `en`, `pl`, `ru`, and `uk`, including search, locale-aware saved-word count, loading, empty, generic-error, helper, Telegram CTA, and accessibility copy
-
-### Entry paths
-- after successful sign-in
-- default authenticated-shell entry
-- return from Card Details
-- direct visit to protected dictionary route by authenticated user
-
-### Exit paths
-- to Card Details
-- to Settings when provided by the minimal authenticated layout
-- sign-out action returns user to Landing / Entry
-
-### Intentionally excluded
-- manual add
-- advanced filters
-- sort/filter control expansion beyond accepted search
-- manual status change
-- separate Telegram management area
-- unlink flow
-- reassignment flow
-- review controls
-- capture controls
-- bulk actions
-- admin or broader account-management navigation
-- billing/subscription navigation
-
-## Screen 8 — Card Details
-
-### Purpose
-Show the accepted card fields for one user-scoped dictionary item together with the narrow details-first delete action.
-
-### Key UI blocks
-- back navigation to Dictionary List at `/dictionary`
-- minimal authenticated header pattern if retained by layout
-- settings gear entry to `/settings` when presented in the shared authenticated layout
-- sign-out action when presented in the shared authenticated layout
-- word or phrase
-- compact metadata presentation
-- canonical form when applicable
-- explanation in the source word language
-- translation only when `preferred_translation_language` is set and backend returns translation
-- examples
-- language label only when present in the accepted backend detail payload
-- learning status only when present in the accepted backend detail payload
-- narrow delete action from Card Details only
-- refreshed delete presentation with confirmation, `Confirm delete`, `Cancel`, `Deleting…`, and delete error messaging
-- refreshed one-column reading-oriented detail composition with updated loading/error panels
-- complete web-owned Dictionary Details message coverage in `en`, `pl`, `ru`, and `uk`, including back navigation, loading/not-found/error states, labels, missing-content copy, and delete confirmation states
-- backend vocabulary terms, generated translations, explanations, examples, metadata values, language badges, and identifiers remain unchanged
-
-### Entry paths
-- from Dictionary List
-- from search results inside Dictionary List
-
-### Exit paths
-- back to Dictionary List at `/dictionary`
-- back to Dictionary List at `/dictionary` after successful delete
-- sign-out action returns user to Landing / Entry when available from the shared authenticated layout
-
-### Intentionally excluded
-- edit controls
-- restore/trash/bulk-delete controls
-- manual status change
-- notes editor
-- source/history management UI
-- review actions
-- capture actions
-- arbitrary extra sections just because backend may expose additional fields
-
-## Screen 9 — Settings
-
-### Purpose
-Provide one narrow authenticated settings/preferences screen for accepted backend-backed user settings and the relocated existing Telegram link panel.
-
-### Key UI blocks
-- minimal authenticated header/shell
-- settings gear entry to `/settings` in the shared authenticated header before Sign out
-- screen title
-- sign-out action when presented in the shared authenticated layout
-- refreshed narrower centered settings presentation with updated spacing, typography, and section structure
-- accepted backend-backed settings fields:
-  - `learning_language`
-  - `preferred_translation_language`
-  - `ui_locale`
-  - `daily_review_enabled`
-  - `daily_review_target_count`
-  - `preferred_review_time`
-  - `preferred_review_timezone`
-- existing `preferred_translation_language` label/value mapping and null-cleared backend behavior
-- daily review enabled control
-- daily review target count control using step `5`, minimum `5`, and maximum `50`
-- preferred review time control
-- preferred review timezone control with nullable/unset values handled safely through the shared preferences contract
-- refreshed select control, save action, retry action, and loading/success/error presentation
-- relocated existing Telegram link-status/completion panel, visually integrated into the settings layout
-- existing Telegram status loading, link completion, and conflict presentation without behavior expansion; code input and `Complete link` are hidden when status is `linked`
-- submit/apply action only when required by the accepted backend contract
-- complete Settings-owned message coverage in `en`, `pl`, `ru`, and `uk`, including preference controls, Telegram states/actions, generic errors, loading/success states, accessibility labels, and account deletion
-- immediate Settings-language switching only after the backend-confirmed preferences response is received
-
-### Entry paths
-- from Dictionary List when settings navigation is present in the minimal authenticated layout
-- direct visit to protected settings route by authenticated user
-
-### Exit paths
-- back to Dictionary List
-- sign-out action returns user to Landing / Entry when available from the shared authenticated layout
-
-### Intentionally excluded
-- profile editing
-- password/security-center expansion
-- billing/subscription management
-- admin controls
-- Telegram linking management expansion beyond the existing relocated panel
-- Telegram panel expansion beyond the existing relocated panel
-- Telegram reassignment or unlinking
-- provider-management or account-center behavior
-- daily-review controls beyond the accepted learning-preference fields
-- capture or review actions
-- support/operations tooling
-- arbitrary web-only preferences outside the backend settings/preferences contract
-- dynamic `<html lang>`, locale-prefixed routes, server locale cookies, or request-based locale propagation
-
-## Shared layout behavior
-
-### Public auth-entry layout
-The following screens may share one common public layout pattern:
-- Landing / Entry
-- Sign Up
-- Sign Up Confirmation
-- Sign In
-- Password Recovery
-- Password Recovery Confirmation
-
-Shared traits may include:
-- centered auth-entry content
-- refreshed form presentation on Sign Up, Sign In, and Password Recovery
-- mobile width containment for auth layout, cards, forms, inputs, buttons, and status/error text so the public auth form surface does not clip or overflow horizontally
-- refreshed confirmation presentation on Sign Up Confirmation and Password Recovery Confirmation
-- lightweight branding
-- consistent navigation/back pattern
-- locale-neutral browser/auth readiness states followed by complete web-owned copy from the same global locale owner
-- light-theme presentation only
-
-This is a presentation pattern only.
-It does not imply additional product scope.
-It does not change auth routing, validation, fields, submit behavior, or backend integration.
-
-### Authenticated layout
-The following screens may share one minimal authenticated layout pattern:
-- Dictionary List
-- Card Details
-- Settings
-
-Shared traits may include:
-- lightweight header
-- product mark
-- settings gear entry linking to `/settings` before Sign out
-- sign-out action
-- light-theme presentation only
-- no explanatory side panels or internal helper chrome
-- a localized two-field language-preferences gate when either existing required language preference is missing; canonical option values, completion rules, and preferences payload behavior remain unchanged
-
-This is a minimal shell only.
-It must not expand into a broader application workspace.
-
-## Cache boundary
-
-Lightweight local cache may support:
-- Dictionary List read reuse
-- Card Details read reuse
-
-This is an implementation optimization only.
-It is not a separate screen, flow, or product surface.
-
-## Mobile and desktop behavior
-
-The same screen set above must work across:
-- mobile browser
-- desktop browser
-
-Responsive adaptation may change:
-- spacing
-- card/list density
-- grid vs stacked layout
-- header composition
-- search-field placement
-
-Responsive adaptation must not change:
-- product scope
-- flow availability
-- backend ownership boundaries
-- Telegram-first capture/review boundaries
-
-## Theme boundary
-
-The web client uses the light-theme presentation only.
-
-It must not imply:
-- broader profile/account-management area
-- appearance settings
-- dark theme support or theme-toggle UI
-
-## Backend source-of-truth boundary by screen
-
-### Public auth-entry screens
-Backend owns:
-- account creation
-- authentication
-- recovery initiation
-- session validity
-
-### Authenticated dictionary screens
-Backend owns:
-- access validation
-- user-scoped dictionary list
-- user-scoped dictionary search
-- user-scoped card details payload
-
-### Settings screen
-Backend owns:
-- accepted settings/preferences data
-- accepted settings/preferences update behavior
-- the same settings/preferences contract used by the mobile app where applicable
-
-The web client renders these states and routes the user between accepted screens.
-It does not re-own these responsibilities.
-
-## Explicit screen exclusions
-
-The following screens are intentionally excluded from this document:
-- Manual Add
-- Review
-- Status Change
-- Filters panel / advanced filtering
-- Profile
-- Billing
-- Admin
-- OCR
-- Telegram linking
-- Analytics
-- Notifications center
-
-## Final screen rule
-
-If a screen is not required for:
-- account entry
-- password recovery
-- authenticated dictionary browsing
-- dictionary search within Dictionary List
-- read-only card viewing
-- narrow backend-backed settings/preferences
-- responsive browser usability
-- light-theme presentation
-
-it is out of scope for this web-client workstream unless explicitly accepted later.
+# Web Client Screens
+
+## Purpose and authority
+
+This document is the screen and route authority for the Leksik web client. It defines the current route inventory, the responsibility of each user-facing screen, its stable visible regions, and its local presentation states.
+
+Other documents own adjacent concerns:
+
+- [Web scope](WEB_CLIENT_SCOPE.md) defines accepted and excluded product capabilities.
+- [User flows](WEB_CLIENT_FLOWS.md) defines journeys and transitions between screens.
+- [Web architecture](ARCHITECTURE.md) defines technical and runtime boundaries.
+- [Backend integration](BACKEND_INTEGRATION.md) defines consumed backend surfaces and frontend mapping.
+- [Current status](WEB_CLIENT_STATUS.md) records the implementation snapshot.
+
+## Route inventory
+
+| Route | Screen | Access |
+|---|---|---|
+| `/` | Landing | Public |
+| `/sign-up` | Sign Up | Public |
+| `/sign-up/confirmation` | Sign Up Confirmation | Public |
+| `/sign-in` | Sign In | Public |
+| `/password-recovery` | Password Recovery | Public |
+| `/password-recovery/confirmation` | Password Recovery Confirmation | Public |
+| `/dictionary` | Dictionary List | Authenticated |
+| `/dictionary/[item_id]` | Dictionary Details | Authenticated |
+| `/settings` | Settings | Authenticated |
+| `/telegram/complete` | Telegram Completion | Public entry with authenticated completion states |
+
+Language onboarding and account deletion are screen-local states rather than separate routes.
+
+## Public screens
+
+### Landing
+
+**Responsibility:** Provide the public entry into the web client.
+
+**Visible regions:**
+
+- product identity;
+- concise product positioning;
+- Sign In action;
+- Create Account action;
+- brief Telegram-first capture and review context.
+
+**Local states:**
+
+- locale-readiness placeholder;
+- localized ready state.
+
+### Sign Up
+
+**Responsibility:** Collect the information required to create an account.
+
+**Visible regions:**
+
+- back action to Landing;
+- title and supporting copy;
+- Display name, email, password, and password-confirmation controls;
+- primary create-account action;
+- Sign In link.
+
+**Local states:**
+
+- locale-readiness placeholder;
+- ready form;
+- inline validation errors;
+- submitting state;
+- configuration or account-creation error.
+
+### Sign Up Confirmation
+
+**Responsibility:** Confirm accepted registration and direct the user toward email confirmation and sign in.
+
+**Visible regions:**
+
+- confirmation icon and message;
+- check-email instruction;
+- Sign In action that preserves an intended continuation when present.
+
+**Local states:**
+
+- localized confirmation state.
+
+This screen does not provide resend-email controls.
+
+### Sign In
+
+**Responsibility:** Collect credentials and begin authenticated entry.
+
+**Visible regions:**
+
+- back action to Landing;
+- title and supporting copy;
+- email and password controls;
+- primary sign-in action;
+- Password Recovery link;
+- Create Account link.
+
+**Local states:**
+
+- locale-readiness placeholder;
+- ready form;
+- inline validation errors;
+- submitting state;
+- configuration or authentication error.
+
+Successful authentication continues toward the intended protected destination; this screen does not assume that every user goes directly to Dictionary List.
+
+### Password Recovery
+
+**Responsibility:** Collect the email address for recovery initiation.
+
+**Visible regions:**
+
+- back action to Sign In;
+- title and supporting copy;
+- email control;
+- primary recovery action.
+
+**Local states:**
+
+- locale-readiness placeholder;
+- ready form;
+- inline validation error;
+- submitting state;
+- configuration or recovery error.
+
+### Password Recovery Confirmation
+
+**Responsibility:** Confirm recovery initiation and provide the next public actions.
+
+**Visible regions:**
+
+- confirmation icon and message;
+- check-email instruction;
+- Back to Sign In action;
+- Reset Again action.
+
+**Local states:**
+
+- localized confirmation state.
+
+## Shared authenticated presentation
+
+### Authenticated shell
+
+**Responsibility:** Provide the shared frame for Dictionary List, Dictionary Details, and Settings.
+
+**Visible regions:**
+
+- product identity linking to Dictionary List;
+- Settings action;
+- Sign Out action;
+- main content region.
+
+**Local states:**
+
+- locale-readiness placeholder;
+- ready header;
+- sign-out submitting state;
+- sign-out error.
+
+### Protected entry states
+
+Protected routes share these visible entry states before their screen content is available:
+
+- checking authentication;
+- loading access and required preferences;
+- redirecting an unauthenticated user toward Sign In;
+- missing-configuration state;
+- authentication or access error with Retry;
+- language-preference loading or error with Retry;
+- required language onboarding.
+
+These states replace the destination content until protected entry is ready.
+
+### Required language onboarding state
+
+**Responsibility:** Collect the two language selections required before an authenticated destination can be shown.
+
+**Visible regions:**
+
+- title and explanation;
+- learning-language control;
+- preferred-translation-language control;
+- helper text;
+- Continue action.
+
+**Local states:**
+
+- incomplete state with Continue unavailable;
+- ready state;
+- saving state;
+- save error.
+
+After successful completion, the intended authenticated destination becomes visible. Interface language remains optional and belongs to Settings.
+
+## Dictionary screens
+
+### Dictionary List
+
+**Responsibility:** Present the authenticated user's dictionary and text search in one screen.
+
+**Visible regions:**
+
+- shared authenticated shell;
+- dictionary heading and lightweight result context;
+- text search control and clear action;
+- item summary list or grid;
+- links from item summaries to Dictionary Details.
+
+**Local states:**
+
+- initial loading placeholders;
+- preference-readiness state;
+- background updating indicator;
+- load error;
+- dictionary-empty state with a Telegram call to action;
+- search-empty state with query context;
+- populated result state.
+
+Search remains embedded in Dictionary List and does not have a separate route.
+
+### Dictionary Details
+
+**Responsibility:** Present one dictionary item and its narrow deletion control.
+
+**Visible regions:**
+
+- shared authenticated shell;
+- back action to Dictionary List;
+- word or phrase title;
+- compact metadata and canonical form when available;
+- translation region when available for presentation;
+- explanation region;
+- examples region when available;
+- deletion region.
+
+**Local states:**
+
+- loading placeholders;
+- preference-warning state;
+- unavailable item state;
+- load error;
+- ready content state;
+- delete confirmation;
+- deleting state;
+- delete error.
+
+### Dictionary delete confirmation state
+
+The deletion region expands in place within Dictionary Details.
+
+**Visible regions:**
+
+- destructive-action explanation;
+- Confirm Delete action;
+- Cancel action;
+- deletion failure message when applicable.
+
+Cancel restores the unchanged details state. Successful deletion exits Dictionary Details and returns to Dictionary List.
+
+## Settings screen
+
+### Settings
+
+**Responsibility:** Present the accepted preference controls, Telegram connection area, and account-deletion area.
+
+**Visible regions:**
+
+- shared authenticated shell;
+- back action to Dictionary List;
+- title and supporting copy;
+- learning-language control;
+- preferred-translation-language control;
+- interface-language control;
+- daily-review enablement, target, preferred-time, and timezone controls;
+- Save action;
+- Telegram area;
+- Danger Zone.
+
+**Preference states:**
+
+- loading;
+- load error with Retry;
+- ready values;
+- unsaved changes;
+- saving;
+- saved success;
+- save error with Retry.
+
+### Telegram area
+
+**Responsibility:** Present the current Telegram connection state and completion controls where applicable.
+
+**Visible states:**
+
+- checking;
+- unlinked, with completion-code input and action;
+- pending, with completion-code input and action;
+- linked, with linked identity context and no completion input;
+- conflict, without completion input;
+- completion submitting;
+- completion success;
+- load or completion error.
+
+The area does not present unlinking, reassignment, or general provider-management controls.
+
+### Danger Zone and account deletion
+
+**Responsibility:** Isolate the destructive account-deletion action from ordinary preferences.
+
+**Visible regions:**
+
+- Danger Zone heading and warning;
+- Delete Account action;
+- account-deletion confirmation modal;
+- irreversible-action and retention information;
+- confirmation-text control;
+- Cancel and Confirm Delete actions.
+
+**Local states:**
+
+- closed Danger Zone state;
+- open confirmation modal;
+- confirmation unavailable until the exact text `DELETE` is entered;
+- deleting state;
+- deletion error.
+
+Cancel closes the modal without changing the account. Successful deletion exits the authenticated presentation and returns to the public entry.
+
+## Telegram Completion screen
+
+### Telegram Completion
+
+**Responsibility:** Present the browser handoff for completing a Telegram connection.
+
+**Visible regions:**
+
+- state icon and badge;
+- state title and explanation;
+- completion detail;
+- Sign In and Create Account actions when authentication is required;
+- Open Dictionary action after success.
+
+**Local states:**
+
+- locale-readiness placeholder;
+- authentication required;
+- checking;
+- success;
+- invalid or expired handoff;
+- blocked or conflict.
+
+The screen does not present unlinking, reassignment, ownership resolution, or alternate-provider controls.
+
+## Shared screen rules
+
+- Web-owned screen copy is available in English, Polish, Russian, and Ukrainian; externally supplied content remains visually distinct from interface copy.
+- The same screen inventory serves mobile and desktop browser widths. Regions may reflow without changing screen responsibility.
+- Screens use the accepted light-theme presentation; theme selection is not a screen responsibility.
+- Loading, empty, error, unavailable, confirmation, and success states belong in this document only when they are visibly owned by a screen.
+- Journey sequencing belongs in [User flows](WEB_CLIENT_FLOWS.md), not in the screen descriptions above.

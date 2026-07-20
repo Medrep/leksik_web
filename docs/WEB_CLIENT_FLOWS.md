@@ -1,667 +1,280 @@
-# WEB_CLIENT_FLOWS.md
-
-## Purpose
-
-This document defines the accepted narrow user flows for the responsive web client of the Personal AI Vocabulary System.
-
-Its purpose is to translate the accepted web-client scope into a small set of implementation-baseline flows without expanding the web client into a full frontend product.
-
-This document covers only:
-- landing / entry
-- sign up
-- sign in
-- password recovery
-- authenticated shell entry
-- dictionary list browsing
-- dictionary search
-- card details viewing
-- settings
-- details-first delete
-- empty dictionary state
-- sign out
-- responsive browser usage on mobile and desktop
-- light-theme presentation only
-
-It does not define:
-- backend implementation
-- deployment behavior
-- mobile-app implementation
-- capture flows
-- review flows
-- admin flows
-- billing flows
-
-The backend remains the system core.
-Telegram remains the primary interface for capture and daily review.
-
-## Status
-
-- implementation-baseline flow document
-- aligned to the updated narrow responsive web-client scope
-- not a full product flow map
-- not a replacement for the broader app roadmap
-
-## Flow principles
-
-### 1. Backend-first rule
-All identity, access, dictionary, preference, and delete behavior remain backend-owned.
-The web client is a thin browser client over backend behavior.
-
-### 2. Telegram-first rule
-The web client does not take over:
-- vocabulary capture
-- ready-card delivery after capture
-- daily review
-- review answer submission
-- review feedback
-
-Those flows remain in Telegram.
-
-### 3. Narrow-flow rule
-Only the smallest user-facing flows required for account entry, dictionary usage, narrow settings, and narrow delete behavior are included here.
-
-### 4. No client-side business-logic rule
-If a flow depends on authentication, access state, dictionary ownership, preferences, or delete behavior, the backend is the source of truth.
-The web client must not invent fallback client-side logic for those responsibilities.
-
-### 5. Read-optimization rule
-Lightweight local cache may support the user experience for dictionary reads, but it does not create a separate product flow and does not change backend ownership.
-
-### 6. Web locale rule
-One globally mounted locale owner covers public and authenticated web-owned copy. Before authentication, locale precedence is supported browser locale then English; after authenticated preferences are confirmed, saved `ui_locale` takes precedence over browser locale and English. Browser locale remains transient and sign-out returns public UI to that already resolved browser locale.
-
-## Included flows
-
-The accepted narrow web-client flows are:
-
-1. Landing / entry
-2. Sign up
-3. Sign in
-4. Password recovery
-5. Authenticated shell entry
-6. Dictionary list browsing
-7. Dictionary search
-8. Card details viewing
-9. Settings
-10. Details-first delete
-11. Empty dictionary state
-12. Sign out
-13. Responsive use on desktop and mobile browser
-14. Light-theme presentation only
-
-## Flow 1 — Landing / entry
-
-### Purpose
-Give the user a simple browser entry point into the product and route them into sign up or sign in.
-
-### Entry points
-- direct visit to the web root
-- return visit to the public entry page
-- sign-out completion
-
-### Main path
-1. User opens the web client.
-2. User sees the landing / entry screen.
-3. User chooses either:
-   - sign in to `/sign-in`
-   - sign up to `/sign-up`
-
-### Exit paths
-- to sign in
-- to sign up
-
-### Notes
-- Landing is a lightweight entry surface, not a marketing-site expansion.
-- It may communicate that capture and daily review happen through Telegram.
-- It does not introduce broader product navigation before authentication.
-- Its web-owned copy uses the supported browser locale with English fallback after a locale-neutral readiness state.
-
-## Flow 2 — Sign up
-
-### Purpose
-Allow a new user to create an account through the web client.
-
-### Entry points
-- from landing / entry
-- from sign in via sign-up path
-
-### Main path
-1. User opens the sign-up screen.
-2. User enters required registration fields.
-3. User submits the sign-up form.
-4. Browser auth flow creates the account through the accepted auth boundary.
-5. On success, user reaches a dedicated sign-up confirmation state that tells them to check their email.
-
-### Success result
-- user account is created
-- user is redirected away from the sign-up form
-- user reaches a dedicated sign-up confirmation state
-- user is instructed to check email before signing in
-
-### Failure result
-- sign-up failure is shown to the user
-- user remains in the sign-up flow and can retry
-- web-owned validation, configuration, and generic fallback errors follow the effective public locale, while Supabase errors remain verbatim
-
-### Exit paths
-- to sign-up confirmation on success
-- back to sign in
-- back to landing if supported by the UI design
-
-### Boundaries
-- This flow creates account entry only.
-- It does not include onboarding expansion, profile completion, billing setup, Telegram linking, or tutorial flows.
-
-## Flow 3 — Sign in
-
-### Purpose
-Allow an existing user to authenticate and enter the web client.
-
-### Entry points
-- from landing / entry
-- from sign up via already-have-an-account path
-- from protected-route redirect behavior
-
-### Main path
-1. User opens the sign-in screen.
-2. User enters credentials.
-3. User submits the sign-in form.
-4. Browser auth flow validates the session.
-5. On success, user enters the authenticated shell and dictionary entry path.
-
-### Success result
-- authenticated session is established through the accepted browser-ready auth path
-- user reaches the authenticated web-client path
-
-### Failure result
-- sign-in failure is shown to the user
-- user remains in the sign-in flow and can retry
-- web-owned validation, configuration, and generic fallback errors follow the effective public locale, while Supabase errors remain verbatim
-
-### Exit paths
-- to authenticated shell entry on success
-- to password recovery
-- to sign up
-- back to landing if supported by the UI design
-
-### Boundaries
-- This flow is only for authentication.
-- It does not include advanced security or account-management UI beyond the accepted narrow auth-entry path.
-
-## Flow 4 — Password recovery
-
-### Purpose
-Allow the user to initiate password recovery through the web client.
-
-### Entry points
-- from sign in
-
-### Main path
-1. User opens the password recovery screen.
-2. User enters email.
-3. User submits the recovery form.
-4. Recovery initiation runs through the accepted auth boundary.
-5. User sees the recovery confirmation state.
-
-### Success result
-- recovery initiation request is accepted
-- user sees a confirmation state such as check-your-inbox
-
-### Failure result
-- recovery initiation failure is shown
-- user remains in the recovery flow and can retry
-- web-owned validation, configuration, and generic fallback errors follow the effective public locale, while Supabase errors remain verbatim
-
-### Exit paths
-- back to sign in
-- remain on recovery confirmation state until user leaves
-
-### Boundaries
-- This flow covers recovery initiation only.
-- It does not expand into a broader account-management area.
-
-## Flow 5 — Authenticated shell entry
-
-### Purpose
-Provide the smallest authenticated browser entry into the dictionary experience.
-
-### Entry points
-- successful sign in
-- successful sign in after email confirmation
-- returning authenticated user opening a protected route
-- successful session restoration on browser revisit
-
-### Main path
-1. User reaches an authenticated route.
-2. Web client resolves the authenticated session through the accepted auth path.
-3. Web client resolves the current user and allowed access state through backend-owned checks.
-4. User is admitted into the minimal authenticated shell.
-5. Default continuation goes to dictionary list.
-
-### Success result
-- authenticated user reaches the protected web-client area
-- dictionary becomes the main post-auth destination
-- when either required language preference is missing, the existing authenticated language gate uses the resolved interface locale and continues only after both canonical language values are saved through the existing preferences path
-
-### Failure result
-- unauthenticated user is sent to sign in
-- invalid or expired session returns user to the auth-entry path
-- unresolved access or auth dependency is treated as backend/API dependency behavior, not client-owned business logic
-
-### Exit paths
-- to dictionary list
-- to settings
-- to sign out
-
-### Boundaries
-- Authenticated shell is intentionally minimal.
-- The language-preferences gate remains a two-field authenticated prerequisite; `ui_locale` is optional, and learning/translation selections never become interface-locale fallbacks.
-- It is not a broader application workspace.
-- It is not a multi-feature dashboard.
-- It is not an admin shell or broad account-management shell.
-
-## Narrow add-on flow — Telegram completion
-
-The dedicated public `/telegram/complete` handoff keeps its existing token, authentication, endpoint, one-request, state-mapping, and navigation behavior. Its public, pre-auth, and authenticated web-owned states use the same global locale runtime: browser locale before authentication and saved `ui_locale` after authenticated preferences are confirmed, with English fallback. Arbitrary backend errors remain verbatim; no second provider, cookie, route prefix, or additional preferences request is introduced.
-
-## Flow 6 — Dictionary list browsing
-
-### Purpose
-Allow the authenticated user to browse their saved dictionary items.
-
-### Entry points
-- authenticated shell default entry
-- return from card details
-- returning authenticated session opening the dictionary route directly
-- return from settings after relevant preference change
-- return after successful delete
-
-### Main path
-1. Authenticated user opens dictionary list.
-2. Web client requests the current user’s dictionary list from the backend.
-3. Backend returns user-scoped dictionary items.
-4. Web client renders the list in responsive form.
-5. User scrolls or browses the list.
-6. User opens one item to view card details.
-
-### Success result
-- user can browse their own dictionary items
-- list supports responsive presentation for desktop and mobile browser
-- web-owned Dictionary List copy follows the effective authenticated locale, including search, count plural forms, loading, empty, and generic-error states
-- vocabulary terms, generated content, language badges, identifiers, requests, and payloads remain unchanged by localization
-
-### Failure result
-- loading or access error is shown
-- user does not get fallback access to non-owned data
-
-### Exit paths
-- to card details
-- remain on dictionary list
-- to settings
-- to sign out
-
-### Boundaries
-- This is a dictionary browsing flow.
-- Search remains inside this screen.
-- This flow does not include manual add.
-- This flow does not include manual status change.
-- This flow does not include review actions.
-- This flow does not include advanced filters.
-
-## Flow 7 — Dictionary search
-
-### Purpose
-Allow the authenticated user to search their own dictionary by text.
-
-### Entry points
-- inside dictionary list
-
-### Main path
-1. User is on dictionary list.
-2. User enters search text.
-3. Web client sends the search request through the accepted dictionary list/search API path.
-4. Backend applies search within the current user’s dictionary scope.
-5. Matching results are returned and rendered in the same dictionary view.
-
-### Success result
-- user can narrow the visible dictionary list by text query
-- search remains scoped to the current user’s dictionary
-
-### Failure result
-- search error is shown within the dictionary context
-- no client-owned search logic replaces backend search ownership
-
-### Exit paths
-- open card details from filtered results
-- clear search and return to the broader dictionary list
-
-### Boundaries
-- Search is limited to dictionary text search.
-- Search remains inside Dictionary List.
-- This flow does not include advanced filters.
-- This flow does not include saved searches or search analytics.
-
-## Flow 8 — Card details viewing
-
-### Purpose
-Allow the authenticated user to open a stored dictionary item and view its accepted card fields.
-
-### Entry points
-- from dictionary list
-- from search results within dictionary list
-
-### Main path
-1. User selects a dictionary item.
-2. Web client requests the item details from the backend.
-3. Backend returns the user-scoped card details.
-4. Web client renders the accepted card view.
-5. If delete is available, user may continue into the narrow delete flow from this screen.
-
-### Card-details content boundary
-Card details are limited to accepted dictionary/card fields:
-- word or phrase
-- canonical form when applicable
-- explanation in the source word language
-- translation only when:
-  - `preferred_translation_language` is set, and
-  - the backend returns translation
-- examples
-- language label when present in the accepted detail payload
-- learning status when present in the accepted detail payload
-
-### Success result
-- user can read the stored card content for their own item
-- user can navigate back to dictionary list
-- web-owned Dictionary Details navigation, states, labels, helper copy, and delete confirmation follow the effective authenticated locale
-- vocabulary terms, translations, explanations, examples, metadata values, identifiers, requests, and payloads are never translated or rewritten by the web localization runtime
-
-### Failure result
-- missing or non-owned item does not open as a valid card view
-- error state does not expand into broader management UI
-
-### Exit paths
-- back to dictionary list
-- to details-first delete
-- sign out if available from the minimal authenticated shell/header pattern
-
-### Boundaries
-- Card details do not include manual status change.
-- Card details do not include capture actions.
-- Card details do not include review actions.
-- Card details do not include arbitrary extra fields just because the backend may return them.
-- The client must not imply immediate backfill of older cards when settings change.
-
-## Flow 9 — Settings
-
-### Purpose
-Allow the authenticated user to view and update accepted settings through backend-owned preference behavior and access the relocated existing Telegram link panel.
-
-### Entry points
-- from the settings gear in the minimal authenticated shell/header
-- from accepted authenticated navigation within dictionary/settings scope
-
-### Main path
-1. Authenticated user opens settings.
-2. Web client requests accepted settings data from the backend.
-3. Backend returns backend-owned settings for the current user.
-4. Web client renders the accepted settings controls and the relocated existing Telegram link panel.
-5. User updates accepted learning-preference fields:
-   - `learning_language`
-   - `preferred_translation_language`
-   - `ui_locale`
-   - `daily_review_enabled`
-   - `daily_review_target_count`
-   - `preferred_review_time`
-   - `preferred_review_timezone`
-6. Web client sends the update through the accepted backend preferences endpoint.
-7. Backend persists and returns the updated preference state.
-8. After authoritative save success, the authenticated locale runtime immediately applies the returned `ui_locale`; an unsaved locale draft does not change the active language.
-
-### Success result
-- user can view and update `preferred_translation_language`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`
-- `daily_review_target_count` uses step `5`, minimum `5`, and maximum `50`
-- nullable or unset `preferred_review_timezone` is handled safely and can be saved back as `null`
-- user can use the same Telegram status/loading/link-completion/conflict behavior that previously lived on Dictionary List
-- resulting settings state is confirmed by backend-owned behavior
-- Settings-owned UI, including its Telegram panel and account-deletion flow, is localized in `en`, `pl`, `ru`, and `uk`
-- effective authenticated locale precedence is saved `ui_locale`, then supported browser locale, then English
-- saving `ui_locale: null` recomputes the transient browser fallback without persisting that derived locale
-
-### Failure result
-- loading or update failure is shown within the settings flow
-- Telegram status or completion failure is shown within the relocated Telegram panel
-- no client-owned settings logic replaces backend validation or persistence
-- failed locale saves preserve the active locale, unsaved draft, and saved baseline
-
-### Exit paths
-- back to dictionary list
-- remain on settings
-- to sign out
-
-### Boundaries
-- This is a narrow settings flow only.
-- Settings preferences remain limited to `learning_language`, `preferred_translation_language`, `ui_locale`, `daily_review_enabled`, `daily_review_target_count`, `preferred_review_time`, and `preferred_review_timezone`.
-- browser locale is resolved once by the global web runtime and is never silently persisted
-- Settings, shared authenticated-shell, Dictionary List, Dictionary Details, and the authenticated language-preferences gate use the same authenticated locale runtime and English bundle fallback
-- landing, public auth/recovery, and every Telegram completion state use the same runtime before and after authentication
-- root `<html lang="en">` remains static; locale routes and server locale propagation remain out of scope
-- The Telegram panel move is a placement change for existing behavior, not Telegram feature expansion.
-- It does not include profile/account-management expansion.
-- It does not include billing, admin, or security-center flows.
-- It does not include Telegram reassignment, unlinking, provider-management, account-center behavior, or new backend calls.
-- It does not include review preferences UI unless separately accepted later.
-
-## Flow 10 — Details-first delete
-
-### Purpose
-Allow the authenticated user to delete a dictionary item through the narrow accepted delete flow.
-
-### Entry points
-- from card details only
-
-### Main path
-1. User selects delete from card details.
-2. Web client shows a small confirmation step.
-3. User confirms deletion.
-4. Web client calls the accepted backend delete endpoint.
-5. Backend applies soft delete behavior.
-6. Web client invalidates affected visible read state.
-7. User is redirected back to dictionary list.
-8. Deleted item is no longer shown in normal dictionary browsing.
-
-### Success result
-- item is deleted through the accepted backend flow
-- user returns to dictionary list
-- stale visible read state is not left behind
-
-### Failure result
-- delete failure is shown within the narrow delete flow
-- client does not pretend delete succeeded when backend did not confirm it
-
-### Exit paths
-- back to card details if delete is canceled
-- to dictionary list after success
-
-### Boundaries
-- Delete works only from card details.
-- This flow does not include restore.
-- This flow does not include trash.
-- This flow does not include bulk delete.
-- This flow does not include list-row delete.
-- This flow does not include manual status change.
-
-## Flow 11 — Empty dictionary state
-
-### Purpose
-Provide a simple non-passive experience when the authenticated user has no visible dictionary items.
-
-### Entry points
-- dictionary list load returns no visible items for the current user
-
-### Main path
-1. User opens dictionary list.
-2. Backend returns an empty user-scoped dictionary result.
-3. Web client renders an empty state message.
-4. Web client shows a simple CTA.
-5. CTA points the user back toward the Telegram-first product path without turning the web client into a capture surface.
-
-### Success result
-- empty dictionary state is clear and not passive
-- CTA remains consistent with Telegram-first product boundaries
-
-### Failure result
-- empty state does not turn into unsupported web capture behavior
-- empty state does not imply missing data when the backend result is simply empty
-
-### Exit paths
-- remain on dictionary list
-- follow the accepted CTA direction
-- to settings
-- to sign out
-
-### Boundaries
-- CTA must remain inside Telegram-first product boundaries.
-- This flow does not create web capture.
-- This flow does not create onboarding expansion.
-- This flow does not create advanced branching by link state unless separately accepted later.
-
-## Flow 12 — Sign out
-
-### Purpose
-Allow the authenticated user to leave the protected web-client area safely.
-
-### Entry points
-- from minimal authenticated shell/header
-
-### Main path
-1. User selects sign out.
-2. Web client calls the accepted logout or session-termination path.
-3. Authenticated state is cleared.
-4. Relevant cached read data is cleared or made inaccessible.
-5. User returns to landing or sign-in entry.
-
-### Success result
-- protected session is terminated
-- protected cached read state is not left accessible after sign out
-- user is no longer inside the authenticated shell
-- user-bound locale input is discarded and public UI returns to the already resolved transient browser locale
-
-### Failure result
-- sign-out error is handled as an auth or session issue
-- protected access must not remain ambiguous
-
-### Exit paths
-- to landing
-- to sign in
-
-### Boundaries
-- Sign out remains an action, not a standalone screen.
-- It does not expand into session-management UI or account-management settings.
-
-## Responsive usage boundary
-
-The same narrow flows above must work in:
-- mobile browser
-- desktop browser
-
-Responsive behavior means:
-- the same feature scope
-- the same flow system
-- layout adaptation only
-
-Responsive behavior does not mean:
-- separate mobile-web scope
-- separate desktop feature set
-- hidden product-scope expansion on one form factor
-
-## Theme boundary
-
-The web client uses the light-theme presentation only.
-
-Boundary:
-- dark theme support and theme-toggle UI are not part of the current web client
-- appearance settings must not be added without separate explicit acceptance
-- this does not expand the accepted settings flow into a broader profile/account-management area
-
-## Cache boundary
-
-Lightweight local cache may support:
-- dictionary list read performance
-- card details read performance
-
-Cache is not a user-facing product flow.
-It is a narrow implementation optimization.
-
-Boundary:
-- backend remains the source of truth
-- cache must invalidate after delete
-- cache must clear or become inaccessible after sign out
-- cache must not become offline-first sync logic
-
-## What remains in Telegram
-
-The following product flows remain in Telegram and are not moved into the web client:
-- capture of new words or phrases
-- immediate ready-card response after capture
-- daily review session start
-- review question delivery
-- answer submission
-- compact review feedback
-
-This remains consistent with the accepted backend-first and Telegram-first product model.
-
-## Backend source-of-truth boundaries
-
-The backend remains the source of truth for:
-- account creation and authentication behavior
-- session validity
-- access-state checks
-- user-scoped dictionary retrieval
-- user-scoped dictionary search
-- user-scoped card details access
-- accepted settings/preferences data and update behavior
-- delete behavior
-
-The web client is responsible only for:
-- initiating these flows from the browser
-- rendering the resulting states
-- routing the user between approved screens
-
-## Smallest backend/API dependencies to validate
-
-Before implementation starts, the web-client workstream must confirm:
-- the contract shape for `preferred_translation_language`
-- the payload shape needed for explanation + conditional translation rendering
-- the delete endpoint behavior needed for details-first delete
-- the invalidation behavior needed after delete, sign out, and relevant settings changes
-
-## Explicit flow exclusions
-
-The following flows are intentionally excluded from this document:
-- manual add
-- manual status change
-- review UI
-- advanced filters
-- profile or account-management expansion beyond the accepted narrow settings flow
-- Telegram linking flow
-- billing or subscription flow
-- admin flow
-- OCR flow
-- analytics flow
-- restore/trash flow
-- offline-first sync flow
-
-## Final scope rule
-
-If a user flow is not required for:
-- account entry
-- authenticated dictionary browsing
-- dictionary search
-- accepted card viewing
-- narrow backend-backed settings
-- narrow details-first delete
-- empty dictionary handling
-- responsive browser usability
-- light-theme presentation
-
-it is out of scope for this web-client workstream unless explicitly accepted later.
+# Web Client Flows
+
+## Purpose and authority
+
+This document is the user-flow authority for the Leksik web client. It describes user intent, entry conditions, transitions, visible outcomes, and failure or cancel paths.
+
+Other documents own adjacent concerns:
+
+- [Web scope](WEB_CLIENT_SCOPE.md) defines accepted and excluded product capabilities.
+- [Screens and routes](WEB_CLIENT_SCREENS.md) defines the screen inventory and UI composition.
+- [Web architecture](ARCHITECTURE.md) defines technical boundaries and runtime behavior.
+- [Backend integration](BACKEND_INTEGRATION.md) defines consumed backend surfaces and frontend mapping.
+- [Current status](WEB_CLIENT_STATUS.md) records the implementation snapshot.
+
+## Public entry flows
+
+### Landing entry
+
+**User goal:** Enter the web experience and choose an account path.
+
+**Entry conditions:** The user opens the public web entry or returns there after signing out.
+
+**Main transition:** The user chooses to sign in or create an account.
+
+**Outcome:** The selected authentication flow opens. The landing experience remains a narrow product entry rather than a broader marketing or product-navigation surface.
+
+### Sign up
+
+**User goal:** Create a product account.
+
+**Entry conditions:** The user arrives from the public entry, the sign-in flow, or an authentication-required continuation.
+
+**Main transition:** The user enters the required account information and submits it.
+
+**Success outcome:** The user reaches a confirmation state that asks them to check their email before signing in. Any intended continuation remains available through the later sign-in flow.
+
+**Failure or cancel outcome:** Validation or account-creation failure is shown without leaving the flow, and the user can correct the input and retry. The user may return to sign in instead of continuing.
+
+### Sign in
+
+**User goal:** Authenticate and continue into the requested web experience.
+
+**Entry conditions:** The user arrives from the public entry, sign up, a protected-area redirect, or Telegram completion.
+
+**Main transition:** The user enters credentials and submits them.
+
+**Success outcome:** The user continues toward the originally requested destination. Authenticated entry may require language-preference onboarding before that destination becomes available.
+
+**Failure or cancel outcome:** Authentication failure is shown without leaving the flow, and the user can retry, start password recovery, create an account, or return to the public experience.
+
+### Password-recovery initiation
+
+**User goal:** Request help regaining access to an account.
+
+**Entry conditions:** The user starts recovery from sign in.
+
+**Main transition:** The user enters an email address and submits the recovery request.
+
+**Success outcome:** A confirmation state tells the user to check their email.
+
+**Failure or cancel outcome:** Validation or recovery failure is shown without leaving the flow, and the user can retry or return to sign in.
+
+This flow covers recovery initiation only. It does not define a broader account-management journey.
+
+## Authenticated entry and onboarding
+
+### Authenticated entry
+
+**User goal:** Open an accepted protected web capability.
+
+**Entry conditions:** The user signs in, returns with an existing session, or opens a protected destination directly.
+
+**Main transition:**
+
+1. The web client confirms that the user can enter the protected experience.
+2. If required language preferences are complete, the user continues to the intended destination.
+3. If either required language preference is missing, the user enters the language-preference onboarding flow first.
+
+**Success outcome:** The user reaches the intended dictionary or settings destination inside the minimal authenticated experience.
+
+**Failure outcome:** A user without a valid session returns to sign in with the intended continuation preserved. A temporary entry failure is shown with an opportunity to retry.
+
+### Required language-preference onboarding
+
+**User goal:** Complete the minimum language setup required for the authenticated web experience.
+
+**Entry conditions:** An authenticated user is missing a learning language or preferred translation language.
+
+**Main transition:** The user selects both required languages and submits them.
+
+**Success outcome:** The saved preferences satisfy the onboarding requirement and the user continues to the originally intended destination.
+
+**Failure outcome:** The user remains in onboarding, sees the failure state, and can retry. Incomplete selections do not complete the flow.
+
+Interface language remains optional and is managed through Settings rather than being required to pass this gate.
+
+## Dictionary flows
+
+### Browse dictionary
+
+**User goal:** Review saved vocabulary items.
+
+**Entry conditions:** An authenticated user opens the dictionary, returns from details or Settings, or completes another flow that leads back to the dictionary.
+
+**Main transition:** The dictionary loads and the user browses the available item summaries.
+
+**Success outcome:** The user can open an item, search the dictionary, open Settings, or sign out.
+
+**Failure outcome:** A loading or access failure is shown within the dictionary experience, with no fallback to non-user-owned data.
+
+### Search dictionary
+
+**User goal:** Narrow the dictionary by text.
+
+**Entry conditions:** The user is browsing the dictionary.
+
+**Main transition:** The user enters a text query and sees the matching dictionary result set in the same browsing context.
+
+**Success outcome:** The user can open a matching item or clear the query to restore the broader list.
+
+**Failure outcome:** A search failure is shown within the dictionary context, and the user can change or clear the query.
+
+Search does not become an advanced filtering, saved-search, or analytics flow.
+
+### Open dictionary details
+
+**User goal:** Read one saved dictionary item.
+
+**Entry conditions:** The user selects an item from the dictionary or its search results.
+
+**Main transition:** The item details load and the user reads the accepted card content.
+
+**Success outcome:** The user can return to the dictionary or begin the details-first deletion flow.
+
+**Failure outcome:** A missing, unavailable, or inaccessible item produces an unavailable or error state rather than a valid details view.
+
+This flow does not add capture, review, manual learning-status editing, or broader item-management actions.
+
+### Empty dictionary
+
+**User goal:** Understand what to do when no saved items are available.
+
+**Entry conditions:** The dictionary has no visible items and no active search result context explains the empty state.
+
+**Main transition:** The user sees an empty-state explanation and a Telegram-first call to action.
+
+**Success outcome:** The user can continue toward Telegram capture without turning the web client into a capture surface.
+
+**Failure boundary:** The empty state must not imply a data error or introduce unsupported web capture behavior.
+
+### Delete a dictionary item
+
+**User goal:** Remove an item from normal dictionary use.
+
+**Entry conditions:** The user starts deletion from dictionary details.
+
+**Main transition:**
+
+1. The user selects delete.
+2. A confirmation state explains the destructive action.
+3. The user either cancels or confirms.
+
+**Success outcome:** After confirmed deletion succeeds, the user returns to the dictionary and the deleted item is no longer presented in normal browsing.
+
+**Failure or cancel outcome:** Cancel returns to the unchanged details view. Failure remains in the deletion context and does not present the item as successfully deleted.
+
+Deletion remains details-first. It does not include list-row deletion, bulk deletion, restore, trash management, or manual learning-status editing.
+
+## Settings flows
+
+### View and update preferences
+
+**User goal:** Review and change the accepted web preference surface.
+
+**Entry conditions:** An authenticated user opens Settings.
+
+**Main transition:** The current preferences load, the user changes one or more accepted language or daily-review preferences, and the user saves the changes.
+
+**Success outcome:** The confirmed saved values become the current Settings state. A saved interface-language change updates the web interface after the save succeeds.
+
+**Failure or cancel outcome:** A load failure offers a retry. A save failure leaves the user in Settings with the previous confirmed state and the unsaved choices available for correction or retry. Leaving without saving does not apply draft changes.
+
+### Telegram linking in Settings
+
+**User goal:** Understand or complete the connection between the product account and Telegram.
+
+**Entry conditions:** The user opens the Telegram section in Settings.
+
+**Main transition by visible state:**
+
+- **Unlinked:** The user can enter a completion code and submit it.
+- **Pending:** The user can complete the pending link with a code.
+- **Linked:** The linked state is shown and no completion input is offered.
+- **Conflict or error:** The blocked or failed state is shown without offering reassignment or unlinking.
+
+**Success outcome:** Successful completion changes the visible state to linked.
+
+**Failure outcome:** The user remains in the Telegram section, sees the failure state, and may retry only where the current state permits completion.
+
+This flow does not include provider management, unlinking, or reassignment.
+
+### Delete account
+
+**User goal:** Permanently request deletion of the current product account.
+
+**Entry conditions:** The authenticated user enters the danger area in Settings and opens account deletion.
+
+**Main transition:**
+
+1. The user sees the destructive-account warning.
+2. The user must enter the exact confirmation text `DELETE`.
+3. The user either cancels or confirms deletion.
+
+**Success outcome:** After deletion succeeds, the authenticated experience ends and the user returns to the public entry.
+
+**Failure or cancel outcome:** Cancel closes the confirmation and leaves the account unchanged. Failure remains in Settings and shows that deletion was not confirmed as successful.
+
+Account deletion does not create a broader account center, data-export, restore, or operator flow.
+
+## Telegram completion flow
+
+### Complete a Telegram link from a Telegram handoff
+
+**User goal:** Finish linking Telegram to the product account after arriving from Telegram.
+
+**Entry conditions:** The user opens the dedicated completion experience from a Telegram handoff.
+
+**Main transition:**
+
+1. If authentication is required, the user chooses sign in or account creation.
+2. After authentication, the user returns to the pending completion experience.
+3. The completion enters a visible processing state.
+4. The user receives a success, invalid or expired, or blocked or conflict outcome.
+
+**Success outcome:** The user sees that linking completed and can continue to the dictionary.
+
+**Invalid or expired outcome:** The user sees that the completion cannot proceed with the supplied handoff.
+
+**Blocked or conflict outcome:** The user sees that completion is blocked and is not offered client-side reassignment or ownership resolution.
+
+**Authentication failure outcome:** The user remains in the authentication flow and can retry without losing the intended completion continuation.
+
+## Sign out flow
+
+**User goal:** Leave the protected web experience.
+
+**Entry conditions:** The user selects sign out from the authenticated experience.
+
+**Main transition:** The current authenticated session ends.
+
+**Success outcome:** Protected areas are no longer available and the user returns to the public experience.
+
+**Failure outcome:** The failure is shown to the user and protected access is not presented as ambiguously terminated.
+
+Sign out remains an action, not a standalone account-management screen.
+
+## Localization-related user flow
+
+### Select the interface language
+
+**User goal:** Use the web interface in an accepted language.
+
+**Entry conditions:** Public users enter with the applicable public locale behavior; authenticated users may select an interface language in Settings.
+
+**Main transition:** The authenticated user selects an interface language and saves the preference.
+
+**Success outcome:** The interface changes to the saved language after the update succeeds. Public experiences use a supported browser language when available and otherwise use English.
+
+**Failure or cancel outcome:** A failed save or an unsaved draft does not replace the currently active interface language. After sign out, the public experience returns to public locale behavior.
+
+Localization changes web-owned interface copy only; vocabulary content and externally supplied messages are not rewritten as part of this user flow.
+
+## Explicit flow boundaries
+
+- Vocabulary capture and ready-card delivery remain Telegram-first; there is no manual web capture flow.
+- Daily review, review answering, and review feedback remain outside the web client.
+- Billing, OCR, admin, restore, and offline-synchronization flows are not part of the web experience.
+- Telegram completion does not add provider management, unlinking, or reassignment journeys.
+- Account deletion does not expand into a general account-management flow.
+- Theme selection is not a user flow; the web experience remains light-theme only.

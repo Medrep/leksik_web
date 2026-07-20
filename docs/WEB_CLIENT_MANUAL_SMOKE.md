@@ -31,6 +31,5 @@ Checks:
 
 ## Boundaries
 
-- No automated test scaffolding is introduced by this note.
-- No broad validation framework is introduced by this note.
-- Dictionary, settings, delete, cache, theme, and sign-out behavior are outside this smoke note except for confirming they remain untouched by the completion-page slice.
+- Coverage is limited to dedicated Telegram completion and public authentication non-regression.
+- Dictionary, settings, deletion, cache, theme, and sign-out verification are outside this note.

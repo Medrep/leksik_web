@@ -78,6 +78,8 @@ The current `package.json` does not define test or lint scripts. Do not invent `
 
 ## Documentation
 
+- [Web architecture](docs/ARCHITECTURE.md)
+- [Backend integration](docs/BACKEND_INTEGRATION.md)
 - [Web scope](docs/WEB_CLIENT_SCOPE.md)
 - [User flows](docs/WEB_CLIENT_FLOWS.md)
 - [Screens and routes](docs/WEB_CLIENT_SCREENS.md)
