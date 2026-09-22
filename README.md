@@ -6,6 +6,14 @@ This repository contains the separate responsive web client for Leksik.
 
 It is a narrow Next.js client over the shared backend API. The backend remains the system core and owns domain behavior, API contracts, authorization, and persistence. Telegram remains the primary interface for vocabulary capture and daily review.
 
+## Launch target
+
+The primary customer launch client is the responsive web/PWA product. Initial iOS delivery is Safari with Add to Home Screen; initial Android delivery is the Chrome-installed PWA. Physical-device PWA testing requires an HTTPS origin.
+
+App Store and Google Play distribution, Capacitor iOS, and a Capacitor Android distribution package are deferred. The PWA-01 installability foundation is implemented, with physical iPhone and Android installation verification still pending; see the [PWA launch validation checklist](docs/PWA_LAUNCH_CHECKLIST.md).
+
+The native manifest is defined in `app/manifest.ts`. Manifest icons are under `public/icons/`, and the Apple touch icon uses the native `app/apple-icon.png` convention. Installation testing must use an HTTPS deployment; localhost is suitable only for local static/runtime inspection.
+
 Browser account entry uses Supabase Auth directly. Protected backend requests use the Supabase access token as a bearer token, and the backend remains authoritative for authenticated identity and product access.
 
 ## Implemented web surface
@@ -84,6 +92,7 @@ The current `package.json` does not define test or lint scripts. Do not invent `
 - [User flows](docs/WEB_CLIENT_FLOWS.md)
 - [Screens and routes](docs/WEB_CLIENT_SCREENS.md)
 - [Current status](docs/WEB_CLIENT_STATUS.md)
+- [PWA launch validation checklist](docs/PWA_LAUNCH_CHECKLIST.md)
 - [Manual smoke checks](docs/WEB_CLIENT_MANUAL_SMOKE.md)
 
 These files own web-specific scope and behavior. Broader product, API, authorization, data-model, Telegram, worker, and backend-runtime contracts remain owned by the backend repository.

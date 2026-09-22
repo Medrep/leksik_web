@@ -8,11 +8,17 @@ It describes which user-facing capabilities belong in the web repository and the
 
 ## Product role and boundaries
 
-The web client is a responsive browser interface and a thin client over the shared backend.
+The web client is a responsive browser/PWA interface and a thin client over the shared backend. It is the primary customer launch client.
 
 The backend remains authoritative for identity, access, vocabulary and preference behavior, account behavior, authorization, persistence, and other domain rules. The web client presents backend-owned state and initiates accepted operations without becoming a separate system of record.
 
 Telegram remains the primary interface for vocabulary capture and daily review. Web linking and completion capabilities support that model; they do not replace Telegram capture or review.
+
+### Launch delivery
+
+Installed PWA delivery is accepted web-client launch scope. Initial iOS delivery is Safari with Add to Home Screen, and initial Android delivery is the Chrome-installed PWA. Minimal installation help is accepted for the later PWA-03 slice; it will not add a dedicated installation route or broaden product features.
+
+PWA installability and installed-runtime work remain planned until their respective PWA-01 through PWA-04 slices complete. Native/mobile packaging remains deferred, including App Store, Google Play, Capacitor iOS, and a Capacitor Android distribution package.
 
 ## Accepted scope
 
@@ -143,7 +149,7 @@ The following remain outside the accepted web-client scope:
 - broad profile, settings, security, or account-management expansion beyond the accepted narrow capabilities;
 - Telegram reassignment, unlinking, or general provider management;
 - admin or operator tooling, which belongs to the admin repository;
-- mobile-client implementation or planning, which belongs outside the web repository;
+- native-client implementation and store distribution, including Capacitor iOS and Android packages, App Store, and Google Play;
 - broad analytics or advanced personalization;
 - dark-theme support or theme switching;
 - offline-first synchronization;

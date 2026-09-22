@@ -10,7 +10,7 @@ Web scope, user workflows, screen behavior, and implementation status remain in 
 
 ## Application boundary
 
-The repository contains a separately versioned Next.js App Router application for responsive browser use.
+The repository contains a separately versioned Next.js App Router application. The responsive web/PWA product is the primary customer launch client; Telegram remains the primary channel for capture and daily review.
 
 The web application owns:
 
@@ -43,6 +43,37 @@ The App Router owns the web route hierarchy and separates:
 Route details, screen contents, entry and exit paths, and user workflows belong in the web screen and flow documents.
 
 The repository provides one responsive browser UI for mobile and desktop widths. Responsive presentation may adapt layout and density, but it does not change product scope, backend ownership, or available domain behavior.
+
+## PWA launch delivery
+
+PWA delivery is accepted for launch. Its PWA-01 installability foundation is implemented with the native Next.js manifest route, public PNG application icons, Apple Home Screen metadata, and root theme metadata. The install contract is:
+
+- `id: "/"`;
+- name: `Leksik`;
+- `start_url: "/dictionary"`;
+- `scope: "/"`;
+- `display: "standalone"`;
+- online-first runtime behavior.
+
+`/dictionary` is the intended authenticated launch experience. Signed-out users continue through the existing protected-route and sign-in continuation behavior, without changing landing-page behavior. The root scope permits the installed application to navigate existing authentication, dictionary, details, Settings, and Telegram-completion routes; it does not introduce routes.
+
+Initial iOS delivery is Safari with Add to Home Screen. Initial Android delivery is the Chrome-installed PWA. Apple App Store, Google Play, Capacitor iOS, and a Capacitor Android distribution package are deferred; broader native/mobile development is not part of the launch architecture.
+
+### Online-first and private-data boundary
+
+The initial installed runtime is online-first. No service worker is required for the approved initial PWA implementation; service-worker implementation, offline product mode, offline dictionary support, background synchronization, offline mutation queues, and push notifications are deferred.
+
+Current browser persistence remains unchanged: Supabase persists the browser authentication session, and the dictionary read cache stores user-keyed list and detail data in `localStorage`. That is not an offline product layer. PWA work must not introduce another persistent data layer or service-worker caching for authenticated API responses, dictionary or generated vocabulary data, preferences, identity/access state, authentication tokens, Telegram completion URLs or proofs, or mutation requests.
+
+### Browser and device expectations
+
+iOS Safari and an installed Home Screen web app can use separate browser-storage contexts. An installed app's first launch may therefore require another sign-in; seamless Safari-to-installed-PWA session transfer and cookie/session migration architecture are not launch requirements.
+
+External links are not guaranteed to open an already installed PWA window. Telegram and email handoffs can occur through Safari or another browser context, and an installed app must fetch current backend state after it is reopened or resumed. Native deep-link capture is not part of this delivery.
+
+PWA launch readiness requires physical-device validation, not just static build checks: one real iPhone using current supported Safari and one real Android phone using current supported Chrome, each tested in normal browser and installed standalone modes. Older OS or browser versions are not claimed supported unless added to that physical validation. The operational record is [the PWA launch validation checklist](PWA_LAUNCH_CHECKLIST.md).
+
+The accepted implementation sequence is PWA-00 — Launch Baseline and Documentation Alignment; PWA-01 — Installability Foundation; PWA-02 — Installed Runtime Hardening; PWA-03 — Minimal Installation UX; and PWA-04 — Final Real-Device Launch Gate. `ANDROID-01 — Optional Capacitor Android Distribution` remains deferred and is not launch-blocking.
 
 ## Frontend API mapping
 
@@ -144,3 +175,4 @@ No platform-specific deployment topology is defined by this document or by the c
 - [User flows](WEB_CLIENT_FLOWS.md)
 - [Screens and routes](WEB_CLIENT_SCREENS.md)
 - [Current status](WEB_CLIENT_STATUS.md)
+- [PWA launch validation checklist](PWA_LAUNCH_CHECKLIST.md)

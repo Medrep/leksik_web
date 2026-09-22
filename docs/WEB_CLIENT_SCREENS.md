@@ -29,6 +29,10 @@ Other documents own adjacent concerns:
 
 Language onboarding and account deletion are screen-local states rather than separate routes.
 
+## Planned installation-help presentation
+
+PWA-03 may add a small contextual installation-help presentation to existing screens. It will explain the supported iOS Safari Add to Home Screen and Android Chrome installation paths when appropriate. It is not yet implemented, does not add a dedicated route, and does not change the route inventory or introduce native-store flows.
+
 ## Public screens
 
 ### Landing

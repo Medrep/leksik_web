@@ -62,6 +62,40 @@ Other documents own adjacent concerns:
 
 This flow covers recovery initiation only. It does not define a broader account-management journey.
 
+## Planned PWA launch flows
+
+PWA installability is planned until PWA-01 completes. These accepted flows describe the intended launch behavior and do not describe current implementation details.
+
+### Installation
+
+**User goal:** Install the responsive web client as a standalone web app.
+
+**Entry conditions:** The user opens Leksik in current supported Safari on iOS or current supported Chrome on Android.
+
+**Main transition:** On iOS, the user uses Safari's Add to Home Screen path. On Android, the user uses Chrome's PWA installation path. Future minimal help may be presented in PWA-03 when appropriate.
+
+**Outcome:** The installed app uses the accepted PWA identity and standalone contract. Installation does not create an App Store, Google Play, or native-wrapper flow.
+
+### Installed launch and signed-out continuation
+
+**User goal:** Open the installed app and reach the main authenticated experience.
+
+**Entry conditions:** The user opens the installed app.
+
+**Main transition:** The app starts at `/dictionary`. A signed-in user proceeds to Dictionary List through normal protected entry. A signed-out user follows the existing protected-route redirect and sign-in continuation, then returns toward the intended destination.
+
+**Outcome:** The launch target remains Dictionary List for authenticated users without changing public landing behavior. If required preferences are missing, existing onboarding occurs before the protected destination.
+
+### iOS reauthentication and browser handoffs
+
+**User goal:** Continue safely when browser contexts or external handoffs differ.
+
+**Entry conditions:** An iOS user moves between Safari and the installed Home Screen app, or a user returns from a Telegram or email handoff.
+
+**Main transition:** Separate Safari and installed-app storage contexts can require a separate sign-in on first installed launch. External links may open in Safari or another browser context instead of an installed PWA window.
+
+**Outcome:** Separate reauthentication is acceptable at launch. The installed app fetches current backend state after reopening or returning. This does not promise session transfer or native deep-link capture.
+
 ## Authenticated entry and onboarding
 
 ### Authenticated entry
@@ -278,3 +312,4 @@ Localization changes web-owned interface copy only; vocabulary content and exter
 - Telegram completion does not add provider management, unlinking, or reassignment journeys.
 - Account deletion does not expand into a general account-management flow.
 - Theme selection is not a user flow; the web experience remains light-theme only.
+- Offline, background-sync, offline mutation-queue, and push-notification flows are deferred.
