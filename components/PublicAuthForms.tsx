@@ -39,7 +39,7 @@ type AuthStatusState<T extends string> =
   | null;
 
 const authInputBaseClassName =
-  "w-full min-w-0 max-w-full rounded-lg border bg-token-surfaceStrong px-3.5 py-3 text-sm text-token-text outline-none transition-colors duration-200 placeholder:text-token-muted/45 focus:border-token-brand";
+  "w-full min-w-0 max-w-full rounded-lg border bg-token-surfaceStrong px-3.5 py-3 text-base text-token-text outline-none transition-colors duration-200 placeholder:text-token-muted/45 focus:border-token-brand sm:text-sm";
 const authLabelClassName = "grid w-full min-w-0 max-w-full gap-1 text-xs text-token-muted";
 const authPrimaryButtonClassName =
   "inline-flex min-h-11 w-full min-w-0 max-w-full items-center justify-center rounded-lg bg-token-brand px-5 text-sm font-semibold text-white transition duration-200 hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60";
