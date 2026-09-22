@@ -92,6 +92,7 @@ export async function fetchBackendJson<T>({
   };
 
   const requestInit: RequestInit = {
+    cache: "no-store",
     method,
     headers,
     signal,

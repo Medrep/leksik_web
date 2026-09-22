@@ -226,6 +226,8 @@ After successful completion, the intended authenticated destination becomes visi
 
 Search remains embedded in Dictionary List and does not have a separate route.
 
+The load-error state replaces rendered cached results after an authoritative failure. Authorization denial clears protected list data and invalidates the affected list cache rather than allowing cache to conceal the denial.
+
 ### Dictionary Details
 
 **Responsibility:** Present one dictionary item and its narrow deletion control.
@@ -251,6 +253,8 @@ Search remains embedded in Dictionary List and does not have a separate route.
 - delete confirmation;
 - deleting state;
 - delete error.
+
+The unavailable state replaces denied or authoritatively missing cached details. The load-error state replaces cached details after a transient or server failure while leaving stored cache non-authoritative and available only for a later successful refresh.
 
 ### Dictionary delete confirmation state
 

@@ -12,7 +12,11 @@ function getStorage() {
     return null;
   }
 
-  return window.localStorage;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
 }
 
 function safeRead<T>(key: string): T | null {
@@ -31,6 +35,7 @@ function safeRead<T>(key: string): T | null {
 
     return JSON.parse(rawValue) as T;
   } catch {
+    safeRemove(key);
     return null;
   }
 }
@@ -99,8 +104,64 @@ function detailsCacheKey(userId: string, itemId: string) {
   return `${VOCAB_CACHE_PREFIX}:details:${encodeKeyPart(userId)}:${encodeKeyPart(itemId)}`;
 }
 
-function userCachePrefix(userId: string) {
-  return `${VOCAB_CACHE_PREFIX}:`;
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === "string";
+}
+
+function isDictionaryListItem(value: unknown): value is DictionaryListItem {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const item = value as Record<string, unknown>;
+  return (
+    isNullableString(item.explanation) &&
+    typeof item.id === "string" &&
+    isNullableString(item.learningStatus) &&
+    isNullableString(item.language) &&
+    typeof item.title === "string" &&
+    isNullableString(item.translation)
+  );
+}
+
+function isDictionaryCardDetails(value: unknown): value is DictionaryCardDetails {
+  if (!isDictionaryListItem(value)) {
+    return false;
+  }
+
+  const details = value as unknown as Record<string, unknown>;
+  return (
+    isNullableString(details.canonicalForm) &&
+    Array.isArray(details.examples) &&
+    details.examples.every((example) => typeof example === "string")
+  );
+}
+
+function readValidatedCachedValue<T>(
+  key: string,
+  isValidValue: (value: unknown) => value is T,
+) {
+  const cachedValue = safeRead<unknown>(key);
+
+  if (!cachedValue || typeof cachedValue !== "object") {
+    if (cachedValue !== null) {
+      safeRemove(key);
+    }
+    return null;
+  }
+
+  const record = cachedValue as Record<string, unknown>;
+
+  if (
+    typeof record.cachedAt !== "number" ||
+    !Number.isFinite(record.cachedAt) ||
+    !isValidValue(record.value)
+  ) {
+    safeRemove(key);
+    return null;
+  }
+
+  return record.value;
 }
 
 export function readCachedDictionaryList({
@@ -110,8 +171,12 @@ export function readCachedDictionaryList({
   userId: string;
   searchText: string;
 }) {
-  const cachedValue = safeRead<CachedValue<DictionaryListItem[]>>(listCacheKey(userId, searchText));
-  return cachedValue?.value ?? null;
+  const key = listCacheKey(userId, searchText);
+  return readValidatedCachedValue(
+    key,
+    (value): value is DictionaryListItem[] =>
+      Array.isArray(value) && value.every(isDictionaryListItem),
+  );
 }
 
 export function writeCachedDictionaryList({
@@ -136,8 +201,8 @@ export function readCachedDictionaryCardDetails({
   userId: string;
   itemId: string;
 }) {
-  const cachedValue = safeRead<CachedValue<DictionaryCardDetails>>(detailsCacheKey(userId, itemId));
-  return cachedValue?.value ?? null;
+  const key = detailsCacheKey(userId, itemId);
+  return readValidatedCachedValue(key, isDictionaryCardDetails);
 }
 
 export function writeCachedDictionaryCardDetails({
@@ -161,6 +226,11 @@ export function invalidateCachedDictionaryReadDataForUser(userId: string) {
   removeMatchingKeys(`${VOCAB_CACHE_PREFIX}:details:${encodedUserId}:`);
 }
 
+export function invalidateCachedDictionaryListsForUser(userId: string) {
+  const encodedUserId = encodeKeyPart(userId);
+  removeMatchingKeys(`${VOCAB_CACHE_PREFIX}:list:${encodedUserId}:`);
+}
+
 export function invalidateCachedDictionaryItem({
   userId,
   itemId,
@@ -172,5 +242,5 @@ export function invalidateCachedDictionaryItem({
 }
 
 export function clearAllCachedDictionaryReadData() {
-  removeMatchingKeys(userCachePrefix(""));
+  removeMatchingKeys(`${VOCAB_CACHE_PREFIX}:`);
 }

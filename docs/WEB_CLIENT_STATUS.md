@@ -60,17 +60,19 @@ This document is the current implementation snapshot for the Leksik web client. 
 
 - The web presentation supports mobile and desktop browser widths.
 - A browser-side cache is used as a read optimization for dictionary list and item details.
+- Authenticated backend requests use `cache: "no-store"`, and failed authoritative dictionary reads cannot leave cached protected content presented as current.
+- Sign-out, account deletion, account transition, dictionary deletion, and authoritative missing-item results apply the implemented local cache cleanup rules.
 
 ## PWA launch workstream
 
 ### Implemented
 
 - **PWA-00 — Launch Baseline and Documentation Alignment:** completed in the web and backend documentation repositories.
-- **PWA-01 — Installability Foundation:** implementation and static validation are complete. Physical installation verification remains pending on iPhone Safari and Android Chrome, so the PWA-01 gate has not yet passed.
+- **PWA-01 — Installability Foundation:** passed, including physical verification on iPhone Safari in the installed PWA and Android Chrome in the installed PWA.
+- **PWA-02 — Installed Runtime Hardening:** **IMPLEMENTED — DEVICE/RUNTIME VERIFICATION PENDING**. Backend revalidation is live-owner/token/generation scoped and equivalent concurrent refreshes share one in-flight operation, preventing stale or superseded refreshes from initiating destructive cleanup. Authoritative rejection immediately revokes protected product state and serializes public sign-in behind the one valid current-owner Supabase cleanup attempt. Account-deletion completions are scoped to their initiating owner/token/generation: a current-owner deletion `401` uses that tracked rejection lifecycle, while a stale completion or one arriving during an active cleanup cannot trigger unscoped sign-out or a second cleanup. Backend-confirmed deletion remains a separate synchronous owner-aware local revocation path. Return-to-app Telegram refresh bursts retain one post-request follow-up when necessary. Final real-device/runtime matrix coverage remains pending and is not asserted here.
 
 ### Planned / not implemented
 
-- **PWA-02 — Installed Runtime Hardening:** planned; installed-runtime hardening is not yet implemented.
 - **PWA-03 — Minimal Installation UX:** planned; no installation-help UI is implemented.
 - **PWA-04 — Final Real-Device Launch Gate:** planned; it is not yet executed or passed.
 
@@ -84,12 +86,13 @@ The intended initial delivery is iOS Safari Add to Home Screen and Android Chrom
 - Root document metadata and the root HTML language remain static English rather than following the active interface locale.
 - No service worker, offline mode, background synchronization, offline mutation queue, or push-notification implementation is present.
 - The manifest icon set does not include a maskable icon; safe-zone qualification is deferred as non-blocking polish.
-- Real-device PWA launch validation remains pending on one current supported iPhone Safari and one current supported Android Chrome device, in both browser and installed standalone contexts.
+- PWA-02 account-boundary, controlled error, deletion, Telegram-return, and broader browser/standalone runtime checks remain pending on physical devices; no result is claimed for unexecuted matrix cases.
 - Additional accepted and excluded capability boundaries are maintained in [Web scope](WEB_CLIENT_SCOPE.md).
 
 ## Verification
 
 - The snapshot is consistent with the current route and capability structure under `app/`, `components/`, and `lib/`.
 - PWA-01 passes `git diff --check`, TypeScript validation, and the production build. The generated manifest, root metadata, public icon responses, icon MIME types, and required dimensions were inspected locally.
+- PWA-02 passes `git diff --check` and TypeScript validation. Its bounded production-build result is recorded in the PWA launch checklist.
 - Focused manual checks for Telegram completion and public authentication non-regression are documented in [Web Client Manual Smoke Notes](WEB_CLIENT_MANUAL_SMOKE.md).
-- No physical-device installation result or broader automated-test result is asserted by this snapshot.
+- PWA-01 physical installed-PWA verification is recorded at the available level of detail; no broader PWA-02 device-flow or automated-test result is asserted by this snapshot.

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { useLocale } from "@/components/LocaleProvider";
 import { BackendRequestError } from "@/lib/backend-client";
@@ -10,7 +10,12 @@ import {
   type DictionaryListMessages,
 } from "@/lib/i18n/messages";
 import { fetchLearningPreferences, getPreferencesRequestMessage } from "@/lib/preferences";
-import { readCachedDictionaryList, writeCachedDictionaryList } from "@/lib/vocab-cache";
+import {
+  invalidateCachedDictionaryListsForUser,
+  invalidateCachedDictionaryReadDataForUser,
+  readCachedDictionaryList,
+  writeCachedDictionaryList,
+} from "@/lib/vocab-cache";
 import { fetchDictionaryList, getVocabRequestMessage, type DictionaryListItem } from "@/lib/vocab";
 
 function LoadingCard({ messages }: { messages: DictionaryListMessages }) {
@@ -85,7 +90,7 @@ function StateCard({
 }
 
 export function DictionaryListScreen() {
-  const { refreshBootstrap, session } = useAuth();
+  const { isCurrentAuthenticatedSession, refreshBootstrap, session } = useAuth();
   const { locale, messages } = useLocale();
   const dictionaryMessages = messages.dictionaryList;
   const [items, setItems] = useState<DictionaryListItem[]>([]);
@@ -100,6 +105,32 @@ export function DictionaryListScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(false);
   const currentUserId = session?.user?.id ?? null;
+  const currentAccessToken = session?.access_token ?? null;
+  const activeReadRef = useRef({
+    accessToken: currentAccessToken,
+    query: activeQuery,
+    userId: currentUserId,
+  });
+  const authDenialGenerationRef = useRef(0);
+  const [resultOwner, setResultOwner] = useState<{
+    query: string;
+    userId: string;
+  } | null>(null);
+  const [preferencesOwnerUserId, setPreferencesOwnerUserId] = useState<string | null>(null);
+
+  activeReadRef.current = {
+    accessToken: currentAccessToken,
+    query: activeQuery,
+    userId: currentUserId,
+  };
+
+  const isCurrentResult =
+    resultOwner?.userId === currentUserId && resultOwner.query === activeQuery;
+  const currentItems = isCurrentResult ? items : [];
+  const currentHasLoadedOnce = isCurrentResult ? hasLoadedOnce : false;
+  const currentListErrorMessage = isCurrentResult ? listErrorMessage : null;
+  const currentPreferencesErrorMessage =
+    preferencesOwnerUserId === currentUserId ? preferencesErrorMessage : null;
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -113,6 +144,7 @@ export function DictionaryListScreen() {
     if (!currentUserId) {
       setItems([]);
       setHasLoadedOnce(false);
+      setResultOwner(null);
       return;
     }
 
@@ -124,11 +156,13 @@ export function DictionaryListScreen() {
     if (cachedItems) {
       setItems(cachedItems);
       setHasLoadedOnce(true);
+      setResultOwner({ query: activeQuery, userId: currentUserId });
       return;
     }
 
     setItems([]);
     setHasLoadedOnce(false);
+    setResultOwner({ query: activeQuery, userId: currentUserId });
   }, [activeQuery, currentUserId]);
 
   useEffect(() => {
@@ -137,10 +171,21 @@ export function DictionaryListScreen() {
     }
 
     const accessToken = session.access_token;
+    const ownerUserId = session.user.id;
+    const authDenialGeneration = authDenialGenerationRef.current;
     const controller = new AbortController();
+    const isCurrentRequest = () =>
+      !controller.signal.aborted &&
+      authDenialGenerationRef.current === authDenialGeneration &&
+      isCurrentAuthenticatedSession(ownerUserId, accessToken) &&
+      activeReadRef.current.accessToken === accessToken &&
+      activeReadRef.current.userId === ownerUserId;
 
     async function loadPreferences() {
       setIsLoadingPreferences(true);
+      setHasLoadedPreferences(false);
+      setPreferredTranslationLanguage(null);
+      setPreferencesOwnerUserId(ownerUserId);
       setPreferencesErrorMessage(null);
 
       try {
@@ -149,13 +194,22 @@ export function DictionaryListScreen() {
           signal: controller.signal,
         });
 
+        if (!isCurrentRequest()) {
+          return;
+        }
+
         setPreferredTranslationLanguage(preferences.preferredTranslationLanguage);
       } catch (error) {
-        if (controller.signal.aborted) {
+        if (!isCurrentRequest()) {
           return;
         }
 
         if (error instanceof BackendRequestError && error.status === 401) {
+          authDenialGenerationRef.current += 1;
+          setItems([]);
+          setHasLoadedOnce(false);
+          setResultOwner({ query: activeQuery, userId: ownerUserId });
+          invalidateCachedDictionaryReadDataForUser(ownerUserId);
           void refreshBootstrap();
           return;
         }
@@ -164,7 +218,7 @@ export function DictionaryListScreen() {
           getPreferencesRequestMessage(error, dictionaryMessages.errors.preferences),
         );
       } finally {
-        if (!controller.signal.aborted) {
+        if (isCurrentRequest()) {
           setHasLoadedPreferences(true);
           setIsLoadingPreferences(false);
         }
@@ -174,7 +228,7 @@ export function DictionaryListScreen() {
     void loadPreferences();
 
     return () => controller.abort();
-  }, [refreshBootstrap, session?.access_token]);
+  }, [isCurrentAuthenticatedSession, refreshBootstrap, session?.access_token]);
 
   useEffect(() => {
     if (!session?.access_token) {
@@ -182,21 +236,26 @@ export function DictionaryListScreen() {
     }
 
     const accessToken = session.access_token;
-    const hasCachedList = currentUserId
-      ? readCachedDictionaryList({
-          userId: currentUserId,
-          searchText: activeQuery,
-        }) !== null
-      : false;
+    const ownerUserId = session.user.id;
+    const requestQuery = activeQuery;
+    const authDenialGeneration = authDenialGenerationRef.current;
     const controller = new AbortController();
+    const isCurrentRequest = () =>
+      !controller.signal.aborted &&
+      authDenialGenerationRef.current === authDenialGeneration &&
+      isCurrentAuthenticatedSession(ownerUserId, accessToken) &&
+      activeReadRef.current.accessToken === accessToken &&
+      activeReadRef.current.query === requestQuery &&
+      activeReadRef.current.userId === ownerUserId;
 
     async function loadDictionaryList() {
-      if (!hasLoadedOnce) {
+      if (!currentHasLoadedOnce) {
         setIsLoading(true);
       } else {
         setIsRefreshing(true);
       }
 
+      setResultOwner({ query: requestQuery, userId: ownerUserId });
       setListErrorMessage(null);
 
       try {
@@ -206,34 +265,42 @@ export function DictionaryListScreen() {
           signal: controller.signal,
         });
 
-        setItems(nextItems);
-        if (currentUserId) {
-          writeCachedDictionaryList({
-            userId: currentUserId,
-            searchText: activeQuery,
-            items: nextItems,
-          });
+        if (!isCurrentRequest()) {
+          return;
         }
+
+        setItems(nextItems);
+        writeCachedDictionaryList({
+          userId: ownerUserId,
+          searchText: requestQuery,
+          items: nextItems,
+        });
         setHasLoadedOnce(true);
       } catch (error) {
-        if (controller.signal.aborted) {
+        if (!isCurrentRequest()) {
           return;
         }
 
         if (error instanceof BackendRequestError && error.status === 401) {
+          authDenialGenerationRef.current += 1;
+          setItems([]);
+          setHasLoadedOnce(false);
+          invalidateCachedDictionaryReadDataForUser(ownerUserId);
           void refreshBootstrap();
           return;
         }
 
-        if (!hasCachedList) {
-          setItems([]);
-          setHasLoadedOnce(true);
-          setListErrorMessage(
-            getVocabRequestMessage(error, dictionaryMessages.errors.list),
-          );
+        if (error instanceof BackendRequestError && error.status === 403) {
+          invalidateCachedDictionaryListsForUser(ownerUserId);
         }
+
+        setItems([]);
+        setHasLoadedOnce(true);
+        setListErrorMessage(
+          getVocabRequestMessage(error, dictionaryMessages.errors.list),
+        );
       } finally {
-        if (!controller.signal.aborted) {
+        if (isCurrentRequest()) {
           setIsLoading(false);
           setIsRefreshing(false);
         }
@@ -243,16 +310,21 @@ export function DictionaryListScreen() {
     void loadDictionaryList();
 
     return () => controller.abort();
-  }, [activeQuery, currentUserId, refreshBootstrap, session?.access_token]);
+  }, [activeQuery, isCurrentAuthenticatedSession, refreshBootstrap, session?.access_token, session?.user.id]);
 
-  const canShowTranslation = hasLoadedPreferences && Boolean(preferredTranslationLanguage);
-  const visibleItems = items.map((item) => ({
+  const canShowTranslation =
+    preferencesOwnerUserId === currentUserId &&
+    hasLoadedPreferences &&
+    Boolean(preferredTranslationLanguage);
+  const visibleItems = currentItems.map((item) => ({
     ...item,
     translation: canShowTranslation ? item.translation : null,
   }));
-  const errorMessage = preferencesErrorMessage ?? listErrorMessage;
+  const errorMessage = currentPreferencesErrorMessage ?? currentListErrorMessage;
   const hasQuery = activeQuery.length > 0;
-  const showInitialLoading = !hasLoadedOnce && (isLoadingPreferences || !hasLoadedPreferences || isLoading);
+  const showInitialLoading =
+    !currentHasLoadedOnce &&
+    (!isCurrentResult || isLoadingPreferences || !hasLoadedPreferences || isLoading);
   const showEmptyState = !showInitialLoading && !errorMessage && visibleItems.length === 0;
 
   return (

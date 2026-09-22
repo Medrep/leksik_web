@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { useLocale } from "@/components/LocaleProvider";
 import { BackendRequestError } from "@/lib/backend-client";
@@ -14,6 +14,8 @@ import {
 type TelegramPanelError =
   | { kind: "backend"; message: string }
   | { kind: "localized"; key: keyof SettingsMessages["telegram"]["errors"] };
+
+const RETURN_REFRESH_COALESCE_MS = 120;
 
 function toTelegramPanelError(
   error: unknown,
@@ -91,7 +93,7 @@ function observedAccountLabel(status: TelegramLinkStatus) {
 }
 
 export function TelegramLinkPanel() {
-  const { refreshBootstrap, session } = useAuth();
+  const { isCurrentAuthenticatedSession, refreshBootstrap, session } = useAuth();
   const { settingsMessages } = useLocale();
   const [code, setCode] = useState("");
   const [panelError, setPanelError] = useState<TelegramPanelError | null>(null);
@@ -99,23 +101,54 @@ export function TelegramLinkPanel() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<TelegramLinkStatus | null>(null);
   const [hasSuccess, setHasSuccess] = useState(false);
+  const [resumeRefreshToken, setResumeRefreshToken] = useState(0);
+  const isMountedRef = useRef(true);
+  const pendingReturnRefreshRef = useRef(false);
+  const returnRefreshTimeoutRef = useRef<number | null>(null);
+  const statusRefreshInFlightRef = useRef(false);
+  const statusRefreshRequestIdRef = useRef(0);
+  const activeAuthOwnerRef = useRef({
+    accessToken: session?.access_token ?? null,
+    userId: session?.user.id ?? null,
+  });
+
+  activeAuthOwnerRef.current = {
+    accessToken: session?.access_token ?? null,
+    userId: session?.user.id ?? null,
+  };
 
   async function loadStatus(signal?: AbortSignal) {
     if (!session?.access_token) {
       return;
     }
 
+    const accessToken = session.access_token;
+    const ownerUserId = session.user.id;
+    const requestId = statusRefreshRequestIdRef.current + 1;
+    statusRefreshRequestIdRef.current = requestId;
+    statusRefreshInFlightRef.current = true;
+    const isCurrentOwner = () =>
+      isMountedRef.current &&
+      isCurrentAuthenticatedSession(ownerUserId, accessToken) &&
+      activeAuthOwnerRef.current.accessToken === accessToken &&
+      activeAuthOwnerRef.current.userId === ownerUserId;
+    const isCurrentRequest = () => !signal?.aborted && isCurrentOwner();
+
     setPanelError(null);
 
     try {
       const nextStatus = await fetchTelegramLinkStatus({
-        accessToken: session.access_token,
+        accessToken,
         signal,
       });
 
+      if (!isCurrentRequest()) {
+        return;
+      }
+
       setStatus(nextStatus);
     } catch (error) {
-      if (signal?.aborted) {
+      if (!isCurrentRequest()) {
         return;
       }
 
@@ -126,26 +159,80 @@ export function TelegramLinkPanel() {
 
       setPanelError(toTelegramPanelError(error, "load"));
     } finally {
-      if (!signal?.aborted) {
-        setIsLoading(false);
+      if (statusRefreshRequestIdRef.current === requestId) {
+        statusRefreshInFlightRef.current = false;
+
+        if (!signal?.aborted) {
+          setIsLoading(false);
+        }
+
+        if (pendingReturnRefreshRef.current) {
+          pendingReturnRefreshRef.current = false;
+
+          if (!signal?.aborted && isCurrentOwner()) {
+            setResumeRefreshToken((currentValue) => currentValue + 1);
+          }
+        }
       }
     }
   }
 
   useEffect(() => {
     if (!session?.access_token) {
+      setStatus(null);
       return;
     }
 
     setIsLoading(true);
     setHasSuccess(false);
+    setStatus(null);
 
     const controller = new AbortController();
 
     void loadStatus(controller.signal);
 
     return () => controller.abort();
-  }, [refreshBootstrap, session?.access_token]);
+  }, [isCurrentAuthenticatedSession, refreshBootstrap, resumeRefreshToken, session?.access_token]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    function scheduleRefreshAfterReturn() {
+      if (
+        document.visibilityState !== "visible" ||
+        returnRefreshTimeoutRef.current !== null
+      ) {
+        return;
+      }
+
+      returnRefreshTimeoutRef.current = window.setTimeout(() => {
+        returnRefreshTimeoutRef.current = null;
+
+        if (statusRefreshInFlightRef.current) {
+          pendingReturnRefreshRef.current = true;
+        } else {
+          setResumeRefreshToken((currentValue) => currentValue + 1);
+        }
+      }, RETURN_REFRESH_COALESCE_MS);
+    }
+
+    window.addEventListener("focus", scheduleRefreshAfterReturn);
+    window.addEventListener("pageshow", scheduleRefreshAfterReturn);
+    document.addEventListener("visibilitychange", scheduleRefreshAfterReturn);
+
+    return () => {
+      isMountedRef.current = false;
+      pendingReturnRefreshRef.current = false;
+      window.removeEventListener("focus", scheduleRefreshAfterReturn);
+      window.removeEventListener("pageshow", scheduleRefreshAfterReturn);
+      document.removeEventListener("visibilitychange", scheduleRefreshAfterReturn);
+
+      if (returnRefreshTimeoutRef.current !== null) {
+        window.clearTimeout(returnRefreshTimeoutRef.current);
+        returnRefreshTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const currentCopy = statusCopy(status, settingsMessages);
   const observedAccount =
@@ -164,6 +251,12 @@ export function TelegramLinkPanel() {
       return;
     }
 
+    const accessToken = session.access_token;
+    const ownerUserId = session.user.id;
+    const isCurrentRequest = () =>
+      isCurrentAuthenticatedSession(ownerUserId, accessToken) &&
+      activeAuthOwnerRef.current.accessToken === accessToken &&
+      activeAuthOwnerRef.current.userId === ownerUserId;
     const trimmedCode = code.trim();
 
     if (!trimmedCode) {
@@ -177,14 +270,22 @@ export function TelegramLinkPanel() {
 
     try {
       const nextStatus = await completeTelegramLink({
-        accessToken: session.access_token,
+        accessToken,
         code: trimmedCode,
       });
+
+      if (!isCurrentRequest()) {
+        return;
+      }
 
       setStatus(nextStatus);
       setCode("");
       setHasSuccess(true);
     } catch (error) {
+      if (!isCurrentRequest()) {
+        return;
+      }
+
       if (error instanceof BackendRequestError && error.status === 401) {
         void refreshBootstrap();
         return;
@@ -193,10 +294,12 @@ export function TelegramLinkPanel() {
       if (error instanceof BackendRequestError && error.status === 409) {
         try {
           const nextStatus = await fetchTelegramLinkStatus({
-            accessToken: session.access_token,
+            accessToken,
           });
 
-          setStatus(nextStatus);
+          if (isCurrentRequest()) {
+            setStatus(nextStatus);
+          }
         } catch {
           setStatus((currentStatus) =>
             currentStatus
@@ -217,7 +320,9 @@ export function TelegramLinkPanel() {
 
       setPanelError(toTelegramPanelError(error, "complete"));
     } finally {
-      setIsSubmitting(false);
+      if (isCurrentRequest()) {
+        setIsSubmitting(false);
+      }
     }
   }
 

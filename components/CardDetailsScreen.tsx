@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { useLocale } from "@/components/LocaleProvider";
 import { BackendRequestError } from "@/lib/backend-client";
@@ -10,6 +10,7 @@ import type { DictionaryDetailsMessages } from "@/lib/i18n/messages";
 import { fetchLearningPreferences, getPreferencesRequestMessage } from "@/lib/preferences";
 import {
   invalidateCachedDictionaryItem,
+  invalidateCachedDictionaryListsForUser,
   invalidateCachedDictionaryReadDataForUser,
   readCachedDictionaryCardDetails,
   writeCachedDictionaryCardDetails,
@@ -110,10 +111,10 @@ function getTranslationModeLabel({
 
 export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
   const router = useRouter();
-  const { refreshBootstrap, session } = useAuth();
+  const { isCurrentAuthenticatedSession, refreshBootstrap, session } = useAuth();
   const { messages } = useLocale();
   const dictionaryMessages = messages.dictionaryDetails;
-  const [details, setDetails] = useState<DictionaryCardDetails | null>(null);
+  const [storedDetails, setStoredDetails] = useState<DictionaryCardDetails | null>(null);
   const [detailsErrorMessage, setDetailsErrorMessage] = useState<string | null>(null);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
   const [preferencesErrorMessage, setPreferencesErrorMessage] = useState<string | null>(null);
@@ -124,10 +125,37 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
   const [isNotFound, setIsNotFound] = useState(false);
   const [preferredTranslationLanguage, setPreferredTranslationLanguage] = useState<string | null>(null);
   const currentUserId = session?.user?.id ?? null;
+  const currentAccessToken = session?.access_token ?? null;
+  const activeReadRef = useRef({
+    accessToken: currentAccessToken,
+    itemId: item_id,
+    userId: currentUserId,
+  });
+  const authDenialGenerationRef = useRef(0);
+  const [resultOwner, setResultOwner] = useState<{
+    itemId: string;
+    userId: string;
+  } | null>(null);
+  const [preferencesOwnerUserId, setPreferencesOwnerUserId] = useState<string | null>(null);
+
+  activeReadRef.current = {
+    accessToken: currentAccessToken,
+    itemId: item_id,
+    userId: currentUserId,
+  };
+
+  const isCurrentResult =
+    resultOwner?.userId === currentUserId && resultOwner.itemId === item_id;
+  const details = isCurrentResult ? storedDetails : null;
+  const currentDetailsErrorMessage = isCurrentResult ? detailsErrorMessage : null;
+  const currentIsNotFound = isCurrentResult && isNotFound;
+  const currentPreferencesErrorMessage =
+    preferencesOwnerUserId === currentUserId ? preferencesErrorMessage : null;
 
   useEffect(() => {
     if (!currentUserId) {
-      setDetails(null);
+      setStoredDetails(null);
+      setResultOwner(null);
       return;
     }
 
@@ -136,7 +164,8 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
       itemId: item_id,
     });
 
-    setDetails(cachedDetails);
+    setStoredDetails(cachedDetails);
+    setResultOwner({ itemId: item_id, userId: currentUserId });
   }, [currentUserId, item_id]);
 
   useEffect(() => {
@@ -145,10 +174,20 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
     }
 
     const accessToken = session.access_token;
+    const ownerUserId = session.user.id;
+    const authDenialGeneration = authDenialGenerationRef.current;
     const controller = new AbortController();
+    const isCurrentRequest = () =>
+      !controller.signal.aborted &&
+      authDenialGenerationRef.current === authDenialGeneration &&
+      isCurrentAuthenticatedSession(ownerUserId, accessToken) &&
+      activeReadRef.current.accessToken === accessToken &&
+      activeReadRef.current.userId === ownerUserId;
 
     async function loadPreferences() {
       setIsLoadingPreferences(true);
+      setPreferredTranslationLanguage(null);
+      setPreferencesOwnerUserId(ownerUserId);
       setPreferencesErrorMessage(null);
 
       try {
@@ -157,13 +196,20 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
           signal: controller.signal,
         });
 
+        if (!isCurrentRequest()) {
+          return;
+        }
+
         setPreferredTranslationLanguage(preferences.preferredTranslationLanguage);
       } catch (error) {
-        if (controller.signal.aborted) {
+        if (!isCurrentRequest()) {
           return;
         }
 
         if (error instanceof BackendRequestError && error.status === 401) {
+          authDenialGenerationRef.current += 1;
+          setStoredDetails(null);
+          invalidateCachedDictionaryReadDataForUser(ownerUserId);
           void refreshBootstrap();
           return;
         }
@@ -172,7 +218,7 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
           getPreferencesRequestMessage(error, dictionaryMessages.errors.preferences),
         );
       } finally {
-        if (!controller.signal.aborted) {
+        if (isCurrentRequest()) {
           setIsLoadingPreferences(false);
         }
       }
@@ -181,7 +227,7 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
     void loadPreferences();
 
     return () => controller.abort();
-  }, [refreshBootstrap, session?.access_token]);
+  }, [isCurrentAuthenticatedSession, refreshBootstrap, session?.access_token]);
 
   useEffect(() => {
     if (!session?.access_token) {
@@ -189,16 +235,21 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
     }
 
     const accessToken = session.access_token;
-    const hasCachedDetails = currentUserId
-      ? readCachedDictionaryCardDetails({
-          userId: currentUserId,
-          itemId: item_id,
-        }) !== null
-      : false;
+    const ownerUserId = session.user.id;
+    const requestItemId = item_id;
+    const authDenialGeneration = authDenialGenerationRef.current;
     const controller = new AbortController();
+    const isCurrentRequest = () =>
+      !controller.signal.aborted &&
+      authDenialGenerationRef.current === authDenialGeneration &&
+      isCurrentAuthenticatedSession(ownerUserId, accessToken) &&
+      activeReadRef.current.accessToken === accessToken &&
+      activeReadRef.current.itemId === requestItemId &&
+      activeReadRef.current.userId === ownerUserId;
 
     async function loadCardDetails() {
       setIsLoadingDetails(true);
+      setResultOwner({ itemId: requestItemId, userId: ownerUserId });
       setDetailsErrorMessage(null);
       setDeleteErrorMessage(null);
       setIsDeleteConfirming(false);
@@ -207,54 +258,63 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
       try {
         const nextDetails = await fetchDictionaryCardDetails({
           accessToken,
-          item_id,
+          item_id: requestItemId,
           signal: controller.signal,
         });
 
+        if (!isCurrentRequest()) {
+          return;
+        }
+
         if (!nextDetails) {
-          setDetails(null);
+          invalidateCachedDictionaryItem({
+            userId: ownerUserId,
+            itemId: requestItemId,
+          });
+          invalidateCachedDictionaryListsForUser(ownerUserId);
+          setStoredDetails(null);
           setIsNotFound(true);
           return;
         }
 
-        setDetails(nextDetails);
-        if (currentUserId) {
-          writeCachedDictionaryCardDetails({
-            userId: currentUserId,
-            itemId: item_id,
-            details: nextDetails,
-          });
-        }
+        setStoredDetails(nextDetails);
+        writeCachedDictionaryCardDetails({
+          userId: ownerUserId,
+          itemId: requestItemId,
+          details: nextDetails,
+        });
       } catch (error) {
-        if (controller.signal.aborted) {
+        if (!isCurrentRequest()) {
           return;
         }
 
         if (error instanceof BackendRequestError && error.status === 401) {
+          authDenialGenerationRef.current += 1;
+          setStoredDetails(null);
+          invalidateCachedDictionaryReadDataForUser(ownerUserId);
           void refreshBootstrap();
           return;
         }
 
         if (error instanceof BackendRequestError && (error.status === 403 || error.status === 404)) {
-          if (currentUserId) {
-            invalidateCachedDictionaryItem({
-              userId: currentUserId,
-              itemId: item_id,
-            });
+          invalidateCachedDictionaryItem({
+            userId: ownerUserId,
+            itemId: requestItemId,
+          });
+          if (error.status === 404) {
+            invalidateCachedDictionaryListsForUser(ownerUserId);
           }
-          setDetails(null);
+          setStoredDetails(null);
           setIsNotFound(true);
           return;
         }
 
-        if (!hasCachedDetails) {
-          setDetails(null);
-          setDetailsErrorMessage(
-            getVocabRequestMessage(error, dictionaryMessages.errors.details),
-          );
-        }
+        setStoredDetails(null);
+        setDetailsErrorMessage(
+          getVocabRequestMessage(error, dictionaryMessages.errors.details),
+        );
       } finally {
-        if (!controller.signal.aborted) {
+        if (isCurrentRequest()) {
           setIsLoadingDetails(false);
         }
       }
@@ -263,14 +323,17 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
     void loadCardDetails();
 
     return () => controller.abort();
-  }, [currentUserId, item_id, refreshBootstrap, session?.access_token]);
+  }, [currentUserId, isCurrentAuthenticatedSession, item_id, refreshBootstrap, session?.access_token]);
 
   const canShowTranslation =
-    !preferencesErrorMessage &&
+    preferencesOwnerUserId === currentUserId &&
+    !currentPreferencesErrorMessage &&
     !isLoadingPreferences &&
     Boolean(preferredTranslationLanguage) &&
     Boolean(details?.translation);
-  const isLoading = !details && !isNotFound && !detailsErrorMessage && isLoadingDetails;
+  const isLoading =
+    !isCurrentResult ||
+    (!details && !currentIsNotFound && !currentDetailsErrorMessage && isLoadingDetails);
   const translationModeLabel = details
     ? getTranslationModeLabel({
         preferredTranslationLanguage,
@@ -289,47 +352,75 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
     : [];
 
   async function handleDelete() {
-    if (!session?.access_token) {
+    if (!session?.access_token || !currentUserId) {
       return;
     }
+
+    const accessToken = session.access_token;
+    const ownerUserId = currentUserId;
+    const requestItemId = item_id;
+    const authDenialGeneration = authDenialGenerationRef.current;
+    const isCurrentRequest = () =>
+      authDenialGenerationRef.current === authDenialGeneration &&
+      isCurrentAuthenticatedSession(ownerUserId, accessToken) &&
+      activeReadRef.current.accessToken === accessToken &&
+      activeReadRef.current.itemId === requestItemId &&
+      activeReadRef.current.userId === ownerUserId;
 
     setIsDeleting(true);
     setDeleteErrorMessage(null);
 
     try {
       await deleteDictionaryItem({
-        accessToken: session.access_token,
-        item_id,
+        accessToken,
+        item_id: requestItemId,
       });
 
-      if (currentUserId) {
-        invalidateCachedDictionaryReadDataForUser(currentUserId);
+      invalidateCachedDictionaryItem({
+        userId: ownerUserId,
+        itemId: requestItemId,
+      });
+      invalidateCachedDictionaryListsForUser(ownerUserId);
+
+      if (!isCurrentRequest()) {
+        return;
       }
-      setDetails(null);
+
+      setStoredDetails(null);
       setIsDeleteConfirming(false);
       router.replace("/dictionary");
       router.refresh();
     } catch (error) {
+      if (!isCurrentRequest()) {
+        return;
+      }
+
       if (error instanceof BackendRequestError && error.status === 401) {
+        authDenialGenerationRef.current += 1;
+        setStoredDetails(null);
+        invalidateCachedDictionaryReadDataForUser(ownerUserId);
         void refreshBootstrap();
         return;
       }
 
       if (error instanceof BackendRequestError && (error.status === 403 || error.status === 404)) {
-        if (currentUserId) {
-          invalidateCachedDictionaryItem({
-            userId: currentUserId,
-            itemId: item_id,
-          });
+        invalidateCachedDictionaryItem({
+          userId: ownerUserId,
+          itemId: requestItemId,
+        });
+        if (error.status === 404) {
+          invalidateCachedDictionaryListsForUser(ownerUserId);
         }
-        setDetails(null);
+        setStoredDetails(null);
         setIsNotFound(true);
         return;
       }
 
       setDeleteErrorMessage(getVocabRequestMessage(error, dictionaryMessages.errors.delete));
     } finally {
-      setIsDeleting(false);
+      if (isCurrentRequest()) {
+        setIsDeleting(false);
+      }
     }
   }
 
@@ -359,22 +450,22 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
         </article>
       ) : null}
 
-      {!isLoading && isNotFound ? (
+      {!isLoading && currentIsNotFound ? (
         <StatePanel
           title={dictionaryMessages.states.unavailableTitle}
           copy={dictionaryMessages.states.unavailableDescription}
         />
       ) : null}
 
-      {!isLoading && detailsErrorMessage ? (
+      {!isLoading && currentDetailsErrorMessage ? (
         <StatePanel
           tone="danger"
           title={dictionaryMessages.states.loadErrorTitle}
-          copy={detailsErrorMessage}
+          copy={currentDetailsErrorMessage}
         />
       ) : null}
 
-      {!isLoading && !isNotFound && !detailsErrorMessage && details ? (
+      {!isLoading && !currentIsNotFound && !currentDetailsErrorMessage && details ? (
         <article className="grid w-full min-w-0 max-w-full gap-6">
           <div className="w-full min-w-0 max-w-full">
             <h1 className="break-words font-serifDisplay text-[3rem] font-normal leading-none text-token-text sm:text-[4rem]">
@@ -390,7 +481,7 @@ export function CardDetailsScreen({ item_id }: CardDetailsScreenProps) {
                 {dictionaryMessages.metadata.canonical}: {details.canonicalForm}
               </p>
             ) : null}
-            {preferencesErrorMessage ? (
+            {currentPreferencesErrorMessage ? (
               <p className="mt-3 max-w-md break-words text-xs leading-5 text-token-muted/70">
                 {dictionaryMessages.preference.unavailable}
               </p>

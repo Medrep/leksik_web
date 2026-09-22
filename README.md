@@ -10,9 +10,9 @@ It is a narrow Next.js client over the shared backend API. The backend remains t
 
 The primary customer launch client is the responsive web/PWA product. Initial iOS delivery is Safari with Add to Home Screen; initial Android delivery is the Chrome-installed PWA. Physical-device PWA testing requires an HTTPS origin.
 
-App Store and Google Play distribution, Capacitor iOS, and a Capacitor Android distribution package are deferred. The PWA-01 installability foundation is implemented, with physical iPhone and Android installation verification still pending; see the [PWA launch validation checklist](docs/PWA_LAUNCH_CHECKLIST.md).
+App Store and Google Play distribution, Capacitor iOS, and a Capacitor Android distribution package are deferred. The PWA-01 installability foundation has passed, including physical installed-PWA verification on iPhone and Android; see the [PWA launch validation checklist](docs/PWA_LAUNCH_CHECKLIST.md).
 
-The native manifest is defined in `app/manifest.ts`. Manifest icons are under `public/icons/`, and the Apple touch icon uses the native `app/apple-icon.png` convention. Installation testing must use an HTTPS deployment; localhost is suitable only for local static/runtime inspection.
+The native manifest is defined in `app/manifest.ts`. Manifest icons are under `public/icons/`, and the Apple touch icon uses the native `app/apple-icon.png` convention. PWA-02 installed-runtime hardening is implemented with final device-flow verification still tracked in the launch checklist. Installation testing must use an HTTPS deployment; localhost is suitable only for local static/runtime inspection.
 
 Browser account entry uses Supabase Auth directly. Protected backend requests use the Supabase access token as a bearer token, and the backend remains authoritative for authenticated identity and product access.
 

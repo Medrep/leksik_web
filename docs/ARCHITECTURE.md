@@ -65,6 +65,8 @@ The initial installed runtime is online-first. No service worker is required for
 
 Current browser persistence remains unchanged: Supabase persists the browser authentication session, and the dictionary read cache stores user-keyed list and detail data in `localStorage`. That is not an offline product layer. PWA work must not introduce another persistent data layer or service-worker caching for authenticated API responses, dictionary or generated vocabulary data, preferences, identity/access state, authentication tokens, Telegram completion URLs or proofs, or mutation requests.
 
+Authenticated browser requests to the backend use the Fetch API `no-store` cache mode through the shared authenticated backend client. This browser safeguard does not change request URLs, bodies, authorization headers, Supabase requests, or backend contracts.
+
 ### Browser and device expectations
 
 iOS Safari and an installed Home Screen web app can use separate browser-storage contexts. An installed app's first launch may therefore require another sign-in; seamless Safari-to-installed-PWA session transfer and cookie/session migration architecture are not launch requirements.
@@ -117,6 +119,8 @@ Client state coordinates browser session state, authenticated readiness, locale 
 
 The dictionary cache is a browser-side read optimization. The frontend owns safe cache invalidation when authentication boundaries, user identity, mutations, or relevant preferences make cached data stale or unsafe to reuse.
 
+Cached dictionary data is never authoritative after an authenticated refresh fails. Authorization denial removes protected content from the rendered state and invalidates the affected cache; an authoritative missing item invalidates its detail and related list cache; successful deletion invalidates the item and list caches; and sign-out, account deletion, or account transition clears user-bound product cache in the executing browser context. Backend revalidation is scoped to the live owner, access token, and auth generation; equivalent concurrent refreshes share one in-flight operation, while stale invocations and results become inert before they can mutate state or initiate destructive cleanup. When authoritative backend bootstrap rejects a restored or active Supabase session, the client immediately revokes protected product state and remains in auth loading/checking state while its one valid current-owner Supabase cleanup attempt is in flight. Public authentication becomes usable only after that attempt settles, so a newer browser session cannot be established through the supported UI while the old cleanup can still mutate shared Supabase storage. A returned cleanup error or thrown cleanup failure still releases the public UI after the attempt has settled; the rejected owner remains blocked for that page lifecycle, although persisted rejected session material may survive and be rejected again after a future full reload. Account-deletion requests capture the initiating owner, access token, and auth generation. A deletion `401` for that still-current ownership enters the same tracked backend-rejection lifecycle; it never calls ordinary unscoped sign-out, and a stale completion or a completion during an existing cleanup cannot start another destructive operation. Other stale deletion failures are inert with respect to the current Settings owner. After backend-confirmed account deletion, a separate synchronous path tombstones the deleted owner and invalidates that owner's cache, while revoking local session ownership, access/bootstrap state, and preferences only when the captured ownership is still current. That deletion-specific path deliberately does not start an asynchronous, unscoped Supabase sign-out: normal sign-out retains that responsibility, while omitting it from deletion prevents old user A cleanup from later removing a newer user B session in the shared browser client. The deleted-owner guard rejects same-runtime restoration events, and a retained Supabase session encountered after reload still has to pass authoritative backend bootstrap before protected content can render. Successful results are committed only while their authenticated owner, access token, and active request still match, so late responses cannot repopulate previous-user state.
+
 The cache does not provide:
 
 - an offline-first product mode;
@@ -125,7 +129,7 @@ The cache does not provide:
 - a durable write queue;
 - authority over backend data.
 
-Cache failure must not change backend ownership or prevent normal backend reads.
+Cache failure, unavailable browser storage, or malformed cache data must not change backend ownership or prevent normal backend reads. Transient authoritative read failures retain stored cache for possible later use but replace any rendered cached result with the normal error state; this is not an offline fallback.
 
 ## Repository ownership boundaries
 

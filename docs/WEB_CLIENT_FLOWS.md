@@ -62,9 +62,9 @@ Other documents own adjacent concerns:
 
 This flow covers recovery initiation only. It does not define a broader account-management journey.
 
-## Planned PWA launch flows
+## PWA launch flows
 
-PWA installability is planned until PWA-01 completes. These accepted flows describe the intended launch behavior and do not describe current implementation details.
+PWA installability and installed-runtime hardening are implemented through PWA-02. PWA-03 installation help and the PWA-04 final device gate remain later work.
 
 ### Installation
 
@@ -112,7 +112,7 @@ PWA installability is planned until PWA-01 completes. These accepted flows descr
 
 **Success outcome:** The user reaches the intended dictionary or settings destination inside the minimal authenticated experience.
 
-**Failure outcome:** A user without a valid session returns to sign in with the intended continuation preserved. A temporary entry failure is shown with an opportunity to retry.
+**Failure outcome:** A user without a valid session returns to sign in with the intended continuation preserved. Backend revalidation uses the live owner, access token, and auth generation, and equivalent concurrent refresh requests share one in-flight operation; delayed old-owner invocations and stale results cannot initiate cleanup. When backend bootstrap authoritatively rejects an existing Supabase session, protected state is revoked immediately and sign-in remains unavailable until the one valid current-owner destructive Supabase cleanup attempt has settled. If that attempt fails, sign-in still becomes usable and the rejected owner remains blocked for the current page lifecycle; persisted rejected session material may be rejected again after a future full reload. A temporary entry failure is shown with an opportunity to retry.
 
 ### Required language-preference onboarding
 
@@ -140,7 +140,7 @@ Interface language remains optional and is managed through Settings rather than 
 
 **Success outcome:** The user can open an item, search the dictionary, open Settings, or sign out.
 
-**Failure outcome:** A loading or access failure is shown within the dictionary experience, with no fallback to non-user-owned data.
+**Failure outcome:** A loading or access failure is shown within the dictionary experience. A failed authoritative refresh replaces any rendered cached result with the error state; authorization denial also invalidates the affected user cache and follows the existing authentication-recovery path where applicable.
 
 ### Search dictionary
 
@@ -166,7 +166,7 @@ Search does not become an advanced filtering, saved-search, or analytics flow.
 
 **Success outcome:** The user can return to the dictionary or begin the details-first deletion flow.
 
-**Failure outcome:** A missing, unavailable, or inaccessible item produces an unavailable or error state rather than a valid details view.
+**Failure outcome:** A missing, unavailable, inaccessible, or transiently failed item read produces an unavailable or error state rather than leaving cached details visible as current. An authoritative missing item invalidates its detail and related list cache.
 
 This flow does not add capture, review, manual learning-status editing, or broader item-management actions.
 
@@ -194,7 +194,7 @@ This flow does not add capture, review, manual learning-status editing, or broad
 2. A confirmation state explains the destructive action.
 3. The user either cancels or confirms.
 
-**Success outcome:** After confirmed deletion succeeds, the user returns to the dictionary and the deleted item is no longer presented in normal browsing.
+**Success outcome:** After confirmed deletion succeeds, the item and affected list cache are invalidated, the user returns to the dictionary, and the deleted item is no longer presented after return, reload, or reopen.
 
 **Failure or cancel outcome:** Cancel returns to the unchanged details view. Failure remains in the deletion context and does not present the item as successfully deleted.
 
@@ -229,6 +229,8 @@ Deletion remains details-first. It does not include list-row deletion, bulk dele
 
 **Success outcome:** Successful completion changes the visible state to linked.
 
+When completion occurs in another browser context, returning to or reopening visible Settings triggers a narrow canonical status refresh so the installed/browser context can reflect the backend state without polling. Near-simultaneous focus, visibility, and page-show events are coalesced into one useful refresh attempt. If that burst occurs during an active status request, one pending refresh runs after the active request settles, including after a failed request, provided the Settings owner remains active.
+
 **Failure outcome:** The user remains in the Telegram section, sees the failure state, and may retry only where the current state permits completion.
 
 This flow does not include provider management, unlinking, or reassignment.
@@ -245,9 +247,9 @@ This flow does not include provider management, unlinking, or reassignment.
 2. The user must enter the exact confirmation text `DELETE`.
 3. The user either cancels or confirms deletion.
 
-**Success outcome:** After deletion succeeds, the authenticated experience ends and the user returns to the public entry.
+**Success outcome:** The request remains scoped to its initiating owner, access token, and auth generation. Immediately after backend deletion succeeds, the separate synchronous deletion path tombstones that owner and invalidates that owner's dictionary cache; it revokes local authenticated ownership, access/bootstrap state, and preferences only if the initiating ownership is still current. The deletion-specific path does not launch an asynchronous Supabase sign-out that could later terminate a newer account's shared browser session. The authenticated experience ends and the user returns to the public entry only for the still-current deleted owner.
 
-**Failure or cancel outcome:** Cancel closes the confirmation and leaves the account unchanged. Failure remains in Settings and shows that deletion was not confirmed as successful.
+**Failure or cancel outcome:** Cancel closes the confirmation and leaves the account unchanged. A current-owner `401` uses the tracked backend-rejection lifecycle rather than ordinary sign-out; a stale `401` after an owner/session change is inert, and a `401` arriving during an existing rejection cleanup does not start another cleanup. Other failures remain in Settings only while the initiating ownership is still current, so an old completion cannot overwrite a newer owner's Settings state.
 
 Account deletion does not create a broader account center, data-export, restore, or operator flow.
 
@@ -283,6 +285,8 @@ Account deletion does not create a broader account center, data-export, restore,
 **Main transition:** The current authenticated session ends.
 
 **Success outcome:** Protected areas are no longer available and the user returns to the public experience.
+
+Successful sign-out clears user-bound product state and dictionary cache in the executing browser context. Back navigation, reload, reopen, and a later account sign-in cannot restore the previous user's protected dictionary data from that cache.
 
 **Failure outcome:** The failure is shown to the user and protected access is not presented as ambiguously terminated.
 

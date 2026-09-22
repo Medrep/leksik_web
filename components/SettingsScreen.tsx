@@ -211,7 +211,17 @@ function SettingsStateMessage({
 
 export function SettingsScreen() {
   const router = useRouter();
-  const { clearAuthenticatedState, refreshBootstrap, session, signOut, user } = useAuth();
+  const {
+    captureAuthenticatedRequestOwnership,
+    clearAuthenticatedState,
+    completeLocalAccountDeletion,
+    handleAuthenticatedRequestRejection,
+    isCurrentAuthenticatedRequest,
+    refreshBootstrap,
+    session,
+    signOut,
+    user,
+  } = useAuth();
   const { acceptAuthoritativeUiLocale, settingsMessages } = useLocale();
   const [draftDailyReviewEnabled, setDraftDailyReviewEnabled] = useState(false);
   const [draftDailyReviewTargetCount, setDraftDailyReviewTargetCount] = useState(10);
@@ -242,6 +252,13 @@ export function SettingsScreen() {
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [hasDeleteError, setHasDeleteError] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  useEffect(() => {
+    setIsDeleteDialogOpen(false);
+    setDeleteConfirmation("");
+    setHasDeleteError(false);
+    setIsDeletingAccount(false);
+  }, [session?.access_token, session?.user.id]);
 
   useEffect(() => {
     if (!session?.access_token) {
@@ -488,7 +505,7 @@ export function SettingsScreen() {
     setHasSaveSuccess(false);
   }
 
-  async function finishDeletedAccountSession() {
+  async function finishUnavailableAccountSession() {
     const result = await signOut();
 
     if (result.error) {
@@ -496,6 +513,16 @@ export function SettingsScreen() {
     }
 
     router.replace("/");
+  }
+
+  function finishDeletedAccountSession(
+    ownership: NonNullable<ReturnType<typeof captureAuthenticatedRequestOwnership>>,
+  ) {
+    const didRevokeCurrentOwner = completeLocalAccountDeletion(ownership);
+
+    if (didRevokeCurrentOwner) {
+      router.replace("/");
+    }
   }
 
   function openDeleteDialog() {
@@ -522,7 +549,16 @@ export function SettingsScreen() {
     }
 
     if (!session?.access_token) {
-      await finishDeletedAccountSession();
+      await finishUnavailableAccountSession();
+      return;
+    }
+
+    const ownership = captureAuthenticatedRequestOwnership(
+      session.user.id,
+      session.access_token,
+    );
+
+    if (!ownership) {
       return;
     }
 
@@ -530,17 +566,21 @@ export function SettingsScreen() {
     setHasDeleteError(false);
 
     try {
-      await deleteAccount({ accessToken: session.access_token });
-      await finishDeletedAccountSession();
+      await deleteAccount({ accessToken: ownership.accessToken });
+      finishDeletedAccountSession(ownership);
     } catch (error) {
       if (error instanceof BackendRequestError && error.status === 401) {
-        await finishDeletedAccountSession();
+        await handleAuthenticatedRequestRejection(ownership, error.message);
         return;
       }
 
-      setHasDeleteError(true);
+      if (isCurrentAuthenticatedRequest(ownership)) {
+        setHasDeleteError(true);
+      }
     } finally {
-      setIsDeletingAccount(false);
+      if (isCurrentAuthenticatedRequest(ownership)) {
+        setIsDeletingAccount(false);
+      }
     }
   }
 
@@ -792,7 +832,7 @@ export function SettingsScreen() {
         </form>
       </article>
 
-      <TelegramLinkPanel />
+      <TelegramLinkPanel key={user?.id ?? "no-user"} />
 
       <section className="w-full min-w-0 max-w-full border-t border-[#E8B7AF] pt-5">
         <div className="grid w-full min-w-0 max-w-full gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
